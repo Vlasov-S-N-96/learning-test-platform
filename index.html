@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Тестирование ПО — Полная схема для собеседований</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <div class="container">
+        <!-- ===== ШАПКА ===== -->
+        <header class="header">
+            <h1>Тестирование ПО</h1>
+
+        </header>
+
+        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ===== -->
+        <div class="controls">
+            <div class="search-wrap">
+                <span class="icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Поиск терминов..." />
+                <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
+            </div>
+            <div class="filter-group" id="filterGroup">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="theory">Теория</button>
+                <button class="filter-btn" data-filter="formal">Формализация</button>
+                <button class="filter-btn" data-filter="scenario">Сценарии</button>
+                <button class="filter-btn" data-filter="methods">Методы</button>
+                <button class="filter-btn" data-filter="levels">Уровни</button>
+                <button class="filter-btn" data-filter="functional">Функциональное</button>
+                <button class="filter-btn" data-filter="nonfunctional">Нефункциональное</button>
+            </div>
+            <div class="stats">
+                Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong>
+            </div>
+        </div>
+
+        <!-- ============================================================
+     БЛОК: АЛГОРИТМ ДЕЙСТВИЙ (по схеме)
+     ============================================================ -->
+		<div class="algorithm-block">
+			<div class="algorithm-title">Как применять эту схему на практике</div>
+
+			<div class="algorithm-steps">
+				<!-- Шаг 1 -->
+				<div class="step">
+					<span class="step-num">1</span>
+					<span class="step-text"><strong>Начинаем с планирования</strong></span>
+				</div>
+				<div class="step-arrow">→</div>
+
+				<!-- Шаг 2 -->
+				<div class="step">
+					<span class="step-num">2</span>
+					<span class="step-text"><strong>Определяем глубину</strong></span>
+				</div>
+				<div class="step-arrow">→</div>
+
+				<!-- Шаг 3 -->
+				<div class="step">
+					<span class="step-num">3</span>
+					<span class="step-text"><strong>Протестируем функции</strong></span>
+				</div>
+				<div class="step-arrow">→</div>
+
+				<!-- Шаг 4 -->
+				<div class="step">
+					<span class="step-num">4</span>
+					<span class="step-text"><strong>Проверим качество</strong></span>
+				</div>
+				<div class="step-arrow">→</div>
+
+				<!-- Шаг 5 -->
+				<div class="step">
+					<span class="step-num">5</span>
+					<span class="step-text"><strong>Решаем: Release or Stop</strong></span>
+				</div>
+			</div>
+
+			<!-- ===== Нижние блоки: Делаем всегда / По необходимости ===== -->
+			<div class="algorithm-footer">
+				<div class="always-block">
+					<span class="block-icon">🔄</span>
+					<span class="block-label"><strong>Делаем всегда</strong></span>
+					<div class="block-tags">
+						<span class="tag-green">Smoke</span>
+						<span class="tag-orange">Sanity</span>
+						<span class="tag-blue">Регрессия</span>
+					</div>
+				</div>
+				<div class="always-block">
+					<span class="block-icon">📌</span>
+					<span class="block-label"><strong>По необходимости</strong></span>
+					<div class="block-tags">
+						<span class="tag-purple">Нагрузочное</span>
+						<span class="tag-orange">Стрессовое</span>
+						<span class="tag-red">Безопасность</span>
+						<span class="tag-green">Usability</span>
+						<span class="tag-teal">Совместимость</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+        <!-- ===== СЕТКА КАРТОЧЕК ===== -->
+        <div class="section-title">
+            <span>Справочник терминов</span>
+        </div>
+        <div class="grid-cards" id="cardsGrid">
+            <!-- Карточки вставляются JavaScript -->
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

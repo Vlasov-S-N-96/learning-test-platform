@@ -1,0 +1,854 @@
+/* ============================================================
+   ГЛОБАЛЬНЫЕ СТИЛИ
+   ============================================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    background: #eef3f9;
+    padding: 30px 20px;
+    color: #0a1929;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 36px;
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
+    padding: 40px 35px;
+}
+
+/* ============================================================
+   ШАПКА
+   ============================================================ */
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 3px solid #e6edf6;
+    padding-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(145deg, #0a1f3b, #1d3b5c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header .sub {
+    font-size: 1.05rem;
+    color: #3a5470;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+.header .sub span {
+    background: #0a1929;
+    color: white;
+    padding: 2px 16px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    margin-left: 8px;
+    font-weight: 600;
+    -webkit-text-fill-color: white;
+}
+
+.header .count-info {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #4a6a8a;
+}
+
+/* ============================================================
+   БЛОК АЛГОРИТМА (как применять схему)
+   ============================================================ */
+.algorithm-block {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6eff9 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #c5d8ef;
+}
+
+.algorithm-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0a1f3b;
+    text-align: center;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+}
+
+.algorithm-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 10px 18px 10px 14px;
+    border-radius: 60px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    flex: 1;
+    min-width: 180px;
+    max-width: 260px;
+}
+
+.step-num {
+    background: #0a1929;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.step-text {
+    font-size: 0.85rem;
+    line-height: 1.3;
+    color: #1a2a3a;
+}
+
+.step-text strong {
+    color: #0a1929;
+}
+
+.step-arrow {
+    font-size: 1.4rem;
+    color: #6a8aaa;
+    font-weight: 300;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   ПАНЕЛЬ УПРАВЛЕНИЯ
+   ============================================================ */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+    margin-bottom: 28px;
+    padding: 16px 22px;
+    background: #f6faff;
+    border-radius: 20px;
+    border: 1px solid #e4ecf6;
+    align-items: center;
+}
+
+.controls .search-wrap {
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 40px;
+    border: 1px solid #d0ddea;
+    padding: 2px 16px;
+    position: relative;
+}
+
+.controls .search-wrap input {
+    border: none;
+    padding: 10px 8px;
+    font-size: 0.95rem;
+    width: 100%;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+}
+
+.controls .search-wrap .icon {
+    color: #7a8fa8;
+    font-size: 1.1rem;
+}
+
+.controls .search-wrap .clear-btn {
+    background: none;
+    border: none;
+    color: #8a9fb8;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    transition: 0.2s;
+    display: none;
+}
+
+.controls .search-wrap .clear-btn:hover {
+    background: #e6edf6;
+    color: #1a2a3a;
+}
+
+.controls .search-wrap .clear-btn.visible {
+    display: block;
+}
+
+.controls .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.controls .filter-btn {
+    padding: 5px 14px;
+    border-radius: 40px;
+    border: 1px solid #d0ddea;
+    background: white;
+    font-weight: 600;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #2a405a;
+    white-space: nowrap;
+}
+
+.controls .filter-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+
+.controls .filter-btn.active {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+}
+
+.controls .stats {
+    font-size: 0.85rem;
+    color: #3a5470;
+    margin-left: auto;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.controls .stats strong {
+    color: #0a1929;
+}
+
+/* ============================================================
+   ЗАГОЛОВОК СЕКЦИИ
+   ============================================================ */
+.section-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0a1929;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e6edf6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* ============================================================
+   КАРТОЧКИ
+   ============================================================ */
+.grid-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background: #fafcff;
+    border-radius: 20px;
+    border: 1px solid #e6eef9;
+    padding: 18px 20px 20px 20px;
+    transition: 0.25s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+}
+
+.card:hover {
+    border-color: #b0c8e0;
+    background: #f6faff;
+    box-shadow: 0 8px 28px rgba(26, 67, 113, 0.07);
+    transform: translateY(-3px);
+}
+
+.card.hidden {
+    display: none;
+}
+
+/* --- Заголовок карточки --- */
+.card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.card .card-header .term {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0a1929;
+    flex: 1;
+}
+
+.card .card-header .tag {
+    padding: 0 14px;
+    border-radius: 30px;
+    font-size: 0.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    background: #d8e2ef;
+    color: #1f334d;
+}
+
+.card .card-header .tag.blue { background: #c5d8ef; color: #1a3a5a; }
+.card .card-header .tag.green { background: #b8d9c8; color: #1a4a3a; }
+.card .card-header .tag.purple { background: #d4c5e6; color: #4a2a6a; }
+.card .card-header .tag.orange { background: #f0d5b8; color: #6a3a1a; }
+.card .card-header .tag.teal { background: #b8d9d9; color: #1a4a4a; }
+.card .card-header .tag.red { background: #f0c5c5; color: #6a1a1a; }
+
+.card .card-header .mode-badge {
+    font-size: 0.55rem;
+    padding: 2px 12px;
+    border-radius: 30px;
+    background: #e6edf6;
+    color: #1a2a3a;
+    font-weight: 700;
+    white-space: nowrap;
+    transition: 0.2s;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* --- Определение --- */
+.card .definition,
+.card .academic-definition {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: #1a2a3a;
+    flex: 1;
+}
+
+.card .definition .simple-def {
+    background: #e8f5e9;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border-left: 4px solid #2e7d32;
+    margin-bottom: 8px;
+}
+
+.card .definition .example {
+    background: #fff8e1;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border-left: 4px solid #f57f17;
+    margin-bottom: 8px;
+}
+
+.card .definition .practice-box,
+.card .academic-definition .practice-box {
+    background: #e3f2fd;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border-left: 4px solid #1565c0;
+    margin-bottom: 8px;
+}
+
+.card .academic-definition .academic-text {
+    background: #f3e5f5;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border-left: 4px solid #6a1b9a;
+}
+
+.card .definition .source,
+.card .academic-definition .source {
+    display: block;
+    font-size: 0.7rem;
+    color: #6a8aaa;
+    font-weight: 500;
+    border-top: 1px dashed #dce5ef;
+    padding-top: 8px;
+    margin-top: 8px;
+}
+
+/* --- Дополнительные метки --- */
+.card .meta-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #e6eef9;
+}
+
+.card .meta-tags .meta {
+    background: #f0f5fd;
+    padding: 2px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    color: #3a5a7a;
+    font-weight: 500;
+}
+
+.card .click-hint {
+    margin-top: 12px;
+    font-size: 0.7rem;
+    color: #8a9fb8;
+    text-align: center;
+    border-top: 1px dashed #e6eef9;
+    padding-top: 10px;
+    opacity: 0.6;
+    transition: 0.2s;
+}
+
+.card:hover .click-hint {
+    opacity: 1;
+    color: #4a6a8a;
+}
+
+/* ============================================================
+   РЕЖИМ "ТОЛЬКО ОПРЕДЕЛЕНИЕ"
+   ============================================================ */
+.card.mode-only-definition .definition .simple-def,
+.card.mode-only-definition .definition .example,
+.card.mode-only-definition .definition .practice-box,
+.card.mode-only-definition .definition .source,
+.card.mode-only-definition .meta-tags,
+.card.mode-only-definition .click-hint {
+    display: none;
+}
+
+.card.mode-only-definition .academic-definition .academic-text {
+    background: #f3e5f5;
+    border-left: 4px solid #6a1b9a;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+.card.mode-only-definition .academic-definition .practice-box {
+    display: none;
+}
+
+.card.mode-only-definition .academic-definition .source {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #6a8aaa;
+    border-top: 1px dashed #dce5ef;
+    padding-top: 8px;
+}
+
+/* ============================================================
+   ПОДВАЛ
+   ============================================================ */
+.footer {
+    background: #eaf1fa;
+    border-radius: 60px;
+    padding: 18px 28px;
+    text-align: center;
+    font-size: 0.95rem;
+    color: #1a3552;
+    border: 1px solid #d0ddea;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.footer strong {
+    color: #0a1929;
+}
+
+/* ============================================================
+   АДАПТИВНОСТЬ
+   ============================================================ */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 16px;
+        border-radius: 24px;
+    }
+
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .grid-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 14px 16px;
+    }
+
+    .controls .search-wrap {
+        min-width: unset;
+    }
+
+    .controls .stats {
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .controls .filter-group {
+        justify-content: center;
+    }
+
+    .algorithm-steps {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .step {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .step-arrow {
+        transform: rotate(90deg);
+    }
+
+    .card .card-header .term {
+        font-size: 1rem;
+    }
+
+    .card .definition {
+        font-size: 0.88rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 12px 8px;
+    }
+
+    .container {
+        padding: 14px 10px;
+        border-radius: 18px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .header .sub {
+        font-size: 0.9rem;
+    }
+
+    .controls .filter-btn {
+        font-size: 0.6rem;
+        padding: 4px 10px;
+    }
+
+    .card {
+        padding: 14px 14px 16px 14px;
+    }
+
+    .card .card-header .term {
+        font-size: 0.95rem;
+    }
+
+    .algorithm-block {
+        padding: 16px 14px;
+    }
+
+    .step-text {
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================================
+   ПЕЧАТНАЯ ВЕРСИЯ
+   ============================================================ */
+@media print {
+    body {
+        background: white;
+        padding: 20px;
+    }
+
+    .container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        padding: 30px;
+    }
+
+    .card {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        border-color: #ccc !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    .card:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .controls {
+        display: none;
+    }
+
+    .card.hidden {
+        display: flex !important;
+    }
+
+    .footer {
+        border-color: #ccc;
+        background: #f5f5f5;
+    }
+}
+
+/* ============================================================
+   БЛОК АЛГОРИТМА (обновлённый)
+   ============================================================ */
+.algorithm-block {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6eff9 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #c5d8ef;
+}
+
+.algorithm-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0a1f3b;
+    text-align: center;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+}
+
+.algorithm-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 12px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 10px 18px 10px 14px;
+    border-radius: 60px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    flex: 1;
+    min-width: 150px;
+    max-width: 220px;
+}
+
+.step-num {
+    background: #0a1929;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.step-text {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: #1a2a3a;
+}
+
+.step-text strong {
+    color: #0a1929;
+}
+
+.step-arrow {
+    font-size: 1.4rem;
+    color: #6a8aaa;
+    font-weight: 300;
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   АКАДЕМИЧЕСКОЕ ОПРЕДЕЛЕНИЕ — БЕЗ ТОЧЕК (буллитов)
+   ============================================================ */
+.card .academic-definition .academic-text ul {
+    margin: 6px 0 0 0;
+    padding: 0;
+    list-style-type: none;
+    line-height: 1.8;
+}
+
+.card .academic-definition .academic-text ul li {
+    margin-bottom: 2px;
+    padding-left: 0;
+}
+
+/* Если хотите сохранить нумерацию, но без точек — используйте это: */
+.card .academic-definition .academic-text ul {
+    list-style-type: none;
+    counter-reset: item;
+}
+
+.card .academic-definition .academic-text ul li {
+    counter-increment: item;
+    padding-left: 28px;
+    position: relative;
+}
+
+.card .academic-definition .academic-text ul li::before {
+    content: counter(item) ". ";
+    position: absolute;
+    left: 0;
+    font-weight: 600;
+    color: #6a1b9a;
+}
+
+/* ============================================================
+   НИЖНИЕ БЛОКИ: Делаем всегда / По необходимости
+   ============================================================ */
+.algorithm-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.algorithm-footer .always-block {
+    background: white;
+    border-radius: 16px;
+    padding: 14px 20px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+}
+
+.algorithm-footer .always-block .block-icon {
+    font-size: 1.3rem;
+}
+
+.algorithm-footer .always-block .block-label {
+    font-size: 0.9rem;
+    color: #0a1929;
+}
+
+.algorithm-footer .always-block .block-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.algorithm-footer .always-block .block-tags span {
+    padding: 3px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.algorithm-footer .always-block .block-tags .tag-green {
+    background: #b8d9c8;
+    color: #1a4a3a;
+}
+
+.algorithm-footer .always-block .block-tags .tag-orange {
+    background: #f0d5b8;
+    color: #6a3a1a;
+}
+
+.algorithm-footer .always-block .block-tags .tag-blue {
+    background: #c5d8ef;
+    color: #1a3a5a;
+}
+
+.algorithm-footer .always-block .block-tags .tag-purple {
+    background: #d4c5e6;
+    color: #4a2a6a;
+}
+
+.algorithm-footer .always-block .block-tags .tag-red {
+    background: #f0c5c5;
+    color: #6a1a1a;
+}
+
+.algorithm-footer .always-block .block-tags .tag-teal {
+    background: #b8d9d9;
+    color: #1a4a4a;
+}
+
+/* ============================================================
+   АДАПТИВНОСТЬ
+   ============================================================ */
+@media (max-width: 768px) {
+    .algorithm-steps {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .step {
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .step-arrow {
+        transform: rotate(90deg);
+    }
+
+    .algorithm-footer {
+        grid-template-columns: 1fr;
+    }
+
+    .algorithm-footer .always-block .block-tags {
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .algorithm-block {
+        padding: 16px 14px;
+    }
+
+    .step-text {
+        font-size: 0.75rem;
+    }
+
+    .algorithm-footer .always-block {
+        padding: 10px 14px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .algorithm-footer .always-block .block-tags {
+        margin-left: 0;
+    }
+}
