@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ *  ТЕСТИРОВАНИЕ ПО — Полные данные (219 терминов)
+ *  Все термины с подробными описаниями и примерами
+ *  • Клик по карточке переключает определение (Просто ↔ Академическое)
+ *  • Для JSON и XML используется подсветка синтаксиса
+ * ============================================================
+ */
 
 const TERMS_DATA = [
     // ============================================================
@@ -2704,56 +2712,50 @@ clearBtn.addEventListener('click', function() {
     searchInput.focus();
 });
 
-filterBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        filterBtns.forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        currentFilter = this.dataset.filter;
-        filterAndSearch();
-        updateDropdownLabel(currentFilter);
-    });
-});
 
 // ===== ВЫПАДАЮЩИЙ СПИСОК =====
 const dropdownToggle = document.getElementById('dropdownToggle');
 const dropdownMenu = document.getElementById('dropdownMenu');
 const dropdownItems = document.querySelectorAll('.dropdown-item');
 
+// Клик по кнопке "Схема тестирования" - ТОЛЬКО открываем/закрываем список, НЕ меняем фильтр!
 dropdownToggle.addEventListener('click', function(e) {
     e.stopPropagation();
     this.classList.toggle('open');
     dropdownMenu.classList.toggle('open');
 });
 
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.dropdown')) {
-        dropdownToggle.classList.remove('open');
-        dropdownMenu.classList.remove('open');
-    }
-});
-
+// Клик по пункту меню - ПРИМЕНЯЕМ фильтр
 dropdownItems.forEach(item => {
     item.addEventListener('click', function(e) {
         e.stopPropagation();
         
         const filter = this.dataset.filter;
 
-        // Убираем активные классы у всех кнопок
+        // Убираем активные классы у всех кнопок фильтров
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
 
         // Активируем выбранный пункт
         this.classList.add('active');
 
+        // Применяем фильтр ТОЛЬКО при выборе пункта
         currentFilter = filter;
         filterAndSearch();
 
+        // Закрываем дропдаун
         dropdownToggle.classList.remove('open');
         dropdownMenu.classList.remove('open');
 
+        // Обновляем текст кнопки
         const label = this.textContent.trim();
         dropdownToggle.innerHTML = `${label} <span class="arrow">▼</span>`;
+
+        // На мобильных закрываем бургер
+        if (window.innerWidth <= 768) {
+            burgerBtn.classList.remove('active');
+            filterGroup.classList.remove('open');
+        }
     });
 });
 
