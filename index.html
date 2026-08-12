@@ -12,8 +12,67 @@
         <!-- ===== ШАПКА ===== -->
         <header class="header">
             <h1>Тестирование ПО</h1>
-
         </header>
+
+        <!-- ============================================================
+             БЛОК: АЛГОРИТМ ДЕЙСТВИЙ (по схеме)
+             ============================================================ -->
+        <div class="algorithm-block">
+            <div class="algorithm-title">Как применять тестирование ПО на практике</div>
+
+            <div class="algorithm-steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <span class="step-text"><strong>Начинаем с планирования</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <span class="step-text"><strong>Определяем глубину</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <span class="step-text"><strong>Протестируем функции</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <span class="step-text"><strong>Проверим качество</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">5</span>
+                    <span class="step-text"><strong>Решаем: Release or Stop</strong></span>
+                </div>
+            </div>
+
+            <div class="algorithm-footer">
+                <div class="always-block">
+                    <span class="block-icon">🔄</span>
+                    <span class="block-label"><strong>Делаем всегда</strong></span>
+                    <div class="block-tags">
+                        <span class="tag-green">Smoke</span>
+                        <span class="tag-orange">Sanity</span>
+                        <span class="tag-blue">Регрессия</span>
+                        <!-- Скрытые теги для выравнивания -->
+                        <span class="hidden-tag">Скрыто</span>
+                        <span class="hidden-tag">Скрыто</span>
+                    </div>
+                </div>
+                <div class="always-block">
+                    <span class="block-icon">📌</span>
+                    <span class="block-label"><strong>По необходимости</strong></span>
+                    <div class="block-tags">
+                        <span class="tag-purple">Нагрузочное</span>
+                        <span class="tag-orange">Стрессовое</span>
+                        <span class="tag-red">Безопасность</span>
+                        <span class="tag-green">Usability</span>
+                        <span class="tag-teal">Совместимость</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ===== -->
         <div class="controls">
@@ -22,93 +81,49 @@
                 <input type="text" id="searchInput" placeholder="Поиск терминов..." />
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
+
+            <!-- Бургер-кнопка для мобильных -->
+            <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
             <div class="filter-group" id="filterGroup">
                 <button class="filter-btn active" data-filter="all">Все</button>
                 <button class="filter-btn" data-filter="theory">Теория</button>
-                <button class="filter-btn" data-filter="formal">Формализация</button>
-                <button class="filter-btn" data-filter="scenario">Сценарии</button>
-                <button class="filter-btn" data-filter="methods">Методы</button>
-                <button class="filter-btn" data-filter="levels">Уровни</button>
-                <button class="filter-btn" data-filter="functional">Функциональное</button>
-                <button class="filter-btn" data-filter="nonfunctional">Нефункциональное</button>
+
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggle">
+                        Схема тестирования <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <button class="dropdown-item" data-filter="formal">Формализация</button>
+                        <button class="dropdown-item" data-filter="scenario">Сценарии</button>
+                        <button class="dropdown-item" data-filter="methods">Методы</button>
+                        <button class="dropdown-item" data-filter="levels">Уровни</button>
+                        <button class="dropdown-item" data-filter="functional">Функциональное</button>
+                        <button class="dropdown-item" data-filter="nonfunctional">Нефункциональное</button>
+                    </div>
+                </div>
+
+                <!-- Новые разделы -->
+                <button class="filter-btn" data-filter="documentation">Тест. документация</button>
+                <button class="filter-btn" data-filter="api">API</button>
+                <button class="filter-btn" data-filter="web">Веб-приложения</button>
+                <button class="filter-btn" data-filter="testdesign">Тест-дизайн</button>
+                <button class="filter-btn" data-filter="kanban">Kanban</button>
+                <button class="filter-btn" data-filter="scrum">Scrum</button>
+                <button class="filter-btn" data-filter="requirements">Требования</button>
+                <button class="filter-btn" data-filter="sql">SQL</button>
+                <button class="filter-btn" data-filter="python">Python</button>
             </div>
-            <div class="stats">
-                Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong>
-            </div>
+
+            <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
         </div>
-
-        <!-- ============================================================
-     БЛОК: АЛГОРИТМ ДЕЙСТВИЙ (по схеме)
-     ============================================================ -->
-		<div class="algorithm-block">
-			<div class="algorithm-title">Как применять эту схему на практике</div>
-
-			<div class="algorithm-steps">
-				<!-- Шаг 1 -->
-				<div class="step">
-					<span class="step-num">1</span>
-					<span class="step-text"><strong>Начинаем с планирования</strong></span>
-				</div>
-				<div class="step-arrow">→</div>
-
-				<!-- Шаг 2 -->
-				<div class="step">
-					<span class="step-num">2</span>
-					<span class="step-text"><strong>Определяем глубину</strong></span>
-				</div>
-				<div class="step-arrow">→</div>
-
-				<!-- Шаг 3 -->
-				<div class="step">
-					<span class="step-num">3</span>
-					<span class="step-text"><strong>Протестируем функции</strong></span>
-				</div>
-				<div class="step-arrow">→</div>
-
-				<!-- Шаг 4 -->
-				<div class="step">
-					<span class="step-num">4</span>
-					<span class="step-text"><strong>Проверим качество</strong></span>
-				</div>
-				<div class="step-arrow">→</div>
-
-				<!-- Шаг 5 -->
-				<div class="step">
-					<span class="step-num">5</span>
-					<span class="step-text"><strong>Решаем: Release or Stop</strong></span>
-				</div>
-			</div>
-
-			<!-- ===== Нижние блоки: Делаем всегда / По необходимости ===== -->
-			<div class="algorithm-footer">
-				<div class="always-block">
-					<span class="block-icon">🔄</span>
-					<span class="block-label"><strong>Делаем всегда</strong></span>
-					<div class="block-tags">
-						<span class="tag-green">Smoke</span>
-						<span class="tag-orange">Sanity</span>
-						<span class="tag-blue">Регрессия</span>
-					</div>
-				</div>
-				<div class="always-block">
-					<span class="block-icon">📌</span>
-					<span class="block-label"><strong>По необходимости</strong></span>
-					<div class="block-tags">
-						<span class="tag-purple">Нагрузочное</span>
-						<span class="tag-orange">Стрессовое</span>
-						<span class="tag-red">Безопасность</span>
-						<span class="tag-green">Usability</span>
-						<span class="tag-teal">Совместимость</span>
-					</div>
-				</div>
-			</div>
-		</div>
-
 
         <!-- ===== СЕТКА КАРТОЧЕК ===== -->
-        <div class="section-title">
-            <span>Справочник терминов</span>
-        </div>
+        <div class="section-title">Справочник терминов</div>
         <div class="grid-cards" id="cardsGrid">
             <!-- Карточки вставляются JavaScript -->
         </div>
