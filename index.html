@@ -14,12 +14,111 @@
             <h1>Тестирование ПО</h1>
         </header>
 
-        <!-- ============================================================
-             БЛОК: АЛГОРИТМ ДЕЙСТВИЙ (по схеме)
-             ============================================================ -->
-        <div class="algorithm-block">
-            <div class="algorithm-title">Как применять тестирование ПО на практике</div>
+        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
+        <div class="schema-controls">
+            <button class="toggle-schema-btn" data-target="testingSchema">Схема тестирования</button>
+            <button class="toggle-schema-btn" data-target="algorithmBlock">Алгоритм тестирования</button>
+            <button class="toggle-schema-btn" data-target="scrumSchema">Scrum схема</button>
+            <button class="toggle-schema-btn" data-target="kanbanSchema">Kanban схема</button>
+        </div>
 
+        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО ===== -->
+        <div class="testing-schema hidden" id="testingSchema">
+            <div class="testing-title">Схема тестирования ПО</div>
+            
+            <div class="testing-grid">
+                <!-- Степень формализации -->
+                <div class="testing-section formalization">
+                    <div class="section-header">Степень формализации</div>
+                    <div class="section-items">
+                        <span class="item purple">Исследовательское</span>
+                        <span class="item blue">На основе тест-кейсов</span>
+                        <span class="item orange">Ad-hoc (свободное)</span>
+                    </div>
+                </div>
+
+                <!-- Методы -->
+                <div class="testing-section methods">
+                    <div class="section-header">Методы (Как?)</div>
+                    <div class="method-group">
+                        <div class="method-subtitle">Сценарии</div>
+                        <div class="section-items">
+                            <span class="item green">Happy Path</span>
+                            <span class="item red">Negative</span>
+                            <span class="item orange">Destructive</span>
+                        </div>
+                    </div>
+                    <div class="method-group">
+                        <div class="method-subtitle">Доступ к коду</div>
+                        <div class="section-items">
+                            <span class="item blue">Чёрный ящик</span>
+                            <span class="item teal">Серый ящик</span>
+                            <span class="item purple">Белый ящик</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Уровни (компактная версия) -->
+                <div class="testing-section levels">
+                    <div class="section-header">Уровни (Где я нахожусь?)</div>
+                    <div class="level-items">
+                        <span class="item green">Модульное</span>
+                        <span class="item blue">Интеграционное</span>
+                        <span class="item purple">Системное</span>
+                    </div>
+                    <div class="level-divider">Приёмочное (Acceptance)</div>
+                    <div class="level-subgroups">
+                        <div class="level-subgroup">
+                            <span class="level-label">Когда и где:</span>
+                            <span class="item orange">Альфа</span>
+                            <span class="item orange">Бета</span>
+                        </div>
+                        <div class="level-subgroup">
+                            <span class="level-label">Что и почему:</span>
+                            <span class="item teal">Нормативное</span>
+                            <span class="item teal">Контрактное</span>
+                            <span class="item teal">Эксплуатационное</span>
+                            <span class="item teal">Пользовательское</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Функциональное -->
+                <div class="testing-section functional">
+                    <div class="section-header">Функциональное (Что?)</div>
+                    <div class="section-items">
+                        <span class="item red">Regression</span>
+                        <span class="item orange">Smoke</span>
+                        <span class="item blue">Sanity</span>
+                        <span class="item purple">GUI</span>
+                        <span class="item teal">Безопасность</span>
+                        <span class="item green">Installation</span>
+                    </div>
+                </div>
+
+                <!-- Нефункциональное -->
+                <div class="testing-section nonfunctional">
+                    <div class="section-header">Нефункциональное (Качество)</div>
+                    <div class="section-items">
+                        <span class="item purple">Производительность</span>
+                        <span class="item orange">Конкурентное</span>
+                        <span class="item teal">Объёмное</span>
+                        <span class="item blue">Масштабируемость</span>
+                        <span class="item red">Стрессовое</span>
+                        <span class="item green">Удобство</span>
+                        <span class="item green">Совместимость</span>
+                        <span class="item green">Надёжность</span>
+                        <span class="item green">Доступность (A11Y)</span>
+                        <span class="item green">Локализация</span>
+                        <span class="item green">Интернационализация</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== БЛОК АЛГОРИТМА ===== -->
+        <div class="algorithm-block hidden" id="algorithmBlock">
+            <div class="algorithm-title">Как применять тестирование ПО на практике</div>
             <div class="algorithm-steps">
                 <div class="step">
                     <span class="step-num">1</span>
@@ -49,7 +148,6 @@
 
             <div class="algorithm-footer">
                 <div class="always-block">
-                    <span class="block-icon">🔄</span>
                     <span class="block-label"><strong>Делаем всегда</strong></span>
                     <div class="block-tags">
                         <span class="tag-green">Smoke</span>
@@ -60,7 +158,6 @@
                     </div>
                 </div>
                 <div class="always-block">
-                    <span class="block-icon">📌</span>
                     <span class="block-label"><strong>По необходимости</strong></span>
                     <div class="block-tags">
                         <span class="tag-purple">Нагрузочное</span>
@@ -73,10 +170,214 @@
             </div>
         </div>
 
-        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ===== -->
+        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА SCRUM ===== -->
+        <div class="scrum-schema hidden" id="scrumSchema">
+            <div class="scrum-title">Структура Scrum</div>
+            <div class="schema-container">
+                <!-- Ценности -->
+                <div class="scrum-values">
+                    <span class="value-badge">Приверженность</span>
+                    <span class="value-badge">Фокус</span>
+                    <span class="value-badge">Открытость</span>
+                    <span class="value-badge">Уважение</span>
+                    <span class="value-badge">Смелость</span>
+                </div>
+
+                <!-- Бэклоги -->
+                <div class="scrum-backlogs">
+                    <div class="backlog-col">
+                        <div class="backlog-title">Product Backlog</div>
+                        <ul class="backlog-items">
+                            <li>Регистрация</li>
+                            <li>Фильтр по цене</li>
+                            <li>Оплата картой</li>
+                            <li class="backlog-owner">(ведет Product Owner)</li>
+                        </ul>
+                    </div>
+                    <div class="backlog-arrow">→</div>
+                    <div class="backlog-col">
+                        <div class="backlog-title">Sprint Backlog</div>
+                        <ul class="backlog-items">
+                            <li>Сверстать форму</li>
+                            <li>Написать тесты</li>
+                            <li>Протестировать GUI</li>
+                            <li class="backlog-goal">Sprint Goal</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Спринт -->
+                <div class="sprint-container">
+                    <div class="sprint-title">Sprint (1-4 недели)</div>
+                    <div class="sprint-content">
+                        <div class="daily-scrum">
+                            <div class="daily-title">Daily Scrum (ежедневно)</div>
+                            <ul class="daily-items">
+                                <li>Что сделано?</li>
+                                <li>Что сегодня?</li>
+                                <li>Препятствия?</li>
+                            </ul>
+                        </div>
+
+                        <div class="refinement-block">
+                            <div class="refinement-title">Backlog Refinement</div>
+                            <ul>
+                                <li>Уточнение требований</li>
+                                <li>Оценка (покер планирования)</li>
+                            </ul>
+                        </div>
+
+                        <div class="dev-block">
+                            <div class="dev-title">Development &amp; Testing</div>
+                            <div class="dev-tags">
+                                <span>Код</span>
+                                <span>Функциональное</span>
+                                <span>Интеграционное</span>
+                                <span>Регресс</span>
+                                <span>Автотесты</span>
+                                <span>Исследовательское</span>
+                            </div>
+                            <div class="kanban-board">
+                                <span>To Do</span>
+                                <span class="arrow">→</span>
+                                <span>In Progress</span>
+                                <span class="arrow">→</span>
+                                <span>Ready for Test</span>
+                                <span class="arrow">→</span>
+                                <span>Done</span>
+                            </div>
+                        </div>
+
+                        <div class="bug-triage">
+                            <span>Bug Triage (по нужде)</span>
+                            <span class="sub">Приоритизация багов</span>
+                        </div>
+
+                        <div class="review-block">
+                            <div class="review-title">Sprint Review</div>
+                            <ul>
+                                <li>Демо версия инкремента заказчику</li>
+                                <li>Сбор обратной связи</li>
+                            </ul>
+                        </div>
+
+                        <div class="retro-block">
+                            <div class="retro-title">RETROSPECTIVE</div>
+                            <ul>
+                                <li>Что хорошо?</li>
+                                <li>Что улучшить?</li>
+                                <li>План действий</li>
+                            </ul>
+                        </div>
+
+                        <div class="increment-block">
+                            <div class="increment-title">Increment</div>
+                            <ul>
+                                <li>Протестирован</li>
+                                <li>Соответствует DoD</li>
+                                <li>Готов к релизу</li>
+                            </ul>
+                        </div>
+
+                        <div class="next-sprint">Next Sprint →</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА KANBAN ===== -->
+        <div class="kanban-schema hidden" id="kanbanSchema">
+            <div class="kanban-title">Структура Kanban</div>
+            <div class="schema-container">
+                <div class="kanban-values">
+                    <span class="value-badge">Прозрачность</span>
+                    <span class="value-badge">Баланс</span>
+                    <span class="value-badge">Сотрудничество</span>
+                    <span class="value-badge">Ориентация на клиента</span>
+                    <span class="value-badge">Поток</span>
+                    <span class="value-badge">Лидерство</span>
+                    <span class="value-badge">Понимание</span>
+                    <span class="value-badge">Согласие</span>
+                    <span class="value-badge">Уважение</span>
+                </div>
+
+                <div class="kanban-board-full">
+                    <div class="board-title">Kanban-доска</div>
+                    <div class="board-columns">
+                        <div class="board-col">
+                            <div class="col-header">To Do</div>
+                            <div class="col-items">
+                                <span>Задача 1</span>
+                                <span>Задача 2</span>
+                            </div>
+                            <div class="wip-limit">WIP: 3</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">In Progress</div>
+                            <div class="col-items">
+                                <span>Задача 3</span>
+                            </div>
+                            <div class="wip-limit">WIP: 2</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">Review</div>
+                            <div class="col-items">
+                                <span>Задача 4</span>
+                                <span>Задача 5</span>
+                            </div>
+                            <div class="wip-limit">WIP: 2</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">Done</div>
+                            <div class="col-items">
+                                <span>Задача 6</span>
+                                <span>Задача 7</span>
+                                <span>Задача 8</span>
+                            </div>
+                            <div class="wip-limit">—</div>
+                        </div>
+                    </div>
+                    <div class="pull-system">Pull-система: задачи «вытягиваются» по мере готовности</div>
+                </div>
+
+                <div class="kanban-metrics-roles">
+                    <div class="metrics-block">
+                        <div class="metrics-title">Метрики</div>
+                        <ul>
+                            <li><strong>Lead Time</strong> — время от запроса до поставки</li>
+                            <li><strong>Customer Lead Time</strong> — время ожидания клиента</li>
+                            <li><strong>Delivery Rate</strong> — скорость поставки (задач/период)</li>
+                            <li><strong>Cycle Time</strong> — время выполнения одной задачи</li>
+                        </ul>
+                    </div>
+                    <div class="roles-block">
+                        <div class="roles-title">Роли</div>
+                        <ul>
+                            <li><strong>Менеджер Запросов (SRM)</strong> — отвечает за «что» делаем, приоритеты</li>
+                            <li><strong>Менеджер Поставки (SDM)</strong> — отвечает за «как» делаем, поток, WIP</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="kanban-cadences">
+                    <div class="cadences-title">Каденции (регулярные встречи)</div>
+                    <div class="cadences-list">
+                        <span>Kanban-митинг</span>
+                        <span>Собрание по пополнению</span>
+                        <span>Ревью сервиса поставки</span>
+                        <span>Ревью рисков</span>
+                        <span>Операционное ревью</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ТЕРМИНАМИ ===== -->
         <div class="controls">
             <div class="search-wrap">
-                <span class="icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Поиск терминов..." />
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
@@ -112,11 +413,50 @@
                 <button class="filter-btn" data-filter="kanban">Kanban</button>
                 <button class="filter-btn" data-filter="scrum">Scrum</button>
                 <button class="filter-btn" data-filter="requirements">Требования</button>
-                <button class="filter-btn" data-filter="sql">SQL</button>
-                <button class="filter-btn" data-filter="python">Python</button>
+
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleSql">
+                        SQL <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuSql">
+                        <button class="dropdown-item" data-filter="sql_basics">Основы SQL</button>
+                        <button class="dropdown-item" data-filter="sql_filter">Фильтрация и сортировка</button>
+                        <button class="dropdown-item" data-filter="sql_aggregate">Агрегация (GROUP BY, HAVING)</button>
+                        <button class="dropdown-item" data-filter="sql_join">JOIN</button>
+                        <button class="dropdown-item" data-filter="sql_subquery">Подзапросы</button>
+                        <button class="dropdown-item" data-filter="sql_window">Оконные функции</button>
+                        <button class="dropdown-item" data-filter="sql_ddl">DDL (CREATE, ALTER, DROP)</button>
+                        <button class="dropdown-item" data-filter="sql_dml">DML (INSERT, UPDATE, DELETE)</button>
+                        <button class="dropdown-item" data-filter="sql_null">NULL</button>
+                        <button class="dropdown-item" data-filter="sql_view">Представления (VIEW)</button>
+                        <button class="dropdown-item" data-filter="sql_index">Индексы и оптимизация</button>
+                        <button class="dropdown-item" data-filter="sql_interview">Вопросы для собеседования</button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownTogglePython">
+                        Python <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuPython">
+                        <button class="dropdown-item" data-filter="python_variables">Переменные и типы данных</button>
+                        <button class="dropdown-item" data-filter="python_structures">Структуры данных</button>
+                        <button class="dropdown-item" data-filter="python_io">Ввод и вывод данных</button>
+                        <button class="dropdown-item" data-filter="python_conditions">Условные операторы</button>
+                        <button class="dropdown-item" data-filter="python_loops">Циклы</button>
+                        <button class="dropdown-item" data-filter="python_functions">Функции</button>
+                        <button class="dropdown-item" data-filter="python_algorithms">Структуры данных и алгоритмы</button>
+                        <button class="dropdown-item" data-filter="python_files">Работа с файлами</button>
+                        <button class="dropdown-item" data-filter="python_requests">Модуль requests</button>
+                        <button class="dropdown-item" data-filter="python_pandas">Модуль pandas</button>
+                        <button class="dropdown-item" data-filter="python_db">Работа с БД</button>
+                        <button class="dropdown-item" data-filter="python_interview">Вопросы для собеседования</button>
+                    </div>
+                </div>
             </div>
 
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
+            <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">✕ Сбросить</button>
         </div>
 
         <div class="section-title">Справочник терминов</div>
