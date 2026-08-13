@@ -711,6 +711,25 @@ body {
         word-break: break-word;
     }
 
+    /* ===== СКРЫВАЕМ ВСЕ КНОПКИ, КОТОРЫЕ ДОЛЖНЫ БЫТЬ В ДРОПДАУНАХ ===== */
+    .controls .filter-btn[data-filter="formal"],
+    .controls .filter-btn[data-filter="scenario"],
+    .controls .filter-btn[data-filter="methods"],
+    .controls .filter-btn[data-filter="levels"],
+    .controls .filter-btn[data-filter="functional"],
+    .controls .filter-btn[data-filter="nonfunctional"],
+    /* Скрываем отдельные кнопки, которые дублируют дропдауны */
+    .controls .filter-btn[data-filter="documentation"],
+    .controls .filter-btn[data-filter="api"],
+    .controls .filter-btn[data-filter="web"],
+    .controls .filter-btn[data-filter="testdesign"],
+    .controls .filter-btn[data-filter="kanban"],
+    .controls .filter-btn[data-filter="scrum"],
+    .controls .filter-btn[data-filter="requirements"] {
+        display: none !important;
+    }
+
+    /* Дропдауны на мобильных занимают всю ширину */
     .controls .dropdown {
         width: 100%;
         position: relative;
@@ -778,15 +797,6 @@ body {
     .controls .dropdown-item.active {
         background: #1d3b5c;
         color: white;
-    }
-
-    .controls .filter-btn[data-filter="formal"],
-    .controls .filter-btn[data-filter="scenario"],
-    .controls .filter-btn[data-filter="methods"],
-    .controls .filter-btn[data-filter="levels"],
-    .controls .filter-btn[data-filter="functional"],
-    .controls .filter-btn[data-filter="nonfunctional"] {
-        display: none;
     }
 
     .burger-btn {
@@ -1075,4 +1085,882 @@ pre {
     .card.hidden {
         display: flex !important;
     }
+}
+
+.reset-btn {
+    padding: 5px 14px;
+    border-radius: 40px;
+    border: 1px solid #d0ddea;
+    background: white;
+    font-weight: 600;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #2a405a;
+    white-space: nowrap;
+}
+.reset-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+@media (max-width: 768px) {
+    .reset-btn {
+        width: 100%;
+        text-align: center;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================================
+   ВИЗУАЛЬНАЯ СХЕМА SCRUM
+   ============================================================ */
+.scrum-schema {
+    background: linear-gradient(145deg, #f0f7ff 0%, #e6eff9 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #c5d8ef;
+}
+
+.scrum-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0a1f3b;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* Ценности */
+.scrum-values {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed #b0c8e0;
+}
+
+.value-badge {
+    background: #1d3b5c;
+    color: white;
+    padding: 4px 18px;
+    border-radius: 30px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Бэклоги */
+.scrum-backlogs {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.backlog-col {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 350px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.backlog-title {
+    font-weight: 700;
+    color: #0a1f3b;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.backlog-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.backlog-items li {
+    padding: 4px 0;
+    font-size: 0.85rem;
+    color: #1a2a3a;
+    border-bottom: 1px solid #e6edf6;
+}
+
+.backlog-items li:last-child {
+    border-bottom: none;
+}
+
+.backlog-owner {
+    font-size: 0.7rem !important;
+    color: #6a8aaa !important;
+    font-style: italic;
+}
+
+.backlog-goal {
+    font-weight: 700;
+    color: #0a1f3b !important;
+}
+
+.backlog-arrow {
+    font-size: 2rem;
+    color: #6a8aaa;
+    display: flex;
+    align-items: center;
+    align-self: center;
+}
+
+/* Спринт-контейнер */
+.sprint-container {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 24px;
+    border: 2px solid #1d3b5c;
+    box-shadow: 0 4px 16px rgba(29, 59, 92, 0.08);
+}
+
+.sprint-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1d3b5c;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+}
+
+.sprint-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* Общие стили для блоков внутри спринта */
+.sprint-content > div {
+    background: #f6faff;
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid #e4ecf6;
+}
+
+.sprint-content > div .title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+    margin-bottom: 6px;
+}
+
+.sprint-content ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sprint-content ul li {
+    font-size: 0.8rem;
+    padding: 2px 0;
+    color: #1a2a3a;
+}
+
+/* Daily Scrum */
+.daily-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+    margin-bottom: 6px;
+}
+
+.daily-items li {
+    font-size: 0.8rem;
+}
+
+/* Backlog Refinement */
+.refinement-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+    margin-bottom: 6px;
+}
+
+/* Development & Testing */
+.dev-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+    margin-bottom: 6px;
+}
+
+.dev-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.dev-tags span {
+    background: #d8e2ef;
+    padding: 0 10px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: #1a3a5a;
+}
+
+.kanban-board {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #1a2a3a;
+    background: #eef3f9;
+    padding: 6px 12px;
+    border-radius: 30px;
+}
+
+.kanban-board .arrow {
+    color: #6a8aaa;
+}
+
+/* Bug Triage */
+.bug-triage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.bug-triage span:first-child {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+}
+
+.bug-triage .sub {
+    font-size: 0.7rem;
+    color: #6a8aaa;
+}
+
+/* Sprint Review */
+.review-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #0a1f3b;
+    margin-bottom: 6px;
+}
+
+/* Retrospective */
+.retro-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #6a1a3a;
+    margin-bottom: 6px;
+}
+
+/* Increment */
+.increment-title {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1a6a3a;
+    margin-bottom: 6px;
+}
+
+/* Next sprint */
+.next-sprint {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #1d3b5c;
+    padding: 8px 0;
+    background: #e6edf6;
+    border-radius: 30px;
+    margin-top: 4px;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .scrum-schema {
+        padding: 16px 12px;
+    }
+
+    .scrum-backlogs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .backlog-col {
+        max-width: 100%;
+        min-width: unset;
+    }
+
+    .backlog-arrow {
+        transform: rotate(90deg);
+        padding: 4px 0;
+    }
+
+    .sprint-content {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .value-badge {
+        font-size: 0.65rem;
+        padding: 2px 12px;
+    }
+
+    .kanban-board {
+        font-size: 0.6rem;
+    }
+}
+
+/* ============================================================
+   ВИЗУАЛЬНАЯ СХЕМА KANBAN
+   ============================================================ */
+.kanban-schema {
+    background: linear-gradient(145deg, #f5f0ff 0%, #e8e0f5 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #d4c5e6;
+}
+
+.kanban-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #3a1a5a;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* Ценности */
+.kanban-values {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed #d4c5e6;
+}
+
+.kanban-values .value-badge {
+    background: #4a2a6a;
+    color: white;
+    padding: 4px 18px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* Доска */
+.kanban-board-full {
+    background: white;
+    border-radius: 20px;
+    padding: 20px 24px;
+    border: 2px solid #4a2a6a;
+    box-shadow: 0 4px 16px rgba(74, 42, 106, 0.08);
+    margin-bottom: 20px;
+}
+
+.board-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #4a2a6a;
+    margin-bottom: 16px;
+}
+
+.board-columns {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.board-col {
+    background: #f6f0fc;
+    border-radius: 14px;
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+    border: 1px solid #e4d6f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.col-header {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #3a1a5a;
+    margin-bottom: 8px;
+}
+
+.col-items {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    margin-bottom: 8px;
+    min-height: 60px;
+}
+
+.col-items span {
+    background: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    border: 1px solid #d4c5e6;
+    text-align: center;
+}
+
+.wip-limit {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #6a4a8a;
+    background: #e4d6f0;
+    padding: 2px 12px;
+    border-radius: 20px;
+}
+
+.col-arrow {
+    font-size: 1.5rem;
+    color: #6a4a8a;
+    display: flex;
+    align-items: center;
+    align-self: center;
+}
+
+.pull-system {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #4a2a6a;
+    font-weight: 500;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #d4c5e6;
+}
+
+/* Метрики и роли */
+.kanban-metrics-roles {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.metrics-block, .roles-block {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px solid #d4c5e6;
+}
+
+.metrics-title, .roles-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #3a1a5a;
+    margin-bottom: 8px;
+}
+
+.metrics-block ul, .roles-block ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.metrics-block ul li, .roles-block ul li {
+    font-size: 0.8rem;
+    padding: 4px 0;
+    color: #1a1a3a;
+    border-bottom: 1px solid #e4d6f0;
+}
+
+.metrics-block ul li:last-child, .roles-block ul li:last-child {
+    border-bottom: none;
+}
+
+/* Каденции */
+.kanban-cadences {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    border: 1px solid #d4c5e6;
+}
+
+.cadences-title {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #3a1a5a;
+    margin-bottom: 8px;
+}
+
+.cadences-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cadences-list span {
+    background: #f0e8f8;
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #4a2a6a;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .kanban-schema {
+        padding: 16px 12px;
+    }
+
+    .board-columns {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .board-col {
+        max-width: 100%;
+        min-width: unset;
+    }
+
+    .col-arrow {
+        transform: rotate(90deg);
+        padding: 4px 0;
+    }
+
+    .kanban-metrics-roles {
+        grid-template-columns: 1fr;
+    }
+
+    .kanban-values .value-badge {
+        font-size: 0.6rem;
+        padding: 2px 10px;
+    }
+}
+
+/* ============================================================
+   ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ
+   ============================================================ */
+.schema-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: #f6faff;
+    border-radius: 16px;
+    border: 1px solid #e4ecf6;
+}
+
+.toggle-schema-btn {
+    padding: 5px 14px;
+    border-radius: 40px;
+    border: 1px solid #d0ddea;
+    background: white;
+    font-weight: 600;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: 0.2s;
+    color: #2a405a;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toggle-schema-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+
+.toggle-schema-btn.active {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+}
+
+.toggle-schema-btn.active:hover {
+    background: #2a4a6a;
+}
+
+/* Скрытие блоков */
+#algorithmBlock.hidden,
+#scrumSchema.hidden,
+#kanbanSchema.hidden {
+    display: none !important;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .schema-controls {
+        justify-content: center;
+        padding: 8px 6px;
+    }
+    .toggle-schema-btn {
+        font-size: 0.7rem;
+        padding: 4px 12px;
+    }
+}
+
+/* ============================================================
+   ВИЗУАЛЬНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО (только CSS, 4 колонки)
+   ============================================================ */
+.testing-schema {
+    background: linear-gradient(145deg, #f0f7ff 0%, #e8f0fa 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #c5d8ef;
+}
+
+.testing-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0a1f3b;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* Сетка — 4 колонки (адаптивно) */
+.testing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    align-items: stretch;
+}
+
+/* Каждая секция */
+.testing-section {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 18px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.testing-section .section-header {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #0a1f3b;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e6edf6;
+    text-align: center;
+}
+
+/* Группы внутри секций */
+.method-group {
+    margin-bottom: 12px;
+}
+.method-group:last-child {
+    margin-bottom: 0;
+}
+
+.method-subtitle {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #3a5a7a;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* Контейнер для тегов */
+.section-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+}
+
+/* Отдельный тег */
+.section-items .item {
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+/* ===== ЦВЕТА ===== */
+.item.blue {
+    background: #c5d8ef;
+    color: #1a3a5a;
+}
+.item.green {
+    background: #b8d9c8;
+    color: #1a4a3a;
+}
+.item.purple {
+    background: #d4c5e6;
+    color: #4a2a6a;
+}
+.item.orange {
+    background: #f0d5b8;
+    color: #6a3a1a;
+}
+.item.red {
+    background: #f0c5c5;
+    color: #6a1a1a;
+}
+.item.teal {
+    background: #b8d9d9;
+    color: #1a4a4a;
+}
+
+/* ===== БЛОК УРОВНИ (для специальной структуры) ===== */
+.level-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.level-divider {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: #0a1f3b;
+    text-align: center;
+    margin: 6px 0 8px 0;
+    padding: 4px 0;
+    border-top: 1px dashed #d0ddea;
+    border-bottom: 1px dashed #d0ddea;
+}
+
+.level-subgroups {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.level-subgroup {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    justify-content: center;
+}
+
+.level-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #3a5a7a;
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 992px) {
+    .testing-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .testing-schema {
+        padding: 16px 12px;
+    }
+    .testing-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    .testing-section {
+        padding: 12px 14px;
+    }
+    .section-items .item {
+        font-size: 0.6rem;
+        padding: 2px 10px;
+    }
+    .level-subgroup {
+        justify-content: flex-start;
+    }
+    .level-label {
+        font-size: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .testing-title {
+        font-size: 1rem;
+    }
+    .testing-section .section-header {
+        font-size: 0.8rem;
+    }
+    .level-divider {
+        font-size: 0.7rem;
+    }
+}
+
+
+
+/* Скрытие блоков */
+#algorithmBlock.hidden,
+#scrumSchema.hidden,
+#kanbanSchema.hidden,
+#testingSchema.hidden {
+    display: none !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ===== Общие стили для всех тегов (элементов) внутри .section-items ===== */
+.section-items .item {
+    display: inline-block;         
+    padding: 8px 18px;             
+    border-radius: 20px;           
+    font-size: 0.9rem;             
+    font-weight: 500;             
+    line-height: 1.4;              
+    margin: 0;                    
+    white-space: nowrap;         
+    border: 1px solid transparent;  
+}
+
+.testing-section.levels .section-items .item {
+    min-width: 120px;               
+    text-align: center;            
+}
+
+/* ===== Группы внутри секции "Уровни" (подзаголовки и подпункты) ===== */
+.testing-section.levels .method-group {
+    margin-top: 16px;             
+    padding-left: 10px;            
+    border-left: 3px solid #ccc;    
+}
+
+.method-subtitle {
+    font-size: 0.8rem;             
+    color: #666;
+    margin-bottom: 6px;
+    font-weight: 400;
+}
+
+/* Подпункты Альфа, Бета, Нормативное и т.д.*/
+.testing-section.levels .method-group .section-items .item {
+    min-width: auto;               
+    padding: 4px 12px;              
+    font-size: 0.8rem;
+    border-radius: 14px;
 }
