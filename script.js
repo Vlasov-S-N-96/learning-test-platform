@@ -1,11 +1,3 @@
-/**
- * ============================================================
- *  ТЕСТИРОВАНИЕ ПО — Полные данные (219 терминов)
- *  Все термины с подробными описаниями и примерами
- *  • Клик по карточке переключает определение (Просто ↔ Академическое)
- *  • Для JSON и XML используется подсветка синтаксиса
- * ============================================================
- */
 
 const TERMS_DATA = [
     // ============================================================
@@ -2488,70 +2480,3281 @@ const TERMS_DATA = [
         meta: ['Тестируемость', 'Критерии', 'Объективность']
     },
 
+ 
+        // ============================================================
+    //  SQL — данные для выпадающего списка (ID: 300-399)
     // ============================================================
-    //  15. SQL (sql) — 5 терминов (ID: 203-207)
-    // ============================================================
+
+    // ---- Основы SQL (sql_basics) ----
     {
-        id: 203,
+        id: 300,
         term: 'SELECT',
-        category: 'sql',
+        category: 'sql_basics',
         tag: 'Чтение',
         tagColor: 'blue',
         simple: 'Команда для получения данных из базы данных.',
-        example: 'SELECT * FROM users WHERE age > 18 — получить всех пользователей старше 18 лет. SELECT name, email FROM users WHERE city = "Москва" — получить имена и email москвичей.',
+        example: 'SELECT * FROM users WHERE age > 18 — получить всех пользователей старше 18 лет.',
         academic: 'SELECT — команда SQL для выборки данных из таблиц. Использует WHERE для фильтрации, JOIN для объединения таблиц, ORDER BY для сортировки.',
-        source: 'Справочник тестировщика',
+        source: 'SQL.docx',
         meta: ['Выборка', 'WHERE', 'FROM']
     },
     {
-        id: 204,
-        term: 'JOIN',
-        category: 'sql',
-        tag: 'Связи',
+        id: 301,
+        term: 'Типы данных SQL',
+        category: 'sql_basics',
+        tag: 'Типы',
         tagColor: 'purple',
-        simple: 'Объединяет данные из двух или более таблиц по общему полю.',
-        example: 'SELECT orders.id, users.name FROM orders JOIN users ON orders.user_id = users.id — получить заказы с именами пользователей.',
-        academic: 'JOIN — команда SQL для соединения таблиц по общему полю. Существуют INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN.',
-        source: 'Справочник тестировщика',
-        meta: ['INNER JOIN', 'LEFT JOIN', 'Связи']
+        simple: 'Числовые (INT, FLOAT, DECIMAL), символьные (CHAR, VARCHAR, TEXT), дата/время (DATE, DATETIME, TIMESTAMP), булевы (BOOLEAN).',
+        example: 'INT — целые числа. VARCHAR(255) — строка до 255 символов. TIMESTAMP — секунды с 01.01.1970 (UTC).',
+        academic: 'Основные типы данных SQL: числовые (TINYINT, SMALLINT, INT, BIGINT, FLOAT, DOUBLE, DECIMAL), символьные (CHAR, VARCHAR, TEXT), дата и время (DATE, DATETIME, TIME, TIMESTAMP), булевы (BOOLEAN, BOOL).',
+        source: 'SQL.docx',
+        meta: ['Типы', 'Числа', 'Строки', 'Даты']
     },
     {
-        id: 205,
-        term: 'INSERT',
-        category: 'sql',
-        tag: 'Запись',
-        tagColor: 'green',
-        simple: 'Добавляет новые записи в таблицу.',
-        example: 'INSERT INTO users (name, email, age) VALUES ("Иван", "ivan@mail.ru", 25) — добавить нового пользователя.',
-        academic: 'INSERT — команда SQL для вставки новых данных в таблицу. Требует указать столбцы и значения для вставки.',
-        source: 'Справочник тестировщика',
-        meta: ['Добавление', 'VALUES', 'Новые записи']
+        id: 302,
+        term: 'Порядок выполнения SQL',
+        category: 'sql_basics',
+        tag: 'Порядок',
+        tagColor: 'purple',
+        simple: '1. FROM/JOIN → 2. WHERE → 3. GROUP BY → 4. HAVING → 5. SELECT → 6. ORDER BY → 7. LIMIT/OFFSET.',
+        example: 'Запрос выполняется в этом порядке, а не в том, как он написан.',
+        academic: 'Полный порядок выполнения SQL-запросов: 1) FROM/JOIN 2) WHERE 3) GROUP BY 4) HAVING 5) SELECT 6) ORDER BY 7) LIMIT/OFFSET.',
+        source: 'SQL.docx',
+        meta: ['Порядок', 'Выполнение', 'SQL']
+    },
+
+    // ---- Фильтрация и сортировка (sql_filter) ----
+    {
+        id: 303,
+        term: 'WHERE (фильтрация)',
+        category: 'sql_filter',
+        tag: 'Фильтрация',
+        tagColor: 'blue',
+        simple: 'Фильтрует строки по условию. Используется с операторами сравнения, LIKE, IN, BETWEEN, IS NULL.',
+        example: 'WHERE city = \'NY\' OR city = \'LA\' AND name LIKE \'J%\' — используйте скобки: WHERE (city = \'NY\' OR city = \'LA\') AND name LIKE \'J%\'.',
+        academic: 'WHERE — фильтрация строк. Операторы: =, != или <>, >, >=, <, <=, BETWEEN, IN, LIKE, IS NULL, IS NOT NULL.',
+        source: 'SQL.docx',
+        meta: ['WHERE', 'Фильтрация', 'Условия']
     },
     {
-        id: 206,
-        term: 'UPDATE',
-        category: 'sql',
-        tag: 'Изменение',
+        id: 304,
+        term: 'LIKE (поиск по шаблону)',
+        category: 'sql_filter',
+        tag: 'Поиск',
         tagColor: 'orange',
-        simple: 'Изменяет существующие записи в таблице.',
-        example: 'UPDATE users SET age = 26 WHERE name = "Иван" — изменить возраст пользователя. UPDATE orders SET status = "delivered" WHERE id = 123.',
-        academic: 'UPDATE — команда SQL для изменения существующих данных в таблице. Использует SET для указания новых значений и WHERE для фильтрации.',
-        source: 'Справочник тестировщика',
-        meta: ['Изменение', 'SET', 'WHERE']
+        simple: 'Поиск по шаблону с подстановочными знаками: % (любое количество символов) и _ (один символ).',
+        example: '\'J%\' — начинается с J. \'%@gmail.com\' — заканчивается на @gmail.com.',
+        academic: 'LIKE с шаблонами: % — любое количество символов, _ — один символ.',
+        source: 'SQL.docx',
+        meta: ['LIKE', 'Шаблоны', '%', '_']
     },
     {
-        id: 207,
-        term: 'DELETE',
-        category: 'sql',
-        tag: 'Удаление',
+        id: 305,
+        term: 'ORDER BY (сортировка)',
+        category: 'sql_filter',
+        tag: 'Сортировка',
+        tagColor: 'green',
+        simple: 'Сортирует результат по одному или нескольким столбцам. ASC — по возрастанию, DESC — по убыванию.',
+        example: 'ORDER BY name ASC, salary DESC. Можно использовать алиасы.',
+        academic: 'ORDER BY — сортировка. ASC — по возрастанию (по умолчанию), DESC — по убыванию.',
+        source: 'SQL.docx',
+        meta: ['ORDER BY', 'ASC', 'DESC']
+    },
+    {
+        id: 306,
+        term: 'LIMIT / OFFSET (пагинация)',
+        category: 'sql_filter',
+        tag: 'Пагинация',
+        tagColor: 'purple',
+        simple: 'LIMIT ограничивает количество строк, OFFSET — пропускает указанное количество строк.',
+        example: 'LIMIT 10 OFFSET 20 — строки 21-30.',
+        academic: 'Пагинация: LIMIT N OFFSET M — пропускает M строк и возвращает N строк.',
+        source: 'SQL.docx',
+        meta: ['LIMIT', 'OFFSET', 'Пагинация']
+    },
+    {
+        id: 307,
+        term: 'DISTINCT',
+        category: 'sql_filter',
+        tag: 'Уникальность',
+        tagColor: 'teal',
+        simple: 'Удаляет дублирующиеся строки из результата. Может замедлять запрос.',
+        example: 'SELECT DISTINCT column1, column2 FROM table_name.',
+        academic: 'DISTINCT — удаляет дублирующиеся строки. Может замедлять запрос.',
+        source: 'SQL.docx',
+        meta: ['DISTINCT', 'Уникальные', 'Дедупликация']
+    },
+
+    // ---- Агрегация (sql_aggregate) ----
+    {
+        id: 308,
+        term: 'Агрегатные функции',
+        category: 'sql_aggregate',
+        tag: 'Агрегация',
+        tagColor: 'blue',
+        simple: 'Функции для подсчёта данных: COUNT(), SUM(), AVG(), MIN(), MAX().',
+        example: 'COUNT(*) — количество всех строк. COUNT(DISTINCT column) — количество уникальных не-NULL значений.',
+        academic: 'Основные агрегатные функции: COUNT() — подсчет строк, SUM() — сумма, AVG() — среднее, MIN() — минимум, MAX() — максимум.',
+        source: 'SQL.docx',
+        meta: ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']
+    },
+    {
+        id: 309,
+        term: 'GROUP BY',
+        category: 'sql_aggregate',
+        tag: 'Группировка',
+        tagColor: 'green',
+        simple: 'Группирует данные по указанным столбцам для применения агрегатных функций.',
+        example: 'SELECT department, COUNT(*) as employee_count FROM employees GROUP BY department.',
+        academic: 'GROUP BY — группировка данных по указанным столбцам. Все неагрегированные поля из SELECT должны быть в GROUP BY.',
+        source: 'SQL.docx',
+        meta: ['GROUP BY', 'Группировка', 'Агрегация']
+    },
+    {
+        id: 310,
+        term: 'HAVING',
+        category: 'sql_aggregate',
+        tag: 'Группировка',
+        tagColor: 'orange',
+        simple: 'Фильтрация после группировки (по агрегированным значениям). WHERE — до группировки.',
+        example: 'SELECT department, AVG(salary) as avg_salary FROM employees GROUP BY department HAVING AVG(salary) > 50000.',
+        academic: 'HAVING — фильтрация ПОСЛЕ группировки. WHERE — фильтрация ДО группировки.',
+        source: 'SQL.docx',
+        meta: ['HAVING', 'Фильтрация', 'Группы']
+    },
+    {
+        id: 311,
+        term: 'CASE (условная логика)',
+        category: 'sql_aggregate',
+        tag: 'Условия',
+        tagColor: 'purple',
+        simple: 'Аналог if-else в SQL. Позволяет создавать условные выражения в запросах.',
+        example: 'SELECT name, CASE WHEN salary > 1000 THEN \'High\' ELSE \'Low\' END AS category FROM employees.',
+        academic: 'Оператор CASE: CASE WHEN condition1 THEN result1 WHEN condition2 THEN result2 ELSE result_default END.',
+        source: 'SQL.docx',
+        meta: ['CASE', 'WHEN', 'THEN', 'ELSE']
+    },
+
+    // ---- JOIN (sql_join) ----
+    {
+        id: 312,
+        term: 'INNER JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'green',
+        simple: 'Возвращает только строки, для которых есть соответствие в обеих таблицах.',
+        example: 'SELECT * FROM orders JOIN users ON orders.user_id = users.id.',
+        academic: 'INNER JOIN — возвращает только строки, для которых есть соответствие в обеих таблицах.',
+        source: 'SQL.docx',
+        meta: ['INNER JOIN', 'Совпадения', 'Обе таблицы']
+    },
+    {
+        id: 313,
+        term: 'LEFT JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'blue',
+        simple: 'Возвращает все строки из левой таблицы и совпадения из правой. Если совпадения нет — NULL.',
+        example: 'SELECT * FROM users LEFT JOIN orders ON users.id = orders.user_id.',
+        academic: 'LEFT JOIN — возвращает все строки из левой таблицы и совпадения из правой.',
+        source: 'SQL.docx',
+        meta: ['LEFT JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 314,
+        term: 'RIGHT JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'orange',
+        simple: 'Возвращает все строки из правой таблицы и совпадения из левой. Если совпадения нет — NULL.',
+        example: 'SELECT * FROM orders RIGHT JOIN users ON orders.user_id = users.id.',
+        academic: 'RIGHT JOIN — возвращает все строки из правой таблицы и совпадения из левой.',
+        source: 'SQL.docx',
+        meta: ['RIGHT JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 315,
+        term: 'FULL JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'purple',
+        simple: 'Возвращает все строки из обеих таблиц. Отсутствующие значения заполняются NULL.',
+        example: 'SELECT * FROM users FULL JOIN orders ON users.id = orders.user_id.',
+        academic: 'FULL JOIN — возвращает все строки из обеих таблиц, объединяя их.',
+        source: 'SQL.docx',
+        meta: ['FULL JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 316,
+        term: 'CROSS JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
         tagColor: 'red',
-        simple: 'Удаляет записи из таблицы. Без WHERE удалит всё!',
-        example: 'DELETE FROM users WHERE age < 18 — удалить всех пользователей младше 18 лет. DELETE FROM orders WHERE status = "cancelled" — удалить отменённые заказы.',
-        academic: 'DELETE — команда SQL для удаления данных из таблицы. Всегда используйте WHERE, чтобы случайно не удалить все записи.',
-        source: 'Справочник тестировщика',
-        meta: ['Удаление', 'WHERE', 'Осторожно']
+        simple: 'Декартово произведение: каждая строка из таблицы A соединяется с каждой строкой из таблицы B.',
+        example: 'SELECT * FROM products CROSS JOIN colors. Если 10 продуктов и 5 цветов — получится 50 строк.',
+        academic: 'CROSS JOIN — декартово произведение. Возвращает N × M строк.',
+        source: 'SQL.docx',
+        meta: ['CROSS JOIN', 'Декартово', 'Все со всеми']
+    },
+    {
+        id: 317,
+        term: 'SELF JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'teal',
+        simple: 'Соединение таблицы с самой собой. Используется для поиска иерархий или пар.',
+        example: 'SELECT e1.name, e2.name FROM employees e1 JOIN employees e2 ON e1.manager_id = e2.id.',
+        academic: 'SELF JOIN — соединение таблицы с самой собой.',
+        source: 'SQL.docx',
+        meta: ['SELF JOIN', 'Сама с собой', 'Иерархия']
+    },
+
+    // ---- Подзапросы (sql_subquery) ----
+    {
+        id: 318,
+        term: 'Подзапросы',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'blue',
+        simple: 'Запрос внутри другого запроса. Может быть в SELECT, FROM, WHERE, HAVING, ORDER BY.',
+        example: 'SELECT name FROM customers WHERE customer_id IN (SELECT customer_id FROM orders WHERE amount > 1000).',
+        academic: 'Подзапросы — запросы внутри других запросов. Бывают скалярные, коррелированные и некоррелированные.',
+        source: 'SQL.docx',
+        meta: ['Подзапрос', 'Вложенный', 'Subquery']
+    },
+    {
+        id: 319,
+        term: 'Коррелированные подзапросы',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'purple',
+        simple: 'Зависят от данных внешнего запроса. Выполняются для каждой строки внешнего запроса.',
+        example: 'SELECT name, salary FROM employees e1 WHERE salary > (SELECT AVG(salary) FROM employees e2 WHERE e2.department_id = e1.department_id).',
+        academic: 'Коррелированные подзапросы зависят от данных внешнего запроса. Выполняются для каждой строки.',
+        source: 'SQL.docx',
+        meta: ['Коррелированный', 'Связанный', 'Subquery']
+    },
+    {
+        id: 320,
+        term: 'EXISTS',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'green',
+        simple: 'Проверяет существование строк в подзапросе. Возвращает TRUE если есть хотя бы одна строка.',
+        example: 'SELECT * FROM employees e WHERE EXISTS (SELECT 1 FROM orders o WHERE o.employee_id = e.id).',
+        academic: 'EXISTS — проверяет существование строк в подзапросе. Обычно эффективнее IN на больших данных.',
+        source: 'SQL.docx',
+        meta: ['EXISTS', 'Существование', 'Проверка']
+    },
+    {
+        id: 321,
+        term: 'CTE (Common Table Expression)',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'teal',
+        simple: 'Временное именованное выражение, улучшает читаемость сложных запросов.',
+        example: 'WITH cte_name AS (SELECT column1, column2 FROM table1) SELECT * FROM cte_name JOIN table2 ON ...',
+        academic: 'CTE — временное именованное выражение. Улучшает читаемость, позволяет использовать результат несколько раз.',
+        source: 'SQL.docx',
+        meta: ['CTE', 'WITH', 'Временная таблица']
+    },
+    {
+        id: 322,
+        term: 'Рекурсивные CTE',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'red',
+        simple: 'CTE, которое ссылается само на себя. Используется для иерархий, деревьев, генерации последовательностей.',
+        example: 'WITH RECURSIVE numbers AS (SELECT 1 UNION ALL SELECT n+1 FROM numbers WHERE n<10) SELECT * FROM numbers.',
+        academic: 'Рекурсивные CTE: WITH RECURSIVE. Базовый случай + рекурсивный случай.',
+        source: 'SQL.docx',
+        meta: ['RECURSIVE', 'Иерархия', 'Дерево']
+    },
+
+    // ---- Оконные функции (sql_window) ----
+    {
+        id: 323,
+        term: 'Оконные функции — введение',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'blue',
+        simple: 'Вычисления над группой строк без сворачивания данных. Сохраняют все исходные строки.',
+        example: 'Функция() OVER (PARTITION BY ... ORDER BY ...).',
+        academic: 'Оконные функции — вычисления над группой строк (окном) без сворачивания данных.',
+        source: 'оконные функции.docx',
+        meta: ['OVER', 'PARTITION BY', 'Окно']
+    },
+    {
+        id: 324,
+        term: 'ROW_NUMBER()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'green',
+        simple: 'Присваивает уникальный порядковый номер каждой строке в рамках окна. 1, 2, 3, 4...',
+        example: 'SELECT name, ROW_NUMBER() OVER (ORDER BY salary DESC) as rn FROM employees.',
+        academic: 'ROW_NUMBER() — присваивает уникальный порядковый номер каждой строке в рамках окна.',
+        source: 'оконные функции.docx',
+        meta: ['ROW_NUMBER', 'Нумерация', 'Уникальный']
+    },
+    {
+        id: 325,
+        term: 'RANK() и DENSE_RANK()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'orange',
+        simple: 'RANK() — ранжирование с пропусками (1, 2, 2, 4, 5). DENSE_RANK() — без пропусков (1, 2, 2, 3, 4).',
+        example: 'RANK() — при одинаковых значениях получают одинаковый ранг, следующий ранг пропускается.',
+        academic: 'RANK() — ранжирование с пропусками. DENSE_RANK() — без пропусков.',
+        source: 'оконные функции.docx',
+        meta: ['RANK', 'DENSE_RANK', 'Ранжирование']
+    },
+    {
+        id: 326,
+        term: 'LAG() и LEAD()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'teal',
+        simple: 'LAG() — значение из предыдущей строки. LEAD() — значение из следующей строки.',
+        example: 'LAG(salary, 1) OVER (ORDER BY date) — зарплата в предыдущем месяце.',
+        academic: 'LAG(column, n) — возвращает значение из строки, отстоящей на n позиций назад.',
+        source: 'оконные функции.docx',
+        meta: ['LAG', 'LEAD', 'Смещение']
+    },
+    {
+        id: 327,
+        term: 'NTILE()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'purple',
+        simple: 'Разбивает все строки окна на n примерно равных групп и возвращает номер группы.',
+        example: 'NTILE(4) OVER (ORDER BY salary) — разделяет на 4 группы (квартили).',
+        academic: 'NTILE(n) — разбивает все строки окна на n примерно равных групп.',
+        source: 'оконные функции.docx',
+        meta: ['NTILE', 'Квартили', 'Группы']
+    },
+    {
+        id: 328,
+        term: 'Фреймы в оконных функциях',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'red',
+        simple: 'ROWS — по строкам. GROUPS — по группам одинаковых значений. RANGE — по диапазону значений.',
+        example: 'ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING — 3 строки вокруг текущей.',
+        academic: 'Типы фреймов: ROWS — по строкам, GROUPS — по группам, RANGE — по диапазону.',
+        source: 'оконные функции.docx',
+        meta: ['ROWS', 'GROUPS', 'RANGE', 'Фрейм']
+    },
+
+    // ---- Аналитические функции (sql_analytics) ----
+    {
+        id: 329,
+        term: 'CUME_DIST()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'blue',
+        simple: 'Кумулятивное распределение: доля строк со значением ≤ текущему.',
+        example: 'CUME_DIST() OVER (ORDER BY salary) — показывает процент сотрудников с зарплатой ≤ текущей.',
+        academic: 'CUME_DIST() — кумулятивное распределение: (количество строк со значением ≤ текущему) / (общее количество строк).',
+        source: 'оконные функции.docx',
+        meta: ['CUME_DIST', 'Распределение', 'Доля']
+    },
+    {
+        id: 330,
+        term: 'PERCENT_RANK()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'orange',
+        simple: 'Относительный ранг: доля строк со значением < текущего.',
+        example: 'PERCENT_RANK() OVER (ORDER BY salary) — показывает процент сотрудников с зарплатой < текущей.',
+        academic: 'PERCENT_RANK() — (количество строк со значением < текущего) / (общее количество строк - 1).',
+        source: 'оконные функции.docx',
+        meta: ['PERCENT_RANK', 'Ранг', 'Доля']
+    },
+    {
+        id: 331,
+        term: 'FIRST_VALUE() и LAST_VALUE()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'purple',
+        simple: 'FIRST_VALUE() — первое значение в фрейме. LAST_VALUE() — последнее значение в фрейме.',
+        example: 'FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary) — минимальная зарплата в отделе.',
+        academic: 'FIRST_VALUE() — возвращает первое значение в фрейме. LAST_VALUE() — возвращает последнее значение в фрейме.',
+        source: 'оконные функции.docx',
+        meta: ['FIRST_VALUE', 'LAST_VALUE', 'Фрейм']
+    },
+
+    // ---- DDL (sql_ddl) ----
+    {
+        id: 332,
+        term: 'CREATE TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'blue',
+        simple: 'Создает новую таблицу с указанными столбцами и ограничениями.',
+        example: 'CREATE TABLE people (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL).',
+        academic: 'CREATE TABLE — создание новой таблицы. Определяет структуру данных: столбцы, типы, ограничения.',
+        source: 'SQL.docx',
+        meta: ['CREATE', 'Таблица', 'Структура']
+    },
+    {
+        id: 333,
+        term: 'ALTER TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'orange',
+        simple: 'Изменяет структуру существующей таблицы.',
+        example: 'ALTER TABLE people ADD COLUMN age INT. ALTER TABLE people DROP COLUMN age.',
+        academic: 'ALTER TABLE — изменение структуры таблицы. Добавляет, удаляет, переименовывает столбцы.',
+        source: 'SQL.docx',
+        meta: ['ALTER', 'Изменить', 'Структура']
+    },
+    {
+        id: 334,
+        term: 'DROP TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'red',
+        simple: 'Полностью удаляет таблицу из базы данных. Необратимая операция!',
+        example: 'DROP TABLE people — удаляет таблицу people со всеми данными.',
+        academic: 'DROP TABLE — удаление таблицы из базы данных. Все данные и структура удаляются.',
+        source: 'SQL.docx',
+        meta: ['DROP', 'Удаление', 'Необратимо']
+    },
+    {
+        id: 335,
+        term: 'TRUNCATE TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'purple',
+        simple: 'Быстрое удаление всех данных из таблицы. Быстрее DELETE.',
+        example: 'TRUNCATE TABLE people — быстро удаляет все данные из таблицы people.',
+        academic: 'TRUNCATE TABLE — быстрое удаление всех данных из таблицы. Нелогируемое, сбрасывает автоинкремент.',
+        source: 'SQL.docx',
+        meta: ['TRUNCATE', 'Очистка', 'Быстро']
+    },
+
+    // ---- DML (sql_dml) ----
+    {
+        id: 336,
+        term: 'INSERT',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'green',
+        simple: 'Добавляет новые строки в таблицу.',
+        example: 'INSERT INTO users (name, age) VALUES (\'John\', 25).',
+        academic: 'INSERT — добавление новых строк в таблицу. Может вставлять значения напрямую или из SELECT.',
+        source: 'SQL.docx',
+        meta: ['INSERT', 'Добавление', 'Новые записи']
+    },
+    {
+        id: 337,
+        term: 'UPDATE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'orange',
+        simple: 'Изменяет существующие строки в таблице. Всегда используйте WHERE!',
+        example: 'UPDATE users SET age = 26 WHERE name = \'John\'.',
+        academic: 'UPDATE — изменение существующих данных. Всегда используйте WHERE.',
+        source: 'SQL.docx',
+        meta: ['UPDATE', 'Изменение', 'SET']
+    },
+    {
+        id: 338,
+        term: 'DELETE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'red',
+        simple: 'Удаляет строки из таблицы. Всегда используйте WHERE!',
+        example: 'DELETE FROM users WHERE age < 18.',
+        academic: 'DELETE — удаление строк из таблицы. Всегда используйте WHERE.',
+        source: 'SQL.docx',
+        meta: ['DELETE', 'Удаление', 'WHERE']
+    },
+    {
+        id: 339,
+        term: 'TRUNCATE vs DELETE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'purple',
+        simple: 'TRUNCATE — быстрое удаление всех данных. DELETE — можно с WHERE.',
+        example: 'TRUNCATE TABLE people — удаляет все данные быстрее. DELETE FROM people WHERE id > 100.',
+        academic: 'TRUNCATE — быстрое удаление всех данных, нелогируемое. DELETE — медленнее, можно использовать WHERE.',
+        source: 'SQL.docx',
+        meta: ['TRUNCATE', 'DELETE', 'Сравнение']
+    },
+
+    // ---- NULL (sql_null) ----
+    {
+        id: 340,
+        term: 'NULL в SQL',
+        category: 'sql_null',
+        tag: 'NULL',
+        tagColor: 'red',
+        simple: 'NULL — отсутствие значения. Любое сравнение с NULL возвращает NULL.',
+        example: 'WHERE email IS NULL — правильно. WHERE email = NULL — НЕПРАВИЛЬНО.',
+        academic: 'Особенности NULL: не равно пустой строке или 0. Любое сравнение с NULL возвращает NULL.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'IS NULL', 'COALESCE']
+    },
+    {
+        id: 341,
+        term: 'COALESCE',
+        category: 'sql_null',
+        tag: 'NULL',
+        tagColor: 'teal',
+        simple: 'Возвращает первое не-NULL значение из списка. Заменяет NULL на указанное значение.',
+        example: 'SELECT COALESCE(dimension, \'unknown\') AS dim FROM locations.',
+        academic: 'COALESCE — возвращает первое не-NULL значение из списка аргументов.',
+        source: 'SQL.docx',
+        meta: ['COALESCE', 'NULL', 'Замена']
+    },
+
+    // ---- Представления (sql_view) ----
+    {
+        id: 342,
+        term: 'Представления (VIEW)',
+        category: 'sql_view',
+        tag: 'VIEW',
+        tagColor: 'purple',
+        simple: 'Виртуальная таблица на основе SQL-запроса. Не хранит данные, только запрос.',
+        example: 'CREATE VIEW only_human AS SELECT * FROM characters WHERE species = \'Human\'.',
+        academic: 'VIEW — виртуальная таблица, основанная на результате SQL-запроса. Данные не хранятся.',
+        source: 'SQL.docx',
+        meta: ['VIEW', 'Представление', 'Виртуальная']
+    },
+    {
+        id: 343,
+        term: 'Материализованные представления',
+        category: 'sql_view',
+        tag: 'VIEW',
+        tagColor: 'teal',
+        simple: 'Физически хранят результат запроса на диске. Требуют явного обновления.',
+        example: 'CREATE MATERIALIZED VIEW sales_summary AS SELECT product_id, SUM(amount) FROM sales GROUP BY product_id.',
+        academic: 'Материализованные представления — физически хранят результат запроса на диске.',
+        source: 'SQL.docx',
+        meta: ['MATERIALIZED', 'Обновление', 'Производительность']
+    },
+
+    // ---- Индексы и оптимизация (sql_index) ----
+    {
+        id: 344,
+        term: 'Индексы',
+        category: 'sql_index',
+        tag: 'Оптимизация',
+        tagColor: 'blue',
+        simple: 'Ускоряют операции выборки за счёт создания структуры данных для быстрого поиска.',
+        example: 'CREATE INDEX idx_name ON users (name).',
+        academic: 'Индексы — ускоряют операции выборки. Создаются для частых поисков, JOIN, сортировки и группировки.',
+        source: 'SQL.docx',
+        meta: ['INDEX', 'Оптимизация', 'Производительность']
+    },
+    {
+        id: 345,
+        term: 'EXPLAIN (план выполнения)',
+        category: 'sql_index',
+        tag: 'Оптимизация',
+        tagColor: 'orange',
+        simple: 'Показывает план выполнения запроса. Помогает найти медленные места.',
+        example: 'EXPLAIN SELECT * FROM users WHERE age > 18.',
+        academic: 'EXPLAIN — показывает план выполнения запроса без его выполнения. EXPLAIN ANALYZE — выполняет запрос.',
+        source: 'SQL.docx',
+        meta: ['EXPLAIN', 'План', 'Оптимизация']
+    },
+
+    // ---- Регулярные выражения (sql_regex) ----
+    {
+        id: 346,
+        term: 'Регулярные выражения SQL',
+        category: 'sql_regex',
+        tag: 'Регулярки',
+        tagColor: 'purple',
+        simple: 'Поиск по сложным шаблонам. ~ — совпадение, ~* — регистронезависимое.',
+        example: 'SELECT * FROM users WHERE name ~ \'^[A-Z]\'.',
+        academic: 'Регулярные выражения: ~ — регистрозависимое совпадение, ~* — регистронезависимое.',
+        source: 'SQL.docx',
+        meta: ['~', '~*', 'regexp']
+    },
+
+    // ---- Вопросы для собеседования (sql_interview) ----
+    {
+        id: 347,
+        term: 'NULL = NULL?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Что вернет NULL = NULL?',
+        example: 'Ответ: NULL (сравнение с NULL всегда неопределенно).',
+        academic: 'NULL = NULL возвращает NULL, а не TRUE. Для проверки используйте IS NULL.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'Сравнение', 'Собеседование']
+    },
+    {
+        id: 348,
+        term: 'NULL OR TRUE?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Что вернет NULL OR TRUE?',
+        example: 'Ответ: TRUE (достаточно одного TRUE в OR).',
+        academic: 'NULL OR TRUE возвращает TRUE, так как TRUE в OR гарантирует истинность.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'OR', 'TRUE']
+    },
+    {
+        id: 349,
+        term: 'NULL AND TRUE?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Что вернет NULL AND TRUE?',
+        example: 'Ответ: NULL (зависит от неизвестного значения).',
+        academic: 'NULL AND TRUE возвращает NULL, так как AND требует оба операнда TRUE.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'AND', 'Неизвестно']
+    },
+    {
+        id: 350,
+        term: 'UNION vs UNION ALL',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'В чем разница между UNION и UNION ALL? Какой быстрее?',
+        example: 'Ответ: UNION удаляет дубликаты, UNION ALL — нет. UNION ALL работает быстрее.',
+        academic: 'UNION — объединяет результаты, удаляя дубликаты. UNION ALL — объединяет, сохраняя дубликаты.',
+        source: 'SQL.docx',
+        meta: ['UNION', 'UNION ALL', 'Производительность']
+    },
+    {
+        id: 351,
+        term: 'Виды JOIN',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Какие виды JOIN вы знаете?',
+        example: 'Ответ: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN, CROSS JOIN, SELF JOIN.',
+        academic: 'Основные виды JOIN: INNER, LEFT, RIGHT, FULL, CROSS, SELF.',
+        source: 'SQL.docx',
+        meta: ['JOIN', 'Виды', 'Соединения']
+    },
+    {
+        id: 352,
+        term: 'WHERE vs HAVING',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Чем отличается WHERE от HAVING?',
+        example: 'Ответ: WHERE — фильтрация ДО группировки, HAVING — ПОСЛЕ группировки.',
+        academic: 'WHERE — фильтрация строк до группировки. HAVING — фильтрация после группировки по агрегированным значениям.',
+        source: 'SQL.docx',
+        meta: ['WHERE', 'HAVING', 'Группировка']
+    },
+    {
+        id: 353,
+        term: 'Коррелированные vs Некоррелированные подзапросы',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Чем отличаются коррелированные и некоррелированные подзапросы?',
+        example: 'Ответ: Некоррелированные выполняются один раз, коррелированные — для каждой строки внешнего запроса.',
+        academic: 'Некоррелированные подзапросы не зависят от внешнего запроса. Коррелированные — зависят и выполняются для каждой строки.',
+        source: 'SQL.docx',
+        meta: ['Коррелированный', 'Некоррелированный', 'Подзапрос']
+    },
+    {
+        id: 354,
+        term: 'COUNT(1) vs COUNT(*) vs COUNT(name)',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Чем отличаются COUNT(1), COUNT(*) и COUNT(name)?',
+        example: 'Ответ: COUNT(*) — все строки. COUNT(1) — аналог COUNT(*). COUNT(name) — только не-NULL значения.',
+        academic: 'COUNT(*) — количество всех строк. COUNT(1) — аналог. COUNT(column) — количество не-NULL значений в колонке.',
+        source: 'SQL.docx',
+        meta: ['COUNT', 'NULL', 'Агрегация']
+    },
+    {
+        id: 355,
+        term: 'DELETE vs TRUNCATE',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Чем отличается DELETE от TRUNCATE?',
+        example: 'Ответ: DELETE — можно с WHERE, логируется, медленнее. TRUNCATE — удаляет все данные, быстрее.',
+        academic: 'DELETE — удаление с WHERE, логируется, медленнее. TRUNCATE — удаляет все данные, нелогируемое, быстрее.',
+        source: 'SQL.docx',
+        meta: ['DELETE', 'TRUNCATE', 'Сравнение']
+    },
+    {
+        id: 356,
+        term: 'Связка много-ко-многим',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Как реализуется связь много-ко-многим в SQL?',
+        example: 'Ответ: через промежуточную таблицу (junction table) с внешними ключами на обе таблицы.',
+        academic: 'Связь много-ко-многим реализуется через промежуточную таблицу, содержащую внешние ключи на обе связываемые таблицы.',
+        source: 'SQL.docx',
+        meta: ['M:M', 'Промежуточная', 'Связь']
+    },
+    {
+        id: 357,
+        term: 'Вторая по величине зарплата',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Как найти вторую по величине зарплату в таблице?',
+        example: 'Ответ: SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees).',
+        academic: 'Вторая по величине зарплата: SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees).',
+        source: 'SQL.docx',
+        meta: ['MAX', 'Вторая', 'Зарплата']
+    },
+    {
+        id: 358,
+        term: 'JOIN vs UNION',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Чем JOIN отличается от UNION?',
+        example: 'Ответ: JOIN — объединяет столбцы разных таблиц. UNION — объединяет строки из разных таблиц.',
+        academic: 'JOIN — объединяет столбцы из разных таблиц по условию. UNION — объединяет строки из разных таблиц с одинаковой структурой.',
+        source: 'SQL.docx',
+        meta: ['JOIN', 'UNION', 'Сравнение']
+    },
+
+    // ============================================================
+    //  PYTHON — данные для выпадающего списка (ID: 400-449)
+    // ============================================================
+
+    // ---- Переменные и типы данных (python_variables) ----
+    {
+        id: 400,
+        term: 'Типы данных Python',
+        category: 'python_variables',
+        tag: 'Типы',
+        tagColor: 'blue',
+        simple: 'Основные типы: NoneType (None), bool, int, float, complex, str.',
+        example: 'int: 42. float: 3.14. str: "Hello". bool: True. None: отсутствие значения.',
+        academic: 'Типы данных Python: NoneType (None), bool, int, float, complex, str, bytes, bytearray.',
+        source: 'python.docx',
+        meta: ['int', 'float', 'str', 'bool', 'None']
+    },
+    {
+        id: 401,
+        term: 'Конвертация типов',
+        category: 'python_variables',
+        tag: 'Типы',
+        tagColor: 'green',
+        simple: 'Преобразование между типами данных: int(), float(), str(), bool(), list(), tuple(), set(), dict().',
+        example: 'int("42") → 42. float("3.14") → 3.14. str(42) → "42". bool(0) → False.',
+        academic: 'Конвертация типов: int() — в целое, float() — в дробное, str() — в строку, bool() — в булево.',
+        source: 'python.docx',
+        meta: ['int', 'float', 'str', 'bool']
+    },
+
+    // ---- Структуры данных (python_structures) ----
+    {
+        id: 402,
+        term: 'Списки (list)',
+        category: 'python_structures',
+        tag: 'Списки',
+        tagColor: 'purple',
+        simple: 'Изменяемые упорядоченные коллекции. Методы: append(), insert(), extend(), remove(), pop(), sort().',
+        example: 'numbers = [1, 2, 3]. numbers.append(4) → [1, 2, 3, 4].',
+        academic: 'Списки (list) — изменяемые упорядоченные коллекции. Методы: .append(), .insert(), .extend(), .remove(), .pop(), .sort(), .reverse().',
+        source: 'python.docx',
+        meta: ['list', 'Изменяемый', 'Упорядоченный']
+    },
+    {
+        id: 403,
+        term: 'Кортежи (tuple)',
+        category: 'python_structures',
+        tag: 'Кортежи',
+        tagColor: 'teal',
+        simple: 'Неизменяемые упорядоченные коллекции. Создание: t = (1,) (с запятой для одного элемента).',
+        example: 't = (1, 2, 3). t[0] → 1. Кортеж нельзя изменить после создания.',
+        academic: 'Кортежи (tuple) — неизменяемые упорядоченные коллекции. Для одного элемента нужна запятая: (1,).',
+        source: 'python.docx',
+        meta: ['tuple', 'Неизменяемый', 'Упорядоченный']
+    },
+    {
+        id: 404,
+        term: 'Множества (set)',
+        category: 'python_structures',
+        tag: 'Множества',
+        tagColor: 'orange',
+        simple: 'Изменяемые неупорядоченные коллекции уникальных элементов.',
+        example: 'a = {1, 2, 3}. b = {3, 4, 5}. a | b → {1, 2, 3, 4, 5}.',
+        academic: 'Множества (set) — изменяемые неупорядоченные коллекции уникальных элементов. Операции: union (|), intersection (&), difference (-).',
+        source: 'python.docx',
+        meta: ['set', 'Уникальные', 'Неупорядоченный']
+    },
+    {
+        id: 405,
+        term: 'Словари (dict)',
+        category: 'python_structures',
+        tag: 'Словари',
+        tagColor: 'blue',
+        simple: 'Изменяемые коллекции пар ключ-значение. Ключи уникальны.',
+        example: 'd = {"name": "John", "age": 30}. d["name"] → "John".',
+        academic: 'Словари (dict) — изменяемые коллекции пар ключ-значение. Ключи уникальны. Методы: .keys(), .values(), .items(), .get().',
+        source: 'python.docx',
+        meta: ['dict', 'Ключ-значение', 'Изменяемый']
+    },
+    {
+        id: 406,
+        term: 'Список vs Кортеж',
+        category: 'python_structures',
+        tag: 'Сравнение',
+        tagColor: 'orange',
+        simple: 'Список — изменяемый. Кортеж — неизменяемый. Список занимает больше памяти.',
+        example: 'list = [1, 2, 3]; list[0] = 5 → OK. tuple = (1, 2, 3); tuple[0] = 5 → Ошибка!',
+        academic: 'Список (list) — изменяемый. Кортеж (tuple) — неизменяемый. Кортеж можно использовать как ключ в словаре, список — нет.',
+        source: 'python.docx',
+        meta: ['list', 'tuple', 'Сравнение']
+    },
+    {
+        id: 407,
+        term: 'Срезы (slicing)',
+        category: 'python_structures',
+        tag: 'Срезы',
+        tagColor: 'green',
+        simple: 'Извлечение подпоследовательности: list[start:end:step].',
+        example: 'numbers = [0, 1, 2, 3, 4, 5]. numbers[2:5] → [2, 3, 4].',
+        academic: 'Срезы (slicing) — извлечение подпоследовательности: sequence[start:end:step].',
+        source: 'python.docx',
+        meta: ['Срезы', 'Slicing', '[:]']
+    },
+    {
+        id: 408,
+        term: 'Списочные выражения (list comprehension)',
+        category: 'python_structures',
+        tag: 'Генераторы',
+        tagColor: 'purple',
+        simple: 'Компактный способ создания списков: [выражение for элемент in итерируемый if условие].',
+        example: '[x*2 for x in range(5)] → [0, 2, 4, 6, 8].',
+        academic: 'Списочные выражения (list comprehension) — компактный способ создания списков.',
+        source: 'python.docx',
+        meta: ['list comprehension', 'Генератор', 'Кратко']
+    },
+    {
+        id: 409,
+        term: 'Генераторы словарей и множеств',
+        category: 'python_structures',
+        tag: 'Генераторы',
+        tagColor: 'teal',
+        simple: 'Аналоги list comprehension для словарей и множеств.',
+        example: '{x: x*2 for x in range(3)} → {0: 0, 1: 2, 2: 4}.',
+        academic: 'Генераторы словарей: {ключ: значение for переменная in итерируемый}.',
+        source: 'python.docx',
+        meta: ['dict comprehension', 'set comprehension', 'Генераторы']
+    },
+
+    // ---- Ввод и вывод данных (python_io) ----
+    {
+        id: 410,
+        term: 'Ввод данных (input)',
+        category: 'python_io',
+        tag: 'Ввод',
+        tagColor: 'blue',
+        simple: 'input() — читает строку из стандартного ввода. Всегда возвращает строку.',
+        example: 'name = input("Enter name: "). age = int(input("Enter age: ")).',
+        academic: 'input() — интерактивный ввод данных. Возвращает строку.',
+        source: 'python.docx',
+        meta: ['input', 'Ввод', 'Строка']
+    },
+    {
+        id: 411,
+        term: 'Вывод данных (print)',
+        category: 'python_io',
+        tag: 'Вывод',
+        tagColor: 'green',
+        simple: 'print() — выводит данные в консоль. Параметры: sep, end, file.',
+        example: 'print("Hello", "World", sep=", ") → Hello, World.',
+        academic: 'print() — вывод данных. Параметры: sep — разделитель, end — окончание, file — объект для вывода.',
+        source: 'python.docx',
+        meta: ['print', 'Вывод', 'sep', 'end']
+    },
+
+    // ---- Условные операторы (python_conditions) ----
+    {
+        id: 412,
+        term: 'Условные операторы (if-elif-else)',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'purple',
+        simple: 'if условие: ... elif условие: ... else: ...',
+        example: 'if x > 0: print("Positive") elif x < 0: print("Negative") else: print("Zero").',
+        academic: 'Условные операторы: if, elif, else. Логические операторы: and, or, not.',
+        source: 'python.docx',
+        meta: ['if', 'elif', 'else', 'Условия']
+    },
+    {
+        id: 413,
+        term: 'Тернарный оператор',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'teal',
+        simple: 'Однострочная запись if-else: value = a if condition else b.',
+        example: 'status = "active" if age >= 18 else "inactive".',
+        academic: 'Тернарный оператор: value = a if condition else b.',
+        source: 'python.docx',
+        meta: ['Тернарный', 'Однострочный', 'if-else']
+    },
+    {
+        id: 414,
+        term: 'match-case (Python 3.10+)',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'orange',
+        simple: 'Аналог switch-case в других языках. Сопоставляет значения с паттернами.',
+        example: 'match status: case 1: print("Active") case 2: print("Inactive") case _: print("Unknown").',
+        academic: 'match-case — структурное сопоставление с образцом (Python 3.10+).',
+        source: 'python.docx',
+        meta: ['match', 'case', 'switch']
+    },
+
+    // ---- Циклы (python_loops) ----
+    {
+        id: 415,
+        term: 'Цикл for',
+        category: 'python_loops',
+        tag: 'Циклы',
+        tagColor: 'blue',
+        simple: 'Итерация по последовательности: for переменная in итерируемый: ...',
+        example: 'for i in range(5): print(i) → 0, 1, 2, 3, 4.',
+        academic: 'Цикл for — итерация по последовательности (списку, строке, range и т.д.).',
+        source: 'python.docx',
+        meta: ['for', 'Итерация', 'range']
+    },
+    {
+        id: 416,
+        term: 'Цикл while',
+        category: 'python_loops',
+        tag: 'Циклы',
+        tagColor: 'green',
+        simple: 'Выполняется пока условие истинно: while условие: ...',
+        example: 'i = 0; while i < 5: print(i); i += 1.',
+        academic: 'Цикл while — выполняется пока условие истинно.',
+        source: 'python.docx',
+        meta: ['while', 'Условие', 'Итерация']
+    },
+
+    // ---- Функции (python_functions) ----
+    {
+        id: 417,
+        term: 'Определение функций',
+        category: 'python_functions',
+        tag: 'Функции',
+        tagColor: 'purple',
+        simple: 'def имя_функции(параметры): ... return значение.',
+        example: 'def add(a, b): return a + b. result = add(5, 3) → 8.',
+        academic: 'Функции определяются с помощью def. Могут принимать параметры и возвращать значения через return.',
+        source: 'python.docx',
+        meta: ['def', 'return', 'Параметры']
+    },
+    {
+        id: 418,
+        term: 'Аргументы функций',
+        category: 'python_functions',
+        tag: 'Функции',
+        tagColor: 'orange',
+        simple: 'Позиционные, именованные, значения по умолчанию, *args, **kwargs.',
+        example: 'def greet(name, msg="Hello"): return f"{msg}, {name}". greet("John") → "Hello, John".',
+        academic: 'Аргументы функций: позиционные, именованные (keyword), значения по умолчанию, *args (произвольное число аргументов), **kwargs (произвольное число именованных аргументов).',
+        source: 'python.docx',
+        meta: ['args', 'kwargs', 'Параметры']
+    },
+
+    // ---- Структуры данных и алгоритмы (python_algorithms) ----
+    {
+        id: 419,
+        term: 'Операторы сравнения',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'blue',
+        simple: '== (равно), != (не равно), <, >, <=, >=, is (по ссылке), in (проверка наличия).',
+        example: '5 == 5 → True. "a" in ["a", "b"] → True.',
+        academic: 'Операторы сравнения: ==, !=, <, >, <=, >=, is, in.',
+        source: 'python.docx',
+        meta: ['==', '!=', 'is', 'in', 'Сравнение']
+    },
+    {
+        id: 420,
+        term: 'Логические операторы',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'purple',
+        simple: 'and, or, not — логические операторы. Приоритет: not → and → or.',
+        example: 'True and False → False. True or False → True.',
+        academic: 'Логические операторы: and (И), or (ИЛИ), not (НЕ).',
+        source: 'python.docx',
+        meta: ['and', 'or', 'not', 'Логика']
+    },
+    {
+        id: 421,
+        term: '== vs is',
+        category: 'python_algorithms',
+        tag: 'Сравнение',
+        tagColor: 'red',
+        simple: '== — сравнивает значения. is — сравнивает ссылки на объекты.',
+        example: '[1, 2] == [1, 2] → True. [1, 2] is [1, 2] → False.',
+        academic: '== — сравнение по значению. is — сравнение по ссылке (являются ли объекты одним и тем же в памяти).',
+        source: 'python.docx',
+        meta: ['==', 'is', 'Сравнение', 'Ссылка']
+    },
+    {
+        id: 422,
+        term: 'Оператор in',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'teal',
+        simple: 'Проверяет наличие элемента в коллекции.',
+        example: '1 in [1, 2, 3] → True. "key" in {"key": "value"} → True.',
+        academic: 'Оператор in — проверяет наличие элемента в последовательности, множестве или словаре (по ключам).',
+        source: 'python.docx',
+        meta: ['in', 'Проверка', 'Наличие']
+    },
+
+    // ---- Работа с файлами (python_files) ----
+    {
+        id: 423,
+        term: 'Открытие файлов',
+        category: 'python_files',
+        tag: 'Файлы',
+        tagColor: 'blue',
+        simple: 'open(путь, режим) — открывает файл. Режимы: r (чтение), w (запись), a (добавление).',
+        example: 'file = open("file.txt", "r"). content = file.read(). file.close().',
+        academic: 'open(путь, режим) — открывает файл. Режимы: r — чтение, w — запись (перезаписывает), a — добавление (append).',
+        source: 'python.docx',
+        meta: ['open', 'read', 'write', 'close']
+    },
+    {
+        id: 424,
+        term: 'Контекстный менеджер with',
+        category: 'python_files',
+        tag: 'Файлы',
+        tagColor: 'green',
+        simple: 'with open(...) as file: — автоматически закрывает файл после блока.',
+        example: 'with open("file.txt", "r") as f: content = f.read().',
+        academic: 'Контекстный менеджер with — автоматически закрывает файл при выходе из блока.',
+        source: 'python.docx',
+        meta: ['with', 'Контекстный менеджер', 'Автозакрытие']
+    },
+
+    // ---- Модуль requests (python_requests) ----
+    {
+        id: 425,
+        term: 'Модуль requests',
+        category: 'python_requests',
+        tag: 'HTTP',
+        tagColor: 'purple',
+        simple: 'Библиотека для отправки HTTP-запросов. Методы: get(), post(), put(), delete().',
+        example: 'import requests. response = requests.get("https://api.example.com/users").',
+        academic: 'requests — библиотека для отправки HTTP-запросов. Методы: get(), post(), put(), delete(), patch().',
+        source: 'python.docx',
+        meta: ['requests', 'HTTP', 'GET', 'POST']
+    },
+    {
+        id: 426,
+        term: 'Обработка ответов requests',
+        category: 'python_requests',
+        tag: 'HTTP',
+        tagColor: 'orange',
+        simple: 'response.status_code — код ответа. response.json() — парсит JSON. response.text — текст ответа.',
+        example: 'if response.status_code == 200: data = response.json().',
+        academic: 'response.status_code — код ответа, response.json() — парсит JSON, response.text — текст ответа.',
+        source: 'python.docx',
+        meta: ['status_code', 'json', 'text']
+    },
+
+    // ---- Модуль pandas (python_pandas) ----
+    {
+        id: 427,
+        term: 'Pandas — чтение данных',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'blue',
+        simple: 'pd.read_csv(), pd.read_excel(), pd.read_json() — чтение данных из различных форматов.',
+        example: 'import pandas as pd. df = pd.read_csv("file.csv").',
+        academic: 'Pandas — библиотека для анализа данных. Чтение: pd.read_csv(), pd.read_excel(), pd.read_json(), pd.read_parquet().',
+        source: 'pandas.docx',
+        meta: ['pandas', 'read_csv', 'DataFrame']
+    },
+    {
+        id: 428,
+        term: 'Pandas — базовый анализ',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'green',
+        simple: 'df.head(), df.info(), df.describe(), df.shape — первичный анализ данных.',
+        example: 'df.head() — первые 5 строк. df.info() — информация о типах и пропусках.',
+        academic: 'Базовый анализ: df.head(), df.tail(), df.info(), df.describe(), df.shape, df.dtypes.',
+        source: 'pandas.docx',
+        meta: ['head', 'info', 'describe', 'shape']
+    },
+    {
+        id: 429,
+        term: 'Pandas — фильтрация',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'orange',
+        simple: 'df[df["column"] > value] — фильтрация строк по условию.',
+        example: 'df[df["age"] > 18] — все строки с возрастом больше 18.',
+        academic: 'Фильтрация: df[условие]. Логические операторы: & (и), | (или), ~ (не).',
+        source: 'pandas.docx',
+        meta: ['Фильтрация', 'условие', '&', '|']
+    },
+    {
+        id: 430,
+        term: 'Pandas — группировка',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'purple',
+        simple: 'df.groupby("column").agg() — группировка и агрегация данных.',
+        example: 'df.groupby("city")["salary"].mean() — средняя зарплата по городам.',
+        academic: 'Группировка: df.groupby(колонка).agg(функция). Агрегатные функции: sum(), mean(), count(), min(), max().',
+        source: 'pandas.docx',
+        meta: ['groupby', 'agg', 'mean', 'sum']
+    },
+
+    // ---- Работа с БД (python_db) ----
+    {
+        id: 431,
+        term: 'SQLite в Python',
+        category: 'python_db',
+        tag: 'БД',
+        tagColor: 'blue',
+        simple: 'sqlite3 — встроенная библиотека для работы с SQLite. Подключение: sqlite3.connect("db.db").',
+        example: 'import sqlite3. conn = sqlite3.connect("database.db"). cursor = conn.cursor().',
+        academic: 'sqlite3 — встроенная библиотека для работы с SQLite. connect() — подключение, cursor() — создание курсора.',
+        source: 'python.docx',
+        meta: ['sqlite3', 'connect', 'cursor']
+    },
+    {
+        id: 432,
+        term: 'Выполнение SQL-запросов',
+        category: 'python_db',
+        tag: 'БД',
+        tagColor: 'green',
+        simple: 'cursor.execute("SELECT * FROM users"). cursor.fetchall() — выполнение запросов.',
+        example: 'cursor.execute("SELECT * FROM users"). rows = cursor.fetchall().',
+        academic: 'execute() — выполнение запроса. fetchall() — получить все строки, fetchone() — одну строку.',
+        source: 'python.docx',
+        meta: ['execute', 'fetchall', 'fetchone']
+    },
+
+    // ---- Вопросы для собеседования по Python (python_interview) ----
+    {
+        id: 433,
+        term: '== vs is в Python',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Чем отличается == от is в Python?',
+        example: 'Ответ: == сравнивает значения, is сравнивает ссылки на объекты.',
+        academic: '== — сравнение по значению. is — сравнение по ссылке (являются ли объекты одним и тем же в памяти).',
+        source: 'python.docx',
+        meta: ['==', 'is', 'Сравнение']
+    },
+    {
+        id: 434,
+        term: 'Список vs Кортеж',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'В чем разница между списком и кортежем?',
+        example: 'Ответ: список изменяемый, кортеж неизменяемый. Кортеж занимает меньше памяти.',
+        academic: 'Список (list) — изменяемый. Кортеж (tuple) — неизменяемый. Кортеж можно использовать как ключ в словаре.',
+        source: 'python.docx',
+        meta: ['list', 'tuple', 'Сравнение']
+    },
+    {
+        id: 435,
+        term: 'Что такое None в Python?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Что такое None и как его проверять?',
+        example: 'Ответ: None — объект, обозначающий отсутствие значения. Проверка: if x is None.',
+        academic: 'None — объект, обозначающий отсутствие значения. Проверка: is None (не == None).',
+        source: 'python.docx',
+        meta: ['None', 'Отсутствие', 'is None']
+    },
+    {
+        id: 436,
+        term: 'Что такое list comprehension?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Что такое list comprehension и для чего он используется?',
+        example: 'Ответ: компактный способ создания списков. [x*2 for x in range(5)] → [0, 2, 4, 6, 8].',
+        academic: 'list comprehension — компактный способ создания списков с использованием цикла и условия.',
+        source: 'python.docx',
+        meta: ['list comprehension', 'Генератор', 'Кратко']
+    },
+    {
+        id: 437,
+        term: 'Как работают *args и **kwargs?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Что такое *args и **kwargs в функциях?',
+        example: 'Ответ: *args — произвольное число позиционных аргументов, **kwargs — произвольное число именованных аргументов.',
+        academic: '*args — кортеж позиционных аргументов. **kwargs — словарь именованных аргументов.',
+        source: 'python.docx',
+        meta: ['*args', '**kwargs', 'Аргументы']
+    },
+    // ============================================================
+    //  SQL — данные для выпадающего списка (ID: 300-399)
+    // ============================================================
+
+    // ---- Основы SQL (sql_basics) ----
+    {
+        id: 300,
+        term: 'SELECT',
+        category: 'sql_basics',
+        tag: 'Чтение',
+        tagColor: 'blue',
+        simple: 'Команда для получения данных из базы данных.',
+        example: 'SELECT * FROM users WHERE age > 18 — получить всех пользователей старше 18 лет.',
+        academic: 'SELECT — команда SQL для выборки данных из таблиц. Использует WHERE для фильтрации, JOIN для объединения таблиц, ORDER BY для сортировки.',
+        source: 'SQL.docx',
+        meta: ['Выборка', 'WHERE', 'FROM']
+    },
+    {
+        id: 301,
+        term: 'Типы данных SQL',
+        category: 'sql_basics',
+        tag: 'Типы',
+        tagColor: 'purple',
+        simple: 'Числовые (INT, FLOAT, DECIMAL), символьные (CHAR, VARCHAR, TEXT), дата/время (DATE, DATETIME, TIMESTAMP), булевы (BOOLEAN).',
+        example: 'INT — целые числа. VARCHAR(255) — строка до 255 символов. TIMESTAMP — секунды с 01.01.1970 (UTC).',
+        academic: 'Основные типы данных SQL: числовые (TINYINT, SMALLINT, INT, BIGINT, FLOAT, DOUBLE, DECIMAL), символьные (CHAR, VARCHAR, TEXT), дата и время (DATE, DATETIME, TIME, TIMESTAMP), булевы (BOOLEAN, BOOL).',
+        source: 'SQL.docx',
+        meta: ['Типы', 'Числа', 'Строки', 'Даты']
+    },
+    {
+        id: 302,
+        term: 'Порядок выполнения SQL',
+        category: 'sql_basics',
+        tag: 'Порядок',
+        tagColor: 'purple',
+        simple: '1. FROM/JOIN → 2. WHERE → 3. GROUP BY → 4. HAVING → 5. SELECT → 6. ORDER BY → 7. LIMIT/OFFSET.',
+        example: 'Запрос выполняется в этом порядке, а не в том, как он написан.',
+        academic: 'Полный порядок выполнения SQL-запросов: 1) FROM/JOIN 2) WHERE 3) GROUP BY 4) HAVING 5) SELECT 6) ORDER BY 7) LIMIT/OFFSET.',
+        source: 'SQL.docx',
+        meta: ['Порядок', 'Выполнение', 'SQL']
+    },
+
+    // ---- Фильтрация и сортировка (sql_filter) ----
+    {
+        id: 303,
+        term: 'WHERE (фильтрация)',
+        category: 'sql_filter',
+        tag: 'Фильтрация',
+        tagColor: 'blue',
+        simple: 'Фильтрует строки по условию. Используется с операторами сравнения, LIKE, IN, BETWEEN, IS NULL.',
+        example: 'WHERE city = \'NY\' OR city = \'LA\' AND name LIKE \'J%\' — используйте скобки: WHERE (city = \'NY\' OR city = \'LA\') AND name LIKE \'J%\'.',
+        academic: 'WHERE — фильтрация строк. Операторы: =, != или <>, >, >=, <, <=, BETWEEN, IN, LIKE, IS NULL, IS NOT NULL.',
+        source: 'SQL.docx',
+        meta: ['WHERE', 'Фильтрация', 'Условия']
+    },
+    {
+        id: 304,
+        term: 'LIKE (поиск по шаблону)',
+        category: 'sql_filter',
+        tag: 'Поиск',
+        tagColor: 'orange',
+        simple: 'Поиск по шаблону с подстановочными знаками: % (любое количество символов) и _ (один символ).',
+        example: '\'J%\' — начинается с J. \'%@gmail.com\' — заканчивается на @gmail.com.',
+        academic: 'LIKE с шаблонами: % — любое количество символов, _ — один символ.',
+        source: 'SQL.docx',
+        meta: ['LIKE', 'Шаблоны', '%', '_']
+    },
+    {
+        id: 305,
+        term: 'ORDER BY (сортировка)',
+        category: 'sql_filter',
+        tag: 'Сортировка',
+        tagColor: 'green',
+        simple: 'Сортирует результат по одному или нескольким столбцам. ASC — по возрастанию, DESC — по убыванию.',
+        example: 'ORDER BY name ASC, salary DESC. Можно использовать алиасы.',
+        academic: 'ORDER BY — сортировка. ASC — по возрастанию (по умолчанию), DESC — по убыванию.',
+        source: 'SQL.docx',
+        meta: ['ORDER BY', 'ASC', 'DESC']
+    },
+    {
+        id: 306,
+        term: 'LIMIT / OFFSET (пагинация)',
+        category: 'sql_filter',
+        tag: 'Пагинация',
+        tagColor: 'purple',
+        simple: 'LIMIT ограничивает количество строк, OFFSET — пропускает указанное количество строк.',
+        example: 'LIMIT 10 OFFSET 20 — строки 21-30.',
+        academic: 'Пагинация: LIMIT N OFFSET M — пропускает M строк и возвращает N строк.',
+        source: 'SQL.docx',
+        meta: ['LIMIT', 'OFFSET', 'Пагинация']
+    },
+    {
+        id: 307,
+        term: 'DISTINCT',
+        category: 'sql_filter',
+        tag: 'Уникальность',
+        tagColor: 'teal',
+        simple: 'Удаляет дублирующиеся строки из результата. Может замедлять запрос.',
+        example: 'SELECT DISTINCT column1, column2 FROM table_name.',
+        academic: 'DISTINCT — удаляет дублирующиеся строки. Может замедлять запрос.',
+        source: 'SQL.docx',
+        meta: ['DISTINCT', 'Уникальные', 'Дедупликация']
+    },
+
+    // ---- Агрегация (sql_aggregate) ----
+    {
+        id: 308,
+        term: 'Агрегатные функции',
+        category: 'sql_aggregate',
+        tag: 'Агрегация',
+        tagColor: 'blue',
+        simple: 'Функции для подсчёта данных: COUNT(), SUM(), AVG(), MIN(), MAX().',
+        example: 'COUNT(*) — количество всех строк. COUNT(DISTINCT column) — количество уникальных не-NULL значений.',
+        academic: 'Основные агрегатные функции: COUNT() — подсчет строк, SUM() — сумма, AVG() — среднее, MIN() — минимум, MAX() — максимум.',
+        source: 'SQL.docx',
+        meta: ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX']
+    },
+    {
+        id: 309,
+        term: 'GROUP BY',
+        category: 'sql_aggregate',
+        tag: 'Группировка',
+        tagColor: 'green',
+        simple: 'Группирует данные по указанным столбцам для применения агрегатных функций.',
+        example: 'SELECT department, COUNT(*) as employee_count FROM employees GROUP BY department.',
+        academic: 'GROUP BY — группировка данных по указанным столбцам. Все неагрегированные поля из SELECT должны быть в GROUP BY.',
+        source: 'SQL.docx',
+        meta: ['GROUP BY', 'Группировка', 'Агрегация']
+    },
+    {
+        id: 310,
+        term: 'HAVING',
+        category: 'sql_aggregate',
+        tag: 'Группировка',
+        tagColor: 'orange',
+        simple: 'Фильтрация после группировки (по агрегированным значениям). WHERE — до группировки.',
+        example: 'SELECT department, AVG(salary) as avg_salary FROM employees GROUP BY department HAVING AVG(salary) > 50000.',
+        academic: 'HAVING — фильтрация ПОСЛЕ группировки. WHERE — фильтрация ДО группировки.',
+        source: 'SQL.docx',
+        meta: ['HAVING', 'Фильтрация', 'Группы']
+    },
+    {
+        id: 311,
+        term: 'CASE (условная логика)',
+        category: 'sql_aggregate',
+        tag: 'Условия',
+        tagColor: 'purple',
+        simple: 'Аналог if-else в SQL. Позволяет создавать условные выражения в запросах.',
+        example: 'SELECT name, CASE WHEN salary > 1000 THEN \'High\' ELSE \'Low\' END AS category FROM employees.',
+        academic: 'Оператор CASE: CASE WHEN condition1 THEN result1 WHEN condition2 THEN result2 ELSE result_default END.',
+        source: 'SQL.docx',
+        meta: ['CASE', 'WHEN', 'THEN', 'ELSE']
+    },
+
+    // ---- JOIN (sql_join) ----
+    {
+        id: 312,
+        term: 'INNER JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'green',
+        simple: 'Возвращает только строки, для которых есть соответствие в обеих таблицах.',
+        example: 'SELECT * FROM orders JOIN users ON orders.user_id = users.id.',
+        academic: 'INNER JOIN — возвращает только строки, для которых есть соответствие в обеих таблицах.',
+        source: 'SQL.docx',
+        meta: ['INNER JOIN', 'Совпадения', 'Обе таблицы']
+    },
+    {
+        id: 313,
+        term: 'LEFT JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'blue',
+        simple: 'Возвращает все строки из левой таблицы и совпадения из правой. Если совпадения нет — NULL.',
+        example: 'SELECT * FROM users LEFT JOIN orders ON users.id = orders.user_id.',
+        academic: 'LEFT JOIN — возвращает все строки из левой таблицы и совпадения из правой.',
+        source: 'SQL.docx',
+        meta: ['LEFT JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 314,
+        term: 'RIGHT JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'orange',
+        simple: 'Возвращает все строки из правой таблицы и совпадения из левой. Если совпадения нет — NULL.',
+        example: 'SELECT * FROM orders RIGHT JOIN users ON orders.user_id = users.id.',
+        academic: 'RIGHT JOIN — возвращает все строки из правой таблицы и совпадения из левой.',
+        source: 'SQL.docx',
+        meta: ['RIGHT JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 315,
+        term: 'FULL JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'purple',
+        simple: 'Возвращает все строки из обеих таблиц. Отсутствующие значения заполняются NULL.',
+        example: 'SELECT * FROM users FULL JOIN orders ON users.id = orders.user_id.',
+        academic: 'FULL JOIN — возвращает все строки из обеих таблиц, объединяя их.',
+        source: 'SQL.docx',
+        meta: ['FULL JOIN', 'Все строки', 'NULL']
+    },
+    {
+        id: 316,
+        term: 'CROSS JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'red',
+        simple: 'Декартово произведение: каждая строка из таблицы A соединяется с каждой строкой из таблицы B.',
+        example: 'SELECT * FROM products CROSS JOIN colors. Если 10 продуктов и 5 цветов — получится 50 строк.',
+        academic: 'CROSS JOIN — декартово произведение. Возвращает N × M строк.',
+        source: 'SQL.docx',
+        meta: ['CROSS JOIN', 'Декартово', 'Все со всеми']
+    },
+    {
+        id: 317,
+        term: 'SELF JOIN',
+        category: 'sql_join',
+        tag: 'JOIN',
+        tagColor: 'teal',
+        simple: 'Соединение таблицы с самой собой. Используется для поиска иерархий или пар.',
+        example: 'SELECT e1.name, e2.name FROM employees e1 JOIN employees e2 ON e1.manager_id = e2.id.',
+        academic: 'SELF JOIN — соединение таблицы с самой собой.',
+        source: 'SQL.docx',
+        meta: ['SELF JOIN', 'Сама с собой', 'Иерархия']
+    },
+
+    // ---- Подзапросы (sql_subquery) ----
+    {
+        id: 318,
+        term: 'Подзапросы',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'blue',
+        simple: 'Запрос внутри другого запроса. Может быть в SELECT, FROM, WHERE, HAVING, ORDER BY.',
+        example: 'SELECT name FROM customers WHERE customer_id IN (SELECT customer_id FROM orders WHERE amount > 1000).',
+        academic: 'Подзапросы — запросы внутри других запросов. Бывают скалярные, коррелированные и некоррелированные.',
+        source: 'SQL.docx',
+        meta: ['Подзапрос', 'Вложенный', 'Subquery']
+    },
+    {
+        id: 319,
+        term: 'Коррелированные подзапросы',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'purple',
+        simple: 'Зависят от данных внешнего запроса. Выполняются для каждой строки внешнего запроса.',
+        example: 'SELECT name, salary FROM employees e1 WHERE salary > (SELECT AVG(salary) FROM employees e2 WHERE e2.department_id = e1.department_id).',
+        academic: 'Коррелированные подзапросы зависят от данных внешнего запроса. Выполняются для каждой строки.',
+        source: 'SQL.docx',
+        meta: ['Коррелированный', 'Связанный', 'Subquery']
+    },
+    {
+        id: 320,
+        term: 'EXISTS',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'green',
+        simple: 'Проверяет существование строк в подзапросе. Возвращает TRUE если есть хотя бы одна строка.',
+        example: 'SELECT * FROM employees e WHERE EXISTS (SELECT 1 FROM orders o WHERE o.employee_id = e.id).',
+        academic: 'EXISTS — проверяет существование строк в подзапросе. Обычно эффективнее IN на больших данных.',
+        source: 'SQL.docx',
+        meta: ['EXISTS', 'Существование', 'Проверка']
+    },
+    {
+        id: 321,
+        term: 'CTE (Common Table Expression)',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'teal',
+        simple: 'Временное именованное выражение, улучшает читаемость сложных запросов.',
+        example: 'WITH cte_name AS (SELECT column1, column2 FROM table1) SELECT * FROM cte_name JOIN table2 ON ...',
+        academic: 'CTE — временное именованное выражение. Улучшает читаемость, позволяет использовать результат несколько раз.',
+        source: 'SQL.docx',
+        meta: ['CTE', 'WITH', 'Временная таблица']
+    },
+    {
+        id: 322,
+        term: 'Рекурсивные CTE',
+        category: 'sql_subquery',
+        tag: 'Подзапросы',
+        tagColor: 'red',
+        simple: 'CTE, которое ссылается само на себя. Используется для иерархий, деревьев, генерации последовательностей.',
+        example: 'WITH RECURSIVE numbers AS (SELECT 1 UNION ALL SELECT n+1 FROM numbers WHERE n<10) SELECT * FROM numbers.',
+        academic: 'Рекурсивные CTE: WITH RECURSIVE. Базовый случай + рекурсивный случай.',
+        source: 'SQL.docx',
+        meta: ['RECURSIVE', 'Иерархия', 'Дерево']
+    },
+
+    // ---- Оконные функции (sql_window) ----
+    {
+        id: 323,
+        term: 'Оконные функции — введение',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'blue',
+        simple: 'Вычисления над группой строк без сворачивания данных. Сохраняют все исходные строки.',
+        example: 'Функция() OVER (PARTITION BY ... ORDER BY ...).',
+        academic: 'Оконные функции — вычисления над группой строк (окном) без сворачивания данных.',
+        source: 'оконные функции.docx',
+        meta: ['OVER', 'PARTITION BY', 'Окно']
+    },
+    {
+        id: 324,
+        term: 'ROW_NUMBER()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'green',
+        simple: 'Присваивает уникальный порядковый номер каждой строке в рамках окна. 1, 2, 3, 4...',
+        example: 'SELECT name, ROW_NUMBER() OVER (ORDER BY salary DESC) as rn FROM employees.',
+        academic: 'ROW_NUMBER() — присваивает уникальный порядковый номер каждой строке в рамках окна.',
+        source: 'оконные функции.docx',
+        meta: ['ROW_NUMBER', 'Нумерация', 'Уникальный']
+    },
+    {
+        id: 325,
+        term: 'RANK() и DENSE_RANK()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'orange',
+        simple: 'RANK() — ранжирование с пропусками (1, 2, 2, 4, 5). DENSE_RANK() — без пропусков (1, 2, 2, 3, 4).',
+        example: 'RANK() — при одинаковых значениях получают одинаковый ранг, следующий ранг пропускается.',
+        academic: 'RANK() — ранжирование с пропусками. DENSE_RANK() — без пропусков.',
+        source: 'оконные функции.docx',
+        meta: ['RANK', 'DENSE_RANK', 'Ранжирование']
+    },
+    {
+        id: 326,
+        term: 'LAG() и LEAD()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'teal',
+        simple: 'LAG() — значение из предыдущей строки. LEAD() — значение из следующей строки.',
+        example: 'LAG(salary, 1) OVER (ORDER BY date) — зарплата в предыдущем месяце.',
+        academic: 'LAG(column, n) — возвращает значение из строки, отстоящей на n позиций назад.',
+        source: 'оконные функции.docx',
+        meta: ['LAG', 'LEAD', 'Смещение']
+    },
+    {
+        id: 327,
+        term: 'NTILE()',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'purple',
+        simple: 'Разбивает все строки окна на n примерно равных групп и возвращает номер группы.',
+        example: 'NTILE(4) OVER (ORDER BY salary) — разделяет на 4 группы (квартили).',
+        academic: 'NTILE(n) — разбивает все строки окна на n примерно равных групп.',
+        source: 'оконные функции.docx',
+        meta: ['NTILE', 'Квартили', 'Группы']
+    },
+    {
+        id: 328,
+        term: 'Фреймы в оконных функциях',
+        category: 'sql_window',
+        tag: 'Оконные',
+        tagColor: 'red',
+        simple: 'ROWS — по строкам. GROUPS — по группам одинаковых значений. RANGE — по диапазону значений.',
+        example: 'ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING — 3 строки вокруг текущей.',
+        academic: 'Типы фреймов: ROWS — по строкам, GROUPS — по группам, RANGE — по диапазону.',
+        source: 'оконные функции.docx',
+        meta: ['ROWS', 'GROUPS', 'RANGE', 'Фрейм']
+    },
+
+    // ---- Аналитические функции (sql_analytics) ----
+    {
+        id: 329,
+        term: 'CUME_DIST()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'blue',
+        simple: 'Кумулятивное распределение: доля строк со значением ≤ текущему.',
+        example: 'CUME_DIST() OVER (ORDER BY salary) — показывает процент сотрудников с зарплатой ≤ текущей.',
+        academic: 'CUME_DIST() — кумулятивное распределение: (количество строк со значением ≤ текущему) / (общее количество строк).',
+        source: 'оконные функции.docx',
+        meta: ['CUME_DIST', 'Распределение', 'Доля']
+    },
+    {
+        id: 330,
+        term: 'PERCENT_RANK()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'orange',
+        simple: 'Относительный ранг: доля строк со значением < текущего.',
+        example: 'PERCENT_RANK() OVER (ORDER BY salary) — показывает процент сотрудников с зарплатой < текущей.',
+        academic: 'PERCENT_RANK() — (количество строк со значением < текущего) / (общее количество строк - 1).',
+        source: 'оконные функции.docx',
+        meta: ['PERCENT_RANK', 'Ранг', 'Доля']
+    },
+    {
+        id: 331,
+        term: 'FIRST_VALUE() и LAST_VALUE()',
+        category: 'sql_analytics',
+        tag: 'Аналитика',
+        tagColor: 'purple',
+        simple: 'FIRST_VALUE() — первое значение в фрейме. LAST_VALUE() — последнее значение в фрейме.',
+        example: 'FIRST_VALUE(salary) OVER (PARTITION BY department ORDER BY salary) — минимальная зарплата в отделе.',
+        academic: 'FIRST_VALUE() — возвращает первое значение в фрейме. LAST_VALUE() — возвращает последнее значение в фрейме.',
+        source: 'оконные функции.docx',
+        meta: ['FIRST_VALUE', 'LAST_VALUE', 'Фрейм']
+    },
+
+    // ---- DDL (sql_ddl) ----
+    {
+        id: 332,
+        term: 'CREATE TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'blue',
+        simple: 'Создает новую таблицу с указанными столбцами и ограничениями.',
+        example: 'CREATE TABLE people (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL).',
+        academic: 'CREATE TABLE — создание новой таблицы. Определяет структуру данных: столбцы, типы, ограничения.',
+        source: 'SQL.docx',
+        meta: ['CREATE', 'Таблица', 'Структура']
+    },
+    {
+        id: 333,
+        term: 'ALTER TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'orange',
+        simple: 'Изменяет структуру существующей таблицы.',
+        example: 'ALTER TABLE people ADD COLUMN age INT. ALTER TABLE people DROP COLUMN age.',
+        academic: 'ALTER TABLE — изменение структуры таблицы. Добавляет, удаляет, переименовывает столбцы.',
+        source: 'SQL.docx',
+        meta: ['ALTER', 'Изменить', 'Структура']
+    },
+    {
+        id: 334,
+        term: 'DROP TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'red',
+        simple: 'Полностью удаляет таблицу из базы данных. Необратимая операция!',
+        example: 'DROP TABLE people — удаляет таблицу people со всеми данными.',
+        academic: 'DROP TABLE — удаление таблицы из базы данных. Все данные и структура удаляются.',
+        source: 'SQL.docx',
+        meta: ['DROP', 'Удаление', 'Необратимо']
+    },
+    {
+        id: 335,
+        term: 'TRUNCATE TABLE',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'purple',
+        simple: 'Быстрое удаление всех данных из таблицы. Быстрее DELETE.',
+        example: 'TRUNCATE TABLE people — быстро удаляет все данные из таблицы people.',
+        academic: 'TRUNCATE TABLE — быстрое удаление всех данных из таблицы. Нелогируемое, сбрасывает автоинкремент.',
+        source: 'SQL.docx',
+        meta: ['TRUNCATE', 'Очистка', 'Быстро']
+    },
+
+    // ---- DML (sql_dml) ----
+    {
+        id: 336,
+        term: 'INSERT',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'green',
+        simple: 'Добавляет новые строки в таблицу.',
+        example: 'INSERT INTO users (name, age) VALUES (\'John\', 25).',
+        academic: 'INSERT — добавление новых строк в таблицу. Может вставлять значения напрямую или из SELECT.',
+        source: 'SQL.docx',
+        meta: ['INSERT', 'Добавление', 'Новые записи']
+    },
+    {
+        id: 337,
+        term: 'UPDATE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'orange',
+        simple: 'Изменяет существующие строки в таблице. Всегда используйте WHERE!',
+        example: 'UPDATE users SET age = 26 WHERE name = \'John\'.',
+        academic: 'UPDATE — изменение существующих данных. Всегда используйте WHERE.',
+        source: 'SQL.docx',
+        meta: ['UPDATE', 'Изменение', 'SET']
+    },
+    {
+        id: 338,
+        term: 'DELETE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'red',
+        simple: 'Удаляет строки из таблицы. Всегда используйте WHERE!',
+        example: 'DELETE FROM users WHERE age < 18.',
+        academic: 'DELETE — удаление строк из таблицы. Всегда используйте WHERE.',
+        source: 'SQL.docx',
+        meta: ['DELETE', 'Удаление', 'WHERE']
+    },
+    {
+        id: 339,
+        term: 'TRUNCATE vs DELETE',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'purple',
+        simple: 'TRUNCATE — быстрое удаление всех данных. DELETE — можно с WHERE.',
+        example: 'TRUNCATE TABLE people — удаляет все данные быстрее. DELETE FROM people WHERE id > 100.',
+        academic: 'TRUNCATE — быстрое удаление всех данных, нелогируемое. DELETE — медленнее, можно использовать WHERE.',
+        source: 'SQL.docx',
+        meta: ['TRUNCATE', 'DELETE', 'Сравнение']
+    },
+
+    // ---- NULL (sql_null) ----
+    {
+        id: 340,
+        term: 'NULL в SQL',
+        category: 'sql_null',
+        tag: 'NULL',
+        tagColor: 'red',
+        simple: 'NULL — отсутствие значения. Любое сравнение с NULL возвращает NULL.',
+        example: 'WHERE email IS NULL — правильно. WHERE email = NULL — НЕПРАВИЛЬНО.',
+        academic: 'Особенности NULL: не равно пустой строке или 0. Любое сравнение с NULL возвращает NULL.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'IS NULL', 'COALESCE']
+    },
+    {
+        id: 341,
+        term: 'COALESCE',
+        category: 'sql_null',
+        tag: 'NULL',
+        tagColor: 'teal',
+        simple: 'Возвращает первое не-NULL значение из списка. Заменяет NULL на указанное значение.',
+        example: 'SELECT COALESCE(dimension, \'unknown\') AS dim FROM locations.',
+        academic: 'COALESCE — возвращает первое не-NULL значение из списка аргументов.',
+        source: 'SQL.docx',
+        meta: ['COALESCE', 'NULL', 'Замена']
+    },
+
+    // ---- Представления (sql_view) ----
+    {
+        id: 342,
+        term: 'Представления (VIEW)',
+        category: 'sql_view',
+        tag: 'VIEW',
+        tagColor: 'purple',
+        simple: 'Виртуальная таблица на основе SQL-запроса. Не хранит данные, только запрос.',
+        example: 'CREATE VIEW only_human AS SELECT * FROM characters WHERE species = \'Human\'.',
+        academic: 'VIEW — виртуальная таблица, основанная на результате SQL-запроса. Данные не хранятся.',
+        source: 'SQL.docx',
+        meta: ['VIEW', 'Представление', 'Виртуальная']
+    },
+    {
+        id: 343,
+        term: 'Материализованные представления',
+        category: 'sql_view',
+        tag: 'VIEW',
+        tagColor: 'teal',
+        simple: 'Физически хранят результат запроса на диске. Требуют явного обновления.',
+        example: 'CREATE MATERIALIZED VIEW sales_summary AS SELECT product_id, SUM(amount) FROM sales GROUP BY product_id.',
+        academic: 'Материализованные представления — физически хранят результат запроса на диске.',
+        source: 'SQL.docx',
+        meta: ['MATERIALIZED', 'Обновление', 'Производительность']
+    },
+
+    // ---- Индексы и оптимизация (sql_index) ----
+    {
+        id: 344,
+        term: 'Индексы',
+        category: 'sql_index',
+        tag: 'Оптимизация',
+        tagColor: 'blue',
+        simple: 'Ускоряют операции выборки за счёт создания структуры данных для быстрого поиска.',
+        example: 'CREATE INDEX idx_name ON users (name).',
+        academic: 'Индексы — ускоряют операции выборки. Создаются для частых поисков, JOIN, сортировки и группировки.',
+        source: 'SQL.docx',
+        meta: ['INDEX', 'Оптимизация', 'Производительность']
+    },
+    {
+        id: 345,
+        term: 'EXPLAIN (план выполнения)',
+        category: 'sql_index',
+        tag: 'Оптимизация',
+        tagColor: 'orange',
+        simple: 'Показывает план выполнения запроса. Помогает найти медленные места.',
+        example: 'EXPLAIN SELECT * FROM users WHERE age > 18.',
+        academic: 'EXPLAIN — показывает план выполнения запроса без его выполнения. EXPLAIN ANALYZE — выполняет запрос.',
+        source: 'SQL.docx',
+        meta: ['EXPLAIN', 'План', 'Оптимизация']
+    },
+
+    // ---- Регулярные выражения (sql_regex) ----
+    {
+        id: 346,
+        term: 'Регулярные выражения SQL',
+        category: 'sql_regex',
+        tag: 'Регулярки',
+        tagColor: 'purple',
+        simple: 'Поиск по сложным шаблонам. ~ — совпадение, ~* — регистронезависимое.',
+        example: 'SELECT * FROM users WHERE name ~ \'^[A-Z]\'.',
+        academic: 'Регулярные выражения: ~ — регистрозависимое совпадение, ~* — регистронезависимое.',
+        source: 'SQL.docx',
+        meta: ['~', '~*', 'regexp']
+    },
+
+    // ---- Вопросы для собеседования (sql_interview) ----
+    {
+        id: 347,
+        term: 'NULL = NULL?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Что вернет NULL = NULL?',
+        example: 'Ответ: NULL (сравнение с NULL всегда неопределенно).',
+        academic: 'NULL = NULL возвращает NULL, а не TRUE. Для проверки используйте IS NULL.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'Сравнение', 'Собеседование']
+    },
+    {
+        id: 348,
+        term: 'NULL OR TRUE?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Что вернет NULL OR TRUE?',
+        example: 'Ответ: TRUE (достаточно одного TRUE в OR).',
+        academic: 'NULL OR TRUE возвращает TRUE, так как TRUE в OR гарантирует истинность.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'OR', 'TRUE']
+    },
+    {
+        id: 349,
+        term: 'NULL AND TRUE?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Что вернет NULL AND TRUE?',
+        example: 'Ответ: NULL (зависит от неизвестного значения).',
+        academic: 'NULL AND TRUE возвращает NULL, так как AND требует оба операнда TRUE.',
+        source: 'SQL.docx',
+        meta: ['NULL', 'AND', 'Неизвестно']
+    },
+    {
+        id: 350,
+        term: 'UNION vs UNION ALL',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'В чем разница между UNION и UNION ALL? Какой быстрее?',
+        example: 'Ответ: UNION удаляет дубликаты, UNION ALL — нет. UNION ALL работает быстрее.',
+        academic: 'UNION — объединяет результаты, удаляя дубликаты. UNION ALL — объединяет, сохраняя дубликаты.',
+        source: 'SQL.docx',
+        meta: ['UNION', 'UNION ALL', 'Производительность']
+    },
+    {
+        id: 351,
+        term: 'Виды JOIN',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Какие виды JOIN вы знаете?',
+        example: 'Ответ: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN, CROSS JOIN, SELF JOIN.',
+        academic: 'Основные виды JOIN: INNER, LEFT, RIGHT, FULL, CROSS, SELF.',
+        source: 'SQL.docx',
+        meta: ['JOIN', 'Виды', 'Соединения']
+    },
+    {
+        id: 352,
+        term: 'WHERE vs HAVING',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Чем отличается WHERE от HAVING?',
+        example: 'Ответ: WHERE — фильтрация ДО группировки, HAVING — ПОСЛЕ группировки.',
+        academic: 'WHERE — фильтрация строк до группировки. HAVING — фильтрация после группировки по агрегированным значениям.',
+        source: 'SQL.docx',
+        meta: ['WHERE', 'HAVING', 'Группировка']
+    },
+    {
+        id: 353,
+        term: 'Коррелированные vs Некоррелированные подзапросы',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Чем отличаются коррелированные и некоррелированные подзапросы?',
+        example: 'Ответ: Некоррелированные выполняются один раз, коррелированные — для каждой строки внешнего запроса.',
+        academic: 'Некоррелированные подзапросы не зависят от внешнего запроса. Коррелированные — зависят и выполняются для каждой строки.',
+        source: 'SQL.docx',
+        meta: ['Коррелированный', 'Некоррелированный', 'Подзапрос']
+    },
+    {
+        id: 354,
+        term: 'COUNT(1) vs COUNT(*) vs COUNT(name)',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Чем отличаются COUNT(1), COUNT(*) и COUNT(name)?',
+        example: 'Ответ: COUNT(*) — все строки. COUNT(1) — аналог COUNT(*). COUNT(name) — только не-NULL значения.',
+        academic: 'COUNT(*) — количество всех строк. COUNT(1) — аналог. COUNT(column) — количество не-NULL значений в колонке.',
+        source: 'SQL.docx',
+        meta: ['COUNT', 'NULL', 'Агрегация']
+    },
+    {
+        id: 355,
+        term: 'DELETE vs TRUNCATE',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Чем отличается DELETE от TRUNCATE?',
+        example: 'Ответ: DELETE — можно с WHERE, логируется, медленнее. TRUNCATE — удаляет все данные, быстрее.',
+        academic: 'DELETE — удаление с WHERE, логируется, медленнее. TRUNCATE — удаляет все данные, нелогируемое, быстрее.',
+        source: 'SQL.docx',
+        meta: ['DELETE', 'TRUNCATE', 'Сравнение']
+    },
+    {
+        id: 356,
+        term: 'Связка много-ко-многим',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Как реализуется связь много-ко-многим в SQL?',
+        example: 'Ответ: через промежуточную таблицу (junction table) с внешними ключами на обе таблицы.',
+        academic: 'Связь много-ко-многим реализуется через промежуточную таблицу, содержащую внешние ключи на обе связываемые таблицы.',
+        source: 'SQL.docx',
+        meta: ['M:M', 'Промежуточная', 'Связь']
+    },
+    {
+        id: 357,
+        term: 'Вторая по величине зарплата',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Как найти вторую по величине зарплату в таблице?',
+        example: 'Ответ: SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees).',
+        academic: 'Вторая по величине зарплата: SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees).',
+        source: 'SQL.docx',
+        meta: ['MAX', 'Вторая', 'Зарплата']
+    },
+    {
+        id: 358,
+        term: 'JOIN vs UNION',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Чем JOIN отличается от UNION?',
+        example: 'Ответ: JOIN — объединяет столбцы разных таблиц. UNION — объединяет строки из разных таблиц.',
+        academic: 'JOIN — объединяет столбцы из разных таблиц по условию. UNION — объединяет строки из разных таблиц с одинаковой структурой.',
+        source: 'SQL.docx',
+        meta: ['JOIN', 'UNION', 'Сравнение']
+    },
+
+    // ============================================================
+    //  PYTHON — данные для выпадающего списка (ID: 400-449)
+    // ============================================================
+
+    // ---- Переменные и типы данных (python_variables) ----
+    {
+        id: 400,
+        term: 'Типы данных Python',
+        category: 'python_variables',
+        tag: 'Типы',
+        tagColor: 'blue',
+        simple: 'Основные типы: NoneType (None), bool, int, float, complex, str.',
+        example: 'int: 42. float: 3.14. str: "Hello". bool: True. None: отсутствие значения.',
+        academic: 'Типы данных Python: NoneType (None), bool, int, float, complex, str, bytes, bytearray.',
+        source: 'python.docx',
+        meta: ['int', 'float', 'str', 'bool', 'None']
+    },
+    {
+        id: 401,
+        term: 'Конвертация типов',
+        category: 'python_variables',
+        tag: 'Типы',
+        tagColor: 'green',
+        simple: 'Преобразование между типами данных: int(), float(), str(), bool(), list(), tuple(), set(), dict().',
+        example: 'int("42") → 42. float("3.14") → 3.14. str(42) → "42". bool(0) → False.',
+        academic: 'Конвертация типов: int() — в целое, float() — в дробное, str() — в строку, bool() — в булево.',
+        source: 'python.docx',
+        meta: ['int', 'float', 'str', 'bool']
+    },
+
+    // ---- Структуры данных (python_structures) ----
+    {
+        id: 402,
+        term: 'Списки (list)',
+        category: 'python_structures',
+        tag: 'Списки',
+        tagColor: 'purple',
+        simple: 'Изменяемые упорядоченные коллекции. Методы: append(), insert(), extend(), remove(), pop(), sort().',
+        example: 'numbers = [1, 2, 3]. numbers.append(4) → [1, 2, 3, 4].',
+        academic: 'Списки (list) — изменяемые упорядоченные коллекции. Методы: .append(), .insert(), .extend(), .remove(), .pop(), .sort(), .reverse().',
+        source: 'python.docx',
+        meta: ['list', 'Изменяемый', 'Упорядоченный']
+    },
+    {
+        id: 403,
+        term: 'Кортежи (tuple)',
+        category: 'python_structures',
+        tag: 'Кортежи',
+        tagColor: 'teal',
+        simple: 'Неизменяемые упорядоченные коллекции. Создание: t = (1,) (с запятой для одного элемента).',
+        example: 't = (1, 2, 3). t[0] → 1. Кортеж нельзя изменить после создания.',
+        academic: 'Кортежи (tuple) — неизменяемые упорядоченные коллекции. Для одного элемента нужна запятая: (1,).',
+        source: 'python.docx',
+        meta: ['tuple', 'Неизменяемый', 'Упорядоченный']
+    },
+    {
+        id: 404,
+        term: 'Множества (set)',
+        category: 'python_structures',
+        tag: 'Множества',
+        tagColor: 'orange',
+        simple: 'Изменяемые неупорядоченные коллекции уникальных элементов.',
+        example: 'a = {1, 2, 3}. b = {3, 4, 5}. a | b → {1, 2, 3, 4, 5}.',
+        academic: 'Множества (set) — изменяемые неупорядоченные коллекции уникальных элементов. Операции: union (|), intersection (&), difference (-).',
+        source: 'python.docx',
+        meta: ['set', 'Уникальные', 'Неупорядоченный']
+    },
+    {
+        id: 405,
+        term: 'Словари (dict)',
+        category: 'python_structures',
+        tag: 'Словари',
+        tagColor: 'blue',
+        simple: 'Изменяемые коллекции пар ключ-значение. Ключи уникальны.',
+        example: 'd = {"name": "John", "age": 30}. d["name"] → "John".',
+        academic: 'Словари (dict) — изменяемые коллекции пар ключ-значение. Ключи уникальны. Методы: .keys(), .values(), .items(), .get().',
+        source: 'python.docx',
+        meta: ['dict', 'Ключ-значение', 'Изменяемый']
+    },
+    {
+        id: 406,
+        term: 'Список vs Кортеж',
+        category: 'python_structures',
+        tag: 'Сравнение',
+        tagColor: 'orange',
+        simple: 'Список — изменяемый. Кортеж — неизменяемый. Список занимает больше памяти.',
+        example: 'list = [1, 2, 3]; list[0] = 5 → OK. tuple = (1, 2, 3); tuple[0] = 5 → Ошибка!',
+        academic: 'Список (list) — изменяемый. Кортеж (tuple) — неизменяемый. Кортеж можно использовать как ключ в словаре, список — нет.',
+        source: 'python.docx',
+        meta: ['list', 'tuple', 'Сравнение']
+    },
+    {
+        id: 407,
+        term: 'Срезы (slicing)',
+        category: 'python_structures',
+        tag: 'Срезы',
+        tagColor: 'green',
+        simple: 'Извлечение подпоследовательности: list[start:end:step].',
+        example: 'numbers = [0, 1, 2, 3, 4, 5]. numbers[2:5] → [2, 3, 4].',
+        academic: 'Срезы (slicing) — извлечение подпоследовательности: sequence[start:end:step].',
+        source: 'python.docx',
+        meta: ['Срезы', 'Slicing', '[:]']
+    },
+    {
+        id: 408,
+        term: 'Списочные выражения (list comprehension)',
+        category: 'python_structures',
+        tag: 'Генераторы',
+        tagColor: 'purple',
+        simple: 'Компактный способ создания списков: [выражение for элемент in итерируемый if условие].',
+        example: '[x*2 for x in range(5)] → [0, 2, 4, 6, 8].',
+        academic: 'Списочные выражения (list comprehension) — компактный способ создания списков.',
+        source: 'python.docx',
+        meta: ['list comprehension', 'Генератор', 'Кратко']
+    },
+    {
+        id: 409,
+        term: 'Генераторы словарей и множеств',
+        category: 'python_structures',
+        tag: 'Генераторы',
+        tagColor: 'teal',
+        simple: 'Аналоги list comprehension для словарей и множеств.',
+        example: '{x: x*2 for x in range(3)} → {0: 0, 1: 2, 2: 4}.',
+        academic: 'Генераторы словарей: {ключ: значение for переменная in итерируемый}.',
+        source: 'python.docx',
+        meta: ['dict comprehension', 'set comprehension', 'Генераторы']
+    },
+
+    // ---- Ввод и вывод данных (python_io) ----
+    {
+        id: 410,
+        term: 'Ввод данных (input)',
+        category: 'python_io',
+        tag: 'Ввод',
+        tagColor: 'blue',
+        simple: 'input() — читает строку из стандартного ввода. Всегда возвращает строку.',
+        example: 'name = input("Enter name: "). age = int(input("Enter age: ")).',
+        academic: 'input() — интерактивный ввод данных. Возвращает строку.',
+        source: 'python.docx',
+        meta: ['input', 'Ввод', 'Строка']
+    },
+    {
+        id: 411,
+        term: 'Вывод данных (print)',
+        category: 'python_io',
+        tag: 'Вывод',
+        tagColor: 'green',
+        simple: 'print() — выводит данные в консоль. Параметры: sep, end, file.',
+        example: 'print("Hello", "World", sep=", ") → Hello, World.',
+        academic: 'print() — вывод данных. Параметры: sep — разделитель, end — окончание, file — объект для вывода.',
+        source: 'python.docx',
+        meta: ['print', 'Вывод', 'sep', 'end']
+    },
+
+    // ---- Условные операторы (python_conditions) ----
+    {
+        id: 412,
+        term: 'Условные операторы (if-elif-else)',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'purple',
+        simple: 'if условие: ... elif условие: ... else: ...',
+        example: 'if x > 0: print("Positive") elif x < 0: print("Negative") else: print("Zero").',
+        academic: 'Условные операторы: if, elif, else. Логические операторы: and, or, not.',
+        source: 'python.docx',
+        meta: ['if', 'elif', 'else', 'Условия']
+    },
+    {
+        id: 413,
+        term: 'Тернарный оператор',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'teal',
+        simple: 'Однострочная запись if-else: value = a if condition else b.',
+        example: 'status = "active" if age >= 18 else "inactive".',
+        academic: 'Тернарный оператор: value = a if condition else b.',
+        source: 'python.docx',
+        meta: ['Тернарный', 'Однострочный', 'if-else']
+    },
+    {
+        id: 414,
+        term: 'match-case (Python 3.10+)',
+        category: 'python_conditions',
+        tag: 'Условия',
+        tagColor: 'orange',
+        simple: 'Аналог switch-case в других языках. Сопоставляет значения с паттернами.',
+        example: 'match status: case 1: print("Active") case 2: print("Inactive") case _: print("Unknown").',
+        academic: 'match-case — структурное сопоставление с образцом (Python 3.10+).',
+        source: 'python.docx',
+        meta: ['match', 'case', 'switch']
+    },
+
+    // ---- Циклы (python_loops) ----
+    {
+        id: 415,
+        term: 'Цикл for',
+        category: 'python_loops',
+        tag: 'Циклы',
+        tagColor: 'blue',
+        simple: 'Итерация по последовательности: for переменная in итерируемый: ...',
+        example: 'for i in range(5): print(i) → 0, 1, 2, 3, 4.',
+        academic: 'Цикл for — итерация по последовательности (списку, строке, range и т.д.).',
+        source: 'python.docx',
+        meta: ['for', 'Итерация', 'range']
+    },
+    {
+        id: 416,
+        term: 'Цикл while',
+        category: 'python_loops',
+        tag: 'Циклы',
+        tagColor: 'green',
+        simple: 'Выполняется пока условие истинно: while условие: ...',
+        example: 'i = 0; while i < 5: print(i); i += 1.',
+        academic: 'Цикл while — выполняется пока условие истинно.',
+        source: 'python.docx',
+        meta: ['while', 'Условие', 'Итерация']
+    },
+
+    // ---- Функции (python_functions) ----
+    {
+        id: 417,
+        term: 'Определение функций',
+        category: 'python_functions',
+        tag: 'Функции',
+        tagColor: 'purple',
+        simple: 'def имя_функции(параметры): ... return значение.',
+        example: 'def add(a, b): return a + b. result = add(5, 3) → 8.',
+        academic: 'Функции определяются с помощью def. Могут принимать параметры и возвращать значения через return.',
+        source: 'python.docx',
+        meta: ['def', 'return', 'Параметры']
+    },
+    {
+        id: 418,
+        term: 'Аргументы функций',
+        category: 'python_functions',
+        tag: 'Функции',
+        tagColor: 'orange',
+        simple: 'Позиционные, именованные, значения по умолчанию, *args, **kwargs.',
+        example: 'def greet(name, msg="Hello"): return f"{msg}, {name}". greet("John") → "Hello, John".',
+        academic: 'Аргументы функций: позиционные, именованные (keyword), значения по умолчанию, *args (произвольное число аргументов), **kwargs (произвольное число именованных аргументов).',
+        source: 'python.docx',
+        meta: ['args', 'kwargs', 'Параметры']
+    },
+
+    // ---- Структуры данных и алгоритмы (python_algorithms) ----
+    {
+        id: 419,
+        term: 'Операторы сравнения',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'blue',
+        simple: '== (равно), != (не равно), <, >, <=, >=, is (по ссылке), in (проверка наличия).',
+        example: '5 == 5 → True. "a" in ["a", "b"] → True.',
+        academic: 'Операторы сравнения: ==, !=, <, >, <=, >=, is, in.',
+        source: 'python.docx',
+        meta: ['==', '!=', 'is', 'in', 'Сравнение']
+    },
+    {
+        id: 420,
+        term: 'Логические операторы',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'purple',
+        simple: 'and, or, not — логические операторы. Приоритет: not → and → or.',
+        example: 'True and False → False. True or False → True.',
+        academic: 'Логические операторы: and (И), or (ИЛИ), not (НЕ).',
+        source: 'python.docx',
+        meta: ['and', 'or', 'not', 'Логика']
+    },
+    {
+        id: 421,
+        term: '== vs is',
+        category: 'python_algorithms',
+        tag: 'Сравнение',
+        tagColor: 'red',
+        simple: '== — сравнивает значения. is — сравнивает ссылки на объекты.',
+        example: '[1, 2] == [1, 2] → True. [1, 2] is [1, 2] → False.',
+        academic: '== — сравнение по значению. is — сравнение по ссылке (являются ли объекты одним и тем же в памяти).',
+        source: 'python.docx',
+        meta: ['==', 'is', 'Сравнение', 'Ссылка']
+    },
+    {
+        id: 422,
+        term: 'Оператор in',
+        category: 'python_algorithms',
+        tag: 'Операторы',
+        tagColor: 'teal',
+        simple: 'Проверяет наличие элемента в коллекции.',
+        example: '1 in [1, 2, 3] → True. "key" in {"key": "value"} → True.',
+        academic: 'Оператор in — проверяет наличие элемента в последовательности, множестве или словаре (по ключам).',
+        source: 'python.docx',
+        meta: ['in', 'Проверка', 'Наличие']
+    },
+
+    // ---- Работа с файлами (python_files) ----
+    {
+        id: 423,
+        term: 'Открытие файлов',
+        category: 'python_files',
+        tag: 'Файлы',
+        tagColor: 'blue',
+        simple: 'open(путь, режим) — открывает файл. Режимы: r (чтение), w (запись), a (добавление).',
+        example: 'file = open("file.txt", "r"). content = file.read(). file.close().',
+        academic: 'open(путь, режим) — открывает файл. Режимы: r — чтение, w — запись (перезаписывает), a — добавление (append).',
+        source: 'python.docx',
+        meta: ['open', 'read', 'write', 'close']
+    },
+    {
+        id: 424,
+        term: 'Контекстный менеджер with',
+        category: 'python_files',
+        tag: 'Файлы',
+        tagColor: 'green',
+        simple: 'with open(...) as file: — автоматически закрывает файл после блока.',
+        example: 'with open("file.txt", "r") as f: content = f.read().',
+        academic: 'Контекстный менеджер with — автоматически закрывает файл при выходе из блока.',
+        source: 'python.docx',
+        meta: ['with', 'Контекстный менеджер', 'Автозакрытие']
+    },
+
+    // ---- Модуль requests (python_requests) ----
+    {
+        id: 425,
+        term: 'Модуль requests',
+        category: 'python_requests',
+        tag: 'HTTP',
+        tagColor: 'purple',
+        simple: 'Библиотека для отправки HTTP-запросов. Методы: get(), post(), put(), delete().',
+        example: 'import requests. response = requests.get("https://api.example.com/users").',
+        academic: 'requests — библиотека для отправки HTTP-запросов. Методы: get(), post(), put(), delete(), patch().',
+        source: 'python.docx',
+        meta: ['requests', 'HTTP', 'GET', 'POST']
+    },
+    {
+        id: 426,
+        term: 'Обработка ответов requests',
+        category: 'python_requests',
+        tag: 'HTTP',
+        tagColor: 'orange',
+        simple: 'response.status_code — код ответа. response.json() — парсит JSON. response.text — текст ответа.',
+        example: 'if response.status_code == 200: data = response.json().',
+        academic: 'response.status_code — код ответа, response.json() — парсит JSON, response.text — текст ответа.',
+        source: 'python.docx',
+        meta: ['status_code', 'json', 'text']
+    },
+
+    // ---- Модуль pandas (python_pandas) ----
+    {
+        id: 427,
+        term: 'Pandas — чтение данных',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'blue',
+        simple: 'pd.read_csv(), pd.read_excel(), pd.read_json() — чтение данных из различных форматов.',
+        example: 'import pandas as pd. df = pd.read_csv("file.csv").',
+        academic: 'Pandas — библиотека для анализа данных. Чтение: pd.read_csv(), pd.read_excel(), pd.read_json(), pd.read_parquet().',
+        source: 'pandas.docx',
+        meta: ['pandas', 'read_csv', 'DataFrame']
+    },
+    {
+        id: 428,
+        term: 'Pandas — базовый анализ',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'green',
+        simple: 'df.head(), df.info(), df.describe(), df.shape — первичный анализ данных.',
+        example: 'df.head() — первые 5 строк. df.info() — информация о типах и пропусках.',
+        academic: 'Базовый анализ: df.head(), df.tail(), df.info(), df.describe(), df.shape, df.dtypes.',
+        source: 'pandas.docx',
+        meta: ['head', 'info', 'describe', 'shape']
+    },
+    {
+        id: 429,
+        term: 'Pandas — фильтрация',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'orange',
+        simple: 'df[df["column"] > value] — фильтрация строк по условию.',
+        example: 'df[df["age"] > 18] — все строки с возрастом больше 18.',
+        academic: 'Фильтрация: df[условие]. Логические операторы: & (и), | (или), ~ (не).',
+        source: 'pandas.docx',
+        meta: ['Фильтрация', 'условие', '&', '|']
+    },
+    {
+        id: 430,
+        term: 'Pandas — группировка',
+        category: 'python_pandas',
+        tag: 'Pandas',
+        tagColor: 'purple',
+        simple: 'df.groupby("column").agg() — группировка и агрегация данных.',
+        example: 'df.groupby("city")["salary"].mean() — средняя зарплата по городам.',
+        academic: 'Группировка: df.groupby(колонка).agg(функция). Агрегатные функции: sum(), mean(), count(), min(), max().',
+        source: 'pandas.docx',
+        meta: ['groupby', 'agg', 'mean', 'sum']
+    },
+
+    // ---- Работа с БД (python_db) ----
+    {
+        id: 431,
+        term: 'SQLite в Python',
+        category: 'python_db',
+        tag: 'БД',
+        tagColor: 'blue',
+        simple: 'sqlite3 — встроенная библиотека для работы с SQLite. Подключение: sqlite3.connect("db.db").',
+        example: 'import sqlite3. conn = sqlite3.connect("database.db"). cursor = conn.cursor().',
+        academic: 'sqlite3 — встроенная библиотека для работы с SQLite. connect() — подключение, cursor() — создание курсора.',
+        source: 'python.docx',
+        meta: ['sqlite3', 'connect', 'cursor']
+    },
+    {
+        id: 432,
+        term: 'Выполнение SQL-запросов',
+        category: 'python_db',
+        tag: 'БД',
+        tagColor: 'green',
+        simple: 'cursor.execute("SELECT * FROM users"). cursor.fetchall() — выполнение запросов.',
+        example: 'cursor.execute("SELECT * FROM users"). rows = cursor.fetchall().',
+        academic: 'execute() — выполнение запроса. fetchall() — получить все строки, fetchone() — одну строку.',
+        source: 'python.docx',
+        meta: ['execute', 'fetchall', 'fetchone']
+    },
+
+    // ---- Вопросы для собеседования по Python (python_interview) ----
+    {
+        id: 433,
+        term: '== vs is в Python',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Чем отличается == от is в Python?',
+        example: 'Ответ: == сравнивает значения, is сравнивает ссылки на объекты.',
+        academic: '== — сравнение по значению. is — сравнение по ссылке (являются ли объекты одним и тем же в памяти).',
+        source: 'python.docx',
+        meta: ['==', 'is', 'Сравнение']
+    },
+    {
+        id: 434,
+        term: 'Список vs Кортеж',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'В чем разница между списком и кортежем?',
+        example: 'Ответ: список изменяемый, кортеж неизменяемый. Кортеж занимает меньше памяти.',
+        academic: 'Список (list) — изменяемый. Кортеж (tuple) — неизменяемый. Кортеж можно использовать как ключ в словаре.',
+        source: 'python.docx',
+        meta: ['list', 'tuple', 'Сравнение']
+    },
+    {
+        id: 435,
+        term: 'Что такое None в Python?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Что такое None и как его проверять?',
+        example: 'Ответ: None — объект, обозначающий отсутствие значения. Проверка: if x is None.',
+        academic: 'None — объект, обозначающий отсутствие значения. Проверка: is None (не == None).',
+        source: 'python.docx',
+        meta: ['None', 'Отсутствие', 'is None']
+    },
+    {
+        id: 436,
+        term: 'Что такое list comprehension?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Что такое list comprehension и для чего он используется?',
+        example: 'Ответ: компактный способ создания списков. [x*2 for x in range(5)] → [0, 2, 4, 6, 8].',
+        academic: 'list comprehension — компактный способ создания списков с использованием цикла и условия.',
+        source: 'python.docx',
+        meta: ['list comprehension', 'Генератор', 'Кратко']
+    },
+    {
+        id: 437,
+        term: 'Как работают *args и **kwargs?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Что такое *args и **kwargs в функциях?',
+        example: 'Ответ: *args — произвольное число позиционных аргументов, **kwargs — произвольное число именованных аргументов.',
+        academic: '*args — кортеж позиционных аргументов. **kwargs — словарь именованных аргументов.',
+        source: 'python.docx',
+        meta: ['*args', '**kwargs', 'Аргументы']
+    },
+    // ============================================================
+    //  ДОПОЛНИТЕЛЬНЫЕ ТЕРМИНЫ ДЛЯ SQL (ID 500-539)
+    // ============================================================
+    {
+        id: 500,
+        term: 'DDL (Data Definition Language)',
+        category: 'sql_ddl',
+        tag: 'DDL',
+        tagColor: 'blue',
+        simple: 'Язык определения данных. Используется для создания и изменения структуры базы данных.',
+        example: 'CREATE TABLE, ALTER TABLE, DROP TABLE, TRUNCATE TABLE, CREATE INDEX.',
+        academic: 'DDL — команды, которые определяют структуру данных: CREATE, ALTER, DROP, TRUNCATE, RENAME.',
+        source: 'SQL теория',
+        meta: ['CREATE', 'ALTER', 'DROP']
+    },
+    {
+        id: 501,
+        term: 'DML (Data Manipulation Language)',
+        category: 'sql_dml',
+        tag: 'DML',
+        tagColor: 'green',
+        simple: 'Язык манипуляции данными. Используется для извлечения, вставки, обновления и удаления данных.',
+        example: 'SELECT, INSERT, UPDATE, DELETE.',
+        academic: 'DML — команды для работы с данными: SELECT, INSERT, UPDATE, DELETE, MERGE.',
+        source: 'SQL теория',
+        meta: ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
+    },
+    {
+        id: 502,
+        term: 'TCL (Transaction Control Language)',
+        category: 'sql_basics',
+        tag: 'TCL',
+        tagColor: 'purple',
+        simple: 'Язык управления транзакциями. Управляет изменениями данных в рамках транзакции.',
+        example: 'COMMIT, ROLLBACK, SAVEPOINT, SET TRANSACTION.',
+        academic: 'TCL — команды управления транзакциями: COMMIT (фиксация), ROLLBACK (откат), SAVEPOINT (установка точки сохранения).',
+        source: 'SQL теория',
+        meta: ['COMMIT', 'ROLLBACK', 'SAVEPOINT']
+    },
+    {
+        id: 503,
+        term: 'DCL (Data Control Language)',
+        category: 'sql_basics',
+        tag: 'DCL',
+        tagColor: 'orange',
+        simple: 'Язык управления доступом. Управляет правами пользователей.',
+        example: 'GRANT, REVOKE.',
+        academic: 'DCL — команды управления правами доступа: GRANT (выдача прав), REVOKE (отзыв прав).',
+        source: 'SQL теория',
+        meta: ['GRANT', 'REVOKE']
+    },
+    {
+        id: 504,
+        term: 'Транзакции',
+        category: 'sql_basics',
+        tag: 'Транзакции',
+        tagColor: 'teal',
+        simple: 'Последовательность операций, выполняемая как единое целое. Либо все операции выполняются, либо ни одна.',
+        example: 'BEGIN TRANSACTION; ... COMMIT; или ROLLBACK;',
+        academic: 'Транзакция — атомарная операция, обладающая свойствами ACID: атомарность, согласованность, изоляция, долговечность.',
+        source: 'SQL теория',
+        meta: ['ACID', 'COMMIT', 'ROLLBACK']
+    },
+    {
+        id: 505,
+        term: 'ACID',
+        category: 'sql_basics',
+        tag: 'ACID',
+        tagColor: 'red',
+        simple: 'Свойства транзакций: атомарность, согласованность, изоляция, долговечность.',
+        example: 'Атомарность — транзакция выполняется полностью или не выполняется вовсе. Согласованность — данные остаются в согласованном состоянии. Изоляция — параллельные транзакции не влияют друг на друга. Долговечность — результаты транзакции сохраняются после фиксации.',
+        academic: 'ACID — набор требований к транзакционной системе, гарантирующий надежность обработки данных.',
+        source: 'SQL теория',
+        meta: ['Атомарность', 'Согласованность', 'Изоляция', 'Долговечность']
+    },
+    {
+        id: 506,
+        term: 'Уровни изоляции транзакций',
+        category: 'sql_basics',
+        tag: 'Изоляция',
+        tagColor: 'purple',
+        simple: 'Определяют, как параллельные транзакции видят изменения друг друга. Чем выше уровень, тем больше блокировок.',
+        example: 'READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, SERIALIZABLE.',
+        academic: 'Уровни изоляции: READ UNCOMMITTED (грязное чтение), READ COMMITTED (неповторяемое чтение), REPEATABLE READ (фантомы), SERIALIZABLE (полная изоляция).',
+        source: 'SQL теория',
+        meta: ['READ UNCOMMITTED', 'READ COMMITTED', 'REPEATABLE READ', 'SERIALIZABLE']
+    },
+    {
+        id: 507,
+        term: 'Первичный ключ (PRIMARY KEY)',
+        category: 'sql_interview',
+        tag: 'Ключи',
+        tagColor: 'blue',
+        simple: 'Уникальный идентификатор каждой записи в таблице. Не может быть NULL.',
+        example: 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100));',
+        academic: 'PRIMARY KEY — ограничение, гарантирующее уникальность и непустоту столбца (или комбинации столбцов).',
+        source: 'SQL теория',
+        meta: ['Уникальность', 'NOT NULL', 'Идентификатор']
+    },
+    {
+        id: 508,
+        term: 'Внешний ключ (FOREIGN KEY)',
+        category: 'sql_interview',
+        tag: 'Ключи',
+        tagColor: 'green',
+        simple: 'Связывает таблицы. Значение внешнего ключа должно существовать в первичном ключе связанной таблицы.',
+        example: 'CREATE TABLE orders (id INT, user_id INT REFERENCES users(id));',
+        academic: 'FOREIGN KEY — ограничение для поддержания ссылочной целостности между таблицами.',
+        source: 'SQL теория',
+        meta: ['Ссылочная целостность', 'Связь']
+    },
+    {
+        id: 509,
+        term: 'Уникальный ключ (UNIQUE)',
+        category: 'sql_interview',
+        tag: 'Ключи',
+        tagColor: 'orange',
+        simple: 'Обеспечивает уникальность значений в столбце, но может содержать NULL (кроме MySQL).',
+        example: 'CREATE TABLE users (email VARCHAR(255) UNIQUE);',
+        academic: 'UNIQUE — ограничение, гарантирующее уникальность значений в столбце или комбинации столбцов.',
+        source: 'SQL теория',
+        meta: ['Уникальность', 'NULL']
+    },
+    {
+        id: 510,
+        term: 'Нормализация',
+        category: 'sql_interview',
+        tag: 'Нормализация',
+        tagColor: 'purple',
+        simple: 'Процесс организации данных для уменьшения избыточности и зависимостей.',
+        example: '1НФ, 2НФ, 3НФ, НФБК, 4НФ, 5НФ.',
+        academic: 'Нормализация — метод проектирования баз данных, направленный на устранение аномалий и дублирования.',
+        source: 'SQL теория',
+        meta: ['1НФ', '2НФ', '3НФ', 'НФБК']
+    },
+    {
+        id: 511,
+        term: 'Денормализация',
+        category: 'sql_interview',
+        tag: 'Нормализация',
+        tagColor: 'teal',
+        simple: 'Намеренное нарушение нормализации для повышения производительности чтения.',
+        example: 'Добавление избыточных столбцов для ускорения запросов (например, сумма заказа в таблице заказов).',
+        academic: 'Денормализация — обратный процесс нормализации, используемый для оптимизации производительности.',
+        source: 'SQL теория',
+        meta: ['Производительность', 'Избыточность']
+    },
+    {
+        id: 512,
+        term: 'Индексы — виды',
+        category: 'sql_index',
+        tag: 'Индексы',
+        tagColor: 'blue',
+        simple: 'Структуры для ускорения поиска. Основные типы: B-tree, Hash, Bitmap, Full-text.',
+        example: 'CREATE INDEX idx_name ON table(column);',
+        academic: 'Типы индексов: B-tree (по умолчанию), Hash (для равенства), Bitmap (для низкой кардинальности), Full-text (для текстового поиска).',
+        source: 'SQL теория',
+        meta: ['B-tree', 'Hash', 'Bitmap', 'Full-text']
+    },
+    {
+        id: 513,
+        term: 'Explain (план выполнения)',
+        category: 'sql_index',
+        tag: 'Оптимизация',
+        tagColor: 'orange',
+        simple: 'Команда для анализа выполнения запроса. Показывает, как используются индексы и таблицы.',
+        example: 'EXPLAIN SELECT * FROM users WHERE age > 18;',
+        academic: 'EXPLAIN — анализирует план выполнения запроса, помогает выявить узкие места и оптимизировать запрос.',
+        source: 'SQL теория',
+        meta: ['План', 'Оптимизация']
+    },
+    {
+        id: 514,
+        term: 'Хранимые процедуры (Stored Procedure)',
+        category: 'sql_basics',
+        tag: 'Процедуры',
+        tagColor: 'purple',
+        simple: 'Набор SQL-команд, сохранённых на сервере и вызываемых по имени.',
+        example: 'CREATE PROCEDURE GetUsers AS SELECT * FROM users; EXEC GetUsers;',
+        academic: 'Хранимые процедуры — предварительно скомпилированный код, повышающий производительность и безопасность.',
+        source: 'SQL теория',
+        meta: ['Процедуры', 'Безопасность']
+    },
+    {
+        id: 515,
+        term: 'Триггеры (Triggers)',
+        category: 'sql_basics',
+        tag: 'Триггеры',
+        tagColor: 'red',
+        simple: 'Автоматически выполняемые действия при определённых событиях (INSERT, UPDATE, DELETE).',
+        example: 'CREATE TRIGGER after_insert_user AFTER INSERT ON users FOR EACH ROW ...',
+        academic: 'Триггеры — автоматические реакции на события, используются для аудита, валидации, поддержки целостности.',
+        source: 'SQL теория',
+        meta: ['INSERT', 'UPDATE', 'DELETE']
+    },
+    {
+        id: 516,
+        term: 'Функции в SQL',
+        category: 'sql_basics',
+        tag: 'Функции',
+        tagColor: 'green',
+        simple: 'Пользовательские функции, возвращающие значение, могут использоваться в запросах.',
+        example: 'CREATE FUNCTION getFullName(first VARCHAR, last VARCHAR) RETURNS VARCHAR ...',
+        academic: 'Пользовательские функции — расширяют возможности SQL, возвращают скалярное значение или таблицу.',
+        source: 'SQL теория',
+        meta: ['Функции', 'Возврат значения']
+    },
+    {
+        id: 517,
+        term: 'Вопрос: Что такое NULL?',
+        category: 'sql_interview',
+        tag: 'NULL',
+        tagColor: 'red',
+        simple: 'NULL означает отсутствие значения, а не пустую строку или ноль.',
+        example: 'Проверка: WHERE column IS NULL, а не column = NULL.',
+        academic: 'NULL — специальное значение, обозначающее неизвестное или отсутствующее значение. Любое сравнение с NULL даёт NULL.',
+        source: 'SQL теория',
+        meta: ['NULL', 'IS NULL']
+    },
+    {
+        id: 518,
+        term: 'Вопрос: Разница между WHERE и HAVING',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'WHERE фильтрует строки до группировки, HAVING — после группировки (по агрегированным значениям).',
+        example: 'SELECT department, AVG(salary) FROM employees GROUP BY department HAVING AVG(salary) > 50000;',
+        academic: 'WHERE применяется до GROUP BY, HAVING — после. HAVING работает с агрегатными функциями.',
+        source: 'SQL теория',
+        meta: ['WHERE', 'HAVING']
+    },
+    {
+        id: 519,
+        term: 'Вопрос: Разница между DELETE и TRUNCATE',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'DELETE — удаляет строки с условием (можно откатить), TRUNCATE — удаляет все данные (быстрее, нелогируемо).',
+        example: 'DELETE FROM users WHERE age > 60; TRUNCATE TABLE users;',
+        academic: 'DELETE — DML, логируется, можно использовать WHERE. TRUNCATE — DDL, нелогируется, сбрасывает автоинкремент.',
+        source: 'SQL теория',
+        meta: ['DELETE', 'TRUNCATE']
+    },
+    {
+        id: 520,
+        term: 'Вопрос: UNION vs UNION ALL',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'UNION убирает дубликаты, UNION ALL — нет. UNION ALL работает быстрее.',
+        example: 'SELECT name FROM users UNION SELECT name FROM admins;',
+        academic: 'UNION — объединяет результаты с удалением дубликатов, UNION ALL — без удаления.',
+        source: 'SQL теория',
+        meta: ['UNION', 'UNION ALL']
+    },
+    {
+        id: 521,
+        term: 'Вопрос: Типы JOIN',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'INNER, LEFT, RIGHT, FULL, CROSS, SELF.',
+        example: 'SELECT * FROM orders INNER JOIN users ON orders.user_id = users.id;',
+        academic: 'Основные JOIN: INNER (пересечение), LEFT (все из левой), RIGHT (все из правой), FULL (все из обеих), CROSS (декартово произведение), SELF (сама с собой).',
+        source: 'SQL теория',
+        meta: ['INNER', 'LEFT', 'RIGHT', 'FULL']
+    },
+    {
+        id: 522,
+        term: 'Вопрос: Что такое подзапрос?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Запрос внутри другого запроса. Может быть в SELECT, FROM, WHERE.',
+        example: 'SELECT name FROM users WHERE id IN (SELECT user_id FROM orders);',
+        academic: 'Подзапрос — вложенный запрос, возвращающий одно или несколько значений для использования во внешнем запросе.',
+        source: 'SQL теория',
+        meta: ['Подзапрос', 'Вложенный']
+    },
+    {
+        id: 523,
+        term: 'Вопрос: Что такое CTE?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Common Table Expression — временный именованный результат запроса, улучшает читаемость.',
+        example: 'WITH cte AS (SELECT * FROM users) SELECT * FROM cte;',
+        academic: 'CTE — временное именованное выражение, доступное только в рамках одного запроса. Улучшает читаемость и позволяет рекурсию.',
+        source: 'SQL теория',
+        meta: ['WITH', 'CTE']
+    },
+    {
+        id: 524,
+        term: 'Вопрос: Рекурсивный CTE',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'CTE, ссылающееся само на себя. Используется для иерархических данных.',
+        example: 'WITH RECURSIVE cte(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM cte WHERE n<10) SELECT * FROM cte;',
+        academic: 'Рекурсивный CTE состоит из базового случая и рекурсивного члена. Применяется для обхода деревьев и графов.',
+        source: 'SQL теория',
+        meta: ['RECURSIVE', 'Иерархия']
+    },
+    {
+        id: 525,
+        term: 'Вопрос: Что такое оконные функции?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Вычисления над группой строк (окном) без группировки. Сохраняют все строки.',
+        example: 'SELECT name, salary, ROW_NUMBER() OVER (ORDER BY salary DESC) FROM employees;',
+        academic: 'Оконные функции: ROW_NUMBER(), RANK(), DENSE_RANK(), LAG(), LEAD(), SUM() OVER и т.д. Работают с окном, заданным OVER().',
+        source: 'SQL теория',
+        meta: ['OVER', 'PARTITION BY']
+    },
+    {
+        id: 526,
+        term: 'Вопрос: Что такое индексы? Когда их использовать?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Индексы ускоряют поиск, но замедляют вставку/обновление. Использовать на часто запрашиваемых столбцах.',
+        example: 'CREATE INDEX idx_last_name ON users(last_name);',
+        academic: 'Индексы — структуры для ускорения поиска. Создаются на столбцах, используемых в WHERE, JOIN, ORDER BY. Не злоупотреблять.',
+        source: 'SQL теория',
+        meta: ['Индексы', 'Оптимизация']
+    },
+    {
+        id: 527,
+        term: 'Вопрос: Что такое нормализация? Зачем она нужна?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Нормализация — устранение избыточности и аномалий. Нужна для целостности и экономии места.',
+        example: 'Разбиение таблицы на несколько связанных.',
+        academic: 'Нормализация уменьшает дублирование данных и улучшает целостность. Формы: 1НФ, 2НФ, 3НФ, НФБК.',
+        source: 'SQL теория',
+        meta: ['Нормализация', 'Целостность']
+    },
+    {
+        id: 528,
+        term: 'Вопрос: Что такое денормализация?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Денормализация — добавление избыточности для ускорения чтения.',
+        example: 'Хранение суммы заказа в таблице заказов, чтобы не суммировать позиции каждый раз.',
+        academic: 'Денормализация используется для повышения производительности запросов ценой избыточности.',
+        source: 'SQL теория',
+        meta: ['Денормализация', 'Производительность']
+    },
+    {
+        id: 529,
+        term: 'Вопрос: Что такое первичный и внешний ключи?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Первичный ключ — уникальный идентификатор записи. Внешний ключ — связь с другой таблицей.',
+        example: 'PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES users(id).',
+        academic: 'Первичный ключ уникален и не NULL. Внешний ключ обеспечивает ссылочную целостность.',
+        source: 'SQL теория',
+        meta: ['PRIMARY KEY', 'FOREIGN KEY']
+    },
+    {
+        id: 530,
+        term: 'Вопрос: Что такое автоинкремент?',
+        category: 'sql_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Автоматическое увеличение значения столбца при вставке новой записи.',
+        example: 'id INT AUTO_INCREMENT PRIMARY KEY',
+        academic: 'AUTO_INCREMENT (MySQL), SERIAL (PostgreSQL), IDENTITY (SQL Server) — генерируют уникальные значения.',
+        source: 'SQL теория',
+        meta: ['AUTO_INCREMENT', 'SERIAL']
+    },
+
+    // ============================================================
+    //  ДОПОЛНИТЕЛЬНЫЕ ТЕРМИНЫ ДЛЯ PYTHON (ID 600-649)
+    // ============================================================
+    {
+        id: 600,
+        term: 'Декораторы в Python',
+        category: 'python_functions',
+        tag: 'Декораторы',
+        tagColor: 'purple',
+        simple: 'Функции, которые изменяют поведение других функций без изменения их кода.',
+        example: '@decorator\ndef func(): pass',
+        academic: 'Декоратор — функция, принимающая другую функцию как аргумент и возвращающая новую функцию. Используется для логирования, проверки прав, кэширования.',
+        source: 'Python теория',
+        meta: ['@', 'wrapper', 'декоратор']
+    },
+    {
+        id: 601,
+        term: 'Генераторы (yield)',
+        category: 'python_functions',
+        tag: 'Генераторы',
+        tagColor: 'teal',
+        simple: 'Функции, которые могут приостанавливать выполнение и возвращать значения по одному. Используют yield.',
+        example: 'def gen(): yield 1; yield 2',
+        academic: 'Генераторы — функции, возвращающие итератор. Вместо return используют yield, сохраняя состояние между вызовами.',
+        source: 'Python теория',
+        meta: ['yield', 'итератор', 'генератор']
+    },
+    {
+        id: 602,
+        term: 'Итераторы',
+        category: 'python_algorithms',
+        tag: 'Итераторы',
+        tagColor: 'blue',
+        simple: 'Объекты, поддерживающие протокол итерации (__iter__ и __next__). Позволяют обходить коллекции.',
+        example: 'for i in iterable: pass',
+        academic: 'Итератор — объект, реализующий методы __iter__() и __next__(). Используется в циклах for.',
+        source: 'Python теория',
+        meta: ['iter', 'next', 'протокол']
+    },
+    {
+        id: 603,
+        term: 'Контекстный менеджер (with)',
+        category: 'python_files',
+        tag: 'Контекст',
+        tagColor: 'orange',
+        simple: 'Управление ресурсами (файлы, соединения) с автоматическим освобождением.',
+        example: 'with open("file.txt") as f: data = f.read()',
+        academic: 'Контекстный менеджер реализует методы __enter__ и __exit__. Используется с оператором with для гарантированного освобождения ресурсов.',
+        source: 'Python теория',
+        meta: ['with', '__enter__', '__exit__']
+    },
+    {
+        id: 604,
+        term: 'Обработка исключений',
+        category: 'python_algorithms',
+        tag: 'Исключения',
+        tagColor: 'red',
+        simple: 'Механизм перехвата и обработки ошибок с помощью try-except-finally.',
+        example: 'try: x = 1/0 except ZeroDivisionError: print("Ошибка")',
+        academic: 'Исключения — события, нарушающие нормальный ход программы. Обрабатываются конструкцией try-except-else-finally.',
+        source: 'Python теория',
+        meta: ['try', 'except', 'finally']
+    },
+    {
+        id: 605,
+        term: 'Модули и пакеты',
+        category: 'python_functions',
+        tag: 'Модули',
+        tagColor: 'green',
+        simple: 'Файлы с кодом (модули) и папки с __init__.py (пакеты) для организации кода.',
+        example: 'import math; from os import path',
+        academic: 'Модули — файлы .py, пакеты — каталоги с __init__.py. Используются для повторного использования и структурирования кода.',
+        source: 'Python теория',
+        meta: ['import', 'from', '__init__.py']
+    },
+    {
+        id: 606,
+        term: 'Асинхронность (asyncio)',
+        category: 'python_algorithms',
+        tag: 'Асинхронность',
+        tagColor: 'purple',
+        simple: 'Однопоточное параллельное выполнение задач с помощью async/await.',
+        example: 'async def main(): await asyncio.sleep(1)',
+        academic: 'asyncio — библиотека для асинхронного программирования. Использует корутины (async def) и цикл событий.',
+        source: 'Python теория',
+        meta: ['async', 'await', 'asyncio']
+    },
+    {
+        id: 607,
+        term: 'Потоки (threading)',
+        category: 'python_algorithms',
+        tag: 'Потоки',
+        tagColor: 'orange',
+        simple: 'Параллельное выполнение потоков внутри одного процесса. В Python из-за GIL не даёт реального параллелизма для CPU-bound задач.',
+        example: 'import threading; t = threading.Thread(target=func)',
+        academic: 'threading — модуль для работы с потоками. Потоки разделяют память, но GIL ограничивает выполнение байт-кода одним потоком.',
+        source: 'Python теория',
+        meta: ['thread', 'GIL', 'параллелизм']
+    },
+    {
+        id: 608,
+        term: 'Многопроцессорность (multiprocessing)',
+        category: 'python_algorithms',
+        tag: 'Многопроцессорность',
+        tagColor: 'teal',
+        simple: 'Использование нескольких процессов для обхода GIL и использования нескольких ядер CPU.',
+        example: 'from multiprocessing import Process',
+        academic: 'multiprocessing — модуль для создания дочерних процессов, каждый со своим интерпретатором и GIL, что позволяет использовать несколько ядер.',
+        source: 'Python теория',
+        meta: ['Process', 'Pool', 'GIL']
+    },
+    {
+        id: 609,
+        term: 'GIL (Global Interpreter Lock)',
+        category: 'python_interview',
+        tag: 'GIL',
+        tagColor: 'red',
+        simple: 'Блокировка интерпретатора, которая позволяет выполнять только один поток байт-кода за раз.',
+        example: 'Влияет на производительность многопоточных CPU-bound приложений.',
+        academic: 'GIL — мьютекс, защищающий доступ к внутренним объектам Python. Препятствует параллельному выполнению потоков на CPU, но I/O-операции могут выполняться параллельно.',
+        source: 'Python теория',
+        meta: ['GIL', 'потоки', 'производительность']
+    },
+    {
+        id: 610,
+        term: 'Вопрос: list vs tuple',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'list — изменяемый, tuple — неизменяемый. tuple занимает меньше памяти и быстрее создаётся.',
+        example: 'list = [1,2,3]; tuple = (1,2,3)',
+        academic: 'list — изменяемая последовательность, tuple — неизменяемая. tuple можно использовать как ключ в словаре, list — нет.',
+        source: 'Python теория',
+        meta: ['list', 'tuple', 'изменяемость']
+    },
+    {
+        id: 611,
+        term: 'Вопрос: Что такое *args и **kwargs?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: '*args — произвольное число позиционных аргументов, **kwargs — именованных.',
+        example: 'def func(*args, **kwargs): pass',
+        academic: '*args — кортеж позиционных аргументов, **kwargs — словарь именованных аргументов.',
+        source: 'Python теория',
+        meta: ['args', 'kwargs', 'аргументы']
+    },
+    {
+        id: 612,
+        term: 'Вопрос: Что такое декоратор?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Функция, оборачивающая другую функцию для изменения её поведения.',
+        example: '@decorator\ndef func(): pass',
+        academic: 'Декоратор — функция, принимающая функцию и возвращающая новую. Используется для логирования, кэширования, проверки прав.',
+        source: 'Python теория',
+        meta: ['декоратор', '@']
+    },
+    {
+        id: 613,
+        term: 'Вопрос: Что такое генератор?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Функция с yield, которая возвращает значения по одному, сохраняя состояние.',
+        example: 'def gen(): yield 1',
+        academic: 'Генератор — функция, возвращающая итератор с ленивым вычислением значений. Экономит память.',
+        source: 'Python теория',
+        meta: ['генератор', 'yield']
+    },
+    {
+        id: 614,
+        term: 'Вопрос: Что такое итератор?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Объект с методами __iter__ и __next__, позволяющий проходить по коллекции.',
+        example: 'iterable = [1,2,3]; it = iter(iterable); next(it)',
+        academic: 'Итератор — объект, поддерживающий протокол итерации. Возвращает элементы по одному.',
+        source: 'Python теория',
+        meta: ['итератор', 'iter', 'next']
+    },
+    {
+        id: 615,
+        term: 'Вопрос: Разница между deepcopy и copy?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'copy() — поверхностная копия, deepcopy() — рекурсивное копирование всех вложенных объектов.',
+        example: 'from copy import copy, deepcopy',
+        academic: 'copy — создаёт новый объект, но вложенные объекты копируются по ссылкам. deepcopy — рекурсивно копирует все вложенные объекты.',
+        source: 'Python теория',
+        meta: ['copy', 'deepcopy', 'ссылки']
+    },
+    {
+        id: 616,
+        term: 'Вопрос: Как работает GIL?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'GIL — глобальная блокировка, позволяющая выполнять только один поток байт-кода за раз.',
+        example: 'Влияет на производительность CPU-bound задач, но не на I/O-bound.',
+        academic: 'GIL ограничивает параллелизм потоков в CPython. Для CPU-bound задач используют multiprocessing или asyncio для I/O.',
+        source: 'Python теория',
+        meta: ['GIL', 'потоки']
+    },
+    {
+        id: 617,
+        term: 'Вопрос: Что такое менеджер контекста?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Объект с методами __enter__ и __exit__, используемый с оператором with.',
+        example: 'with open(...) as f: ...',
+        academic: 'Контекстный менеджер гарантирует корректное освобождение ресурсов. Применяется для файлов, соединений, блокировок.',
+        source: 'Python теория',
+        meta: ['with', 'контекст']
+    },
+    {
+        id: 618,
+        term: 'Вопрос: Что такое декоратор @property?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Позволяет обращаться к методу как к атрибуту, обеспечивая геттеры/сеттеры.',
+        example: '@property\ndef x(self): return self._x',
+        academic: '@property — встроенный декоратор, превращающий метод в атрибут. Используется для инкапсуляции.',
+        source: 'Python теория',
+        meta: ['property', 'геттер', 'сеттер']
+    },
+    {
+        id: 619,
+        term: 'Вопрос: Как реализовать singleton в Python?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Паттерн, гарантирующий единственный экземпляр класса. Можно реализовать через метакласс, декоратор или __new__.',
+        example: 'class Singleton: __instance = None; def __new__(cls): ...',
+        academic: 'Singleton — паттерн проектирования, ограничивающий создание одного экземпляра класса. В Python часто реализуют через метакласс.',
+        source: 'Python теория',
+        meta: ['singleton', 'одиночка']
+    },
+    {
+        id: 620,
+        term: 'Вопрос: Чем отличается метод класса от статического?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: '@classmethod принимает cls, @staticmethod не принимает ни cls, ни self.',
+        example: '@classmethod def from_string(cls, str): ...; @staticmethod def helper(): ...',
+        academic: 'classmethod — метод, работающий с классом, а не с экземпляром. staticmethod — обычная функция, помещённая в класс для удобства.',
+        source: 'Python теория',
+        meta: ['classmethod', 'staticmethod']
+    },
+    {
+        id: 621,
+        term: 'Вопрос: Что такое __slots__?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Ограничивает набор атрибутов экземпляра, экономя память.',
+        example: 'class MyClass: __slots__ = ["x", "y"]',
+        academic: '__slots__ — атрибут класса, позволяющий явно указать разрешённые атрибуты. Уменьшает потребление памяти и ускоряет доступ.',
+        source: 'Python теория',
+        meta: ['__slots__', 'память']
+    },
+    {
+        id: 622,
+        term: 'Вопрос: Разница между is и ==?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: '== сравнивает значения, is сравнивает ссылки на объекты.',
+        example: 'a = [1,2]; b = [1,2]; a == b True, a is b False',
+        academic: '== — сравнение по значению, is — сравнение по идентичности (адресу в памяти).',
+        source: 'Python теория',
+        meta: ['==', 'is', 'ссылки']
+    },
+    {
+        id: 623,
+        term: 'Вопрос: Что такое list comprehension?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'green',
+        simple: 'Компактный способ создания списков с помощью цикла и условия.',
+        example: '[x*2 for x in range(5) if x%2==0]',
+        academic: 'list comprehension — синтаксический сахар для создания списков на основе итераций.',
+        source: 'Python теория',
+        meta: ['list comprehension', 'генератор списка']
+    },
+    {
+        id: 624,
+        term: 'Вопрос: Что такое генераторное выражение?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Аналогично list comprehension, но возвращает генератор (ленивый).',
+        example: '(x*2 for x in range(5))',
+        academic: 'Генераторное выражение — ленивый вариант, экономит память.',
+        source: 'Python теория',
+        meta: ['генераторное выражение', 'ленивый']
+    },
+    {
+        id: 625,
+        term: 'Вопрос: Как работают декораторы в Python?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Декоратор — функция, которая оборачивает другую функцию, добавляя поведение.',
+        example: '@decorator\ndef f(): pass',
+        academic: 'Декоратор принимает функцию, возвращает новую функцию. Могут быть параметризованными.',
+        source: 'Python теория',
+        meta: ['декоратор', 'обёртка']
+    },
+    {
+        id: 626,
+        term: 'Вопрос: Что такое итератор и итерируемый объект?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'orange',
+        simple: 'Итерируемый — объект, который можно использовать в for (имеет __iter__). Итератор — объект с __next__, возвращает элементы.',
+        example: 'list, tuple — итерируемые; iter(list) — итератор.',
+        academic: 'Итерируемый объект возвращает итератор через __iter__(). Итератор имеет __next__() и выбрасывает StopIteration.',
+        source: 'Python теория',
+        meta: ['итерируемый', 'итератор', '__iter__', '__next__']
+    },
+    {
+        id: 627,
+        term: 'Вопрос: Что такое замыкание (closure)?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'teal',
+        simple: 'Функция, которая запоминает окружение, в котором была создана, даже после завершения внешней функции.',
+        example: 'def outer(x): def inner(y): return x+y; return inner',
+        academic: 'Замыкание — функция, имеющая доступ к переменным из внешней области видимости даже после возврата внешней функции.',
+        source: 'Python теория',
+        meta: ['замыкание', 'closure']
+    },
+    {
+        id: 628,
+        term: 'Вопрос: Что такое рекурсия?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'blue',
+        simple: 'Функция, вызывающая сама себя.',
+        example: 'def fact(n): return 1 if n==0 else n*fact(n-1)',
+        academic: 'Рекурсия — метод решения задач, когда функция вызывает саму себя. Важно задавать базовый случай.',
+        source: 'Python теория',
+        meta: ['рекурсия', 'базовый случай']
+    },
+    {
+        id: 629,
+        term: 'Вопрос: Как управлять памятью в Python?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'purple',
+        simple: 'Python автоматически управляет памятью с помощью сборщика мусора (reference counting + циклы).',
+        example: 'del x, gc.collect() для принудительной сборки.',
+        academic: 'Память управляется счётчиком ссылок и сборщиком мусора для циклических ссылок. Модуль gc для управления.',
+        source: 'Python теория',
+        meta: ['память', 'сборщик мусора']
+    },
+    {
+        id: 630,
+        term: 'Вопрос: Что такое метаклассы?',
+        category: 'python_interview',
+        tag: 'Собеседование',
+        tagColor: 'red',
+        simple: 'Классы, создающие другие классы. type — встроенный метакласс.',
+        example: 'class Meta(type): ...; class MyClass(metaclass=Meta): ...',
+        academic: 'Метаклассы определяют поведение классов. Позволяют изменять создание классов.',
+        source: 'Python теория',
+        meta: ['метакласс', 'type']
+    },
+        // ============================================================
+    //  ДОПОЛНИТЕЛЬНЫЕ ТЕРМИНЫ SCRUM (ID 800-820)
+    // ============================================================
+    {
+        id: 800,
+        term: 'Backlog Refinement',
+        category: 'scrum',
+        tag: 'Событие',
+        tagColor: 'blue',
+        simple: 'Уточнение и оценка задач из Product Backlog перед спринтом. Команда уточняет требования и оценивает сложность.',
+        example: 'Команда собирается раз в неделю, чтобы пересмотреть приоритеты, уточнить детали и оценить задачи в Story Points с помощью покер-планирования.',
+        academic: 'Backlog Refinement (или Grooming) — регулярное событие, на котором Product Owner и команда уточняют требования, добавляют детали, переоценивают и переприоритизируют элементы Product Backlog. Цель — подготовить бэклог для следующего спринта.',
+        source: 'Scrum.docx',
+        meta: ['Grooming', 'Оценка']
+    },
+    {
+        id: 801,
+        term: 'Bug Triage',
+        category: 'scrum',
+        tag: 'Событие',
+        tagColor: 'red',
+        simple: 'Встреча для приоритизации найденных багов. Решают, какие баги исправлять в первую очередь.',
+        example: 'Команда собирается, чтобы отсортировать баги по критичности: критичные блокирующие баги — в работу, мелкие — в бэклог.',
+        academic: 'Bug Triage — процесс оценки и расстановки приоритетов для дефектов. Команда определяет серьёзность (Severity) и приоритет (Priority) каждого бага, решает, нужно ли его исправлять в текущем спринте или можно отложить.',
+        source: 'Scrum.docx',
+        meta: ['Приоритизация', 'Баги']
+    },
+    {
+        id: 802,
+        term: 'Definition of Done (DoD)',
+        category: 'scrum',
+        tag: 'Артефакт',
+        tagColor: 'green',
+        simple: 'Набор критериев, которым должна соответствовать задача, чтобы считаться завершённой.',
+        example: 'DoD для задачи: код написан, покрыт тестами, прошёл ревью, протестирован, задокументирован. Только тогда задача считается Done.',
+        academic: 'Definition of Done (DoD) — это чётко определённый список условий, которым должен удовлетворять инкремент или задача, чтобы считаться завершёнными. DoD гарантирует качество и единообразие работы команды. Включает критерии: код, тесты, ревью, документация, демо.',
+        source: 'Scrum.docx',
+        meta: ['DoD', 'Готово']
+    },
+    {
+        id: 803,
+        term: 'Sprint Goal',
+        category: 'scrum',
+        tag: 'Артефакт',
+        tagColor: 'purple',
+        simple: 'Краткое описание цели спринта. Отвечает на вопрос "зачем мы делаем этот спринт?".',
+        example: 'Sprint Goal: "Сделать MVP корзины с возможностью быстрого заказа". Команда фокусируется на этой цели.',
+        academic: 'Sprint Goal — это согласованная цель спринта, которая даёт команде направление и смысл. Она не привязана к конкретным задачам, а описывает бизнес-ценность, которую команда планирует создать. Если что-то меняется, команда может пересмотреть задачи, но цель остаётся.',
+        source: 'Scrum.docx',
+        meta: ['Цель', 'Спринт']
+    },
+    {
+        id: 804,
+        term: 'Backlog Grooming (устаревшее)',
+        category: 'scrum',
+        tag: 'Событие',
+        tagColor: 'orange',
+        simple: 'Старое название для Backlog Refinement. Процесс подготовки бэклога к спринту.',
+        example: 'Ранее называлось Grooming (вылизывание), теперь чаще используется Refinement.',
+        academic: 'Backlog Grooming — устаревший термин, заменённый на Backlog Refinement. Означает ту же активность: уточнение, оценка и переприоритизация элементов Product Backlog.',
+        source: 'Scrum.docx',
+        meta: ['Grooming', 'Refinement']
+    },
+    {
+        id: 805,
+        term: 'Разница между Sprint Review и Retrospective',
+        category: 'scrum',
+        tag: 'Сравнение',
+        tagColor: 'teal',
+        simple: 'Sprint Review — демо продукта заказчику. Retrospective — обсуждение процесса внутри команды.',
+        example: 'Review: команда показывает работающий инкремент. Retrospective: команда обсуждает, как улучшить процессы.',
+        academic: 'Sprint Review — фокус на продукте: демонстрация результата заказчику, сбор обратной связи. Retrospective — фокус на процессе: анализ работы команды, поиск улучшений. Review — про "что сделали", Retrospective — про "как работали".',
+        source: 'Scrum.docx',
+        meta: ['Review', 'Retro']
     }
 ];
+
 
 // ============================================================
 //  ЛОГИКА РЕНДЕРИНГА, ФИЛЬТРАЦИИ И ПОИСКА
@@ -2575,20 +5778,31 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// Определение языка для подсветки
-function detectLanguage(text) {
-    if (!text) return 'plaintext';
-    const trimmed = text.trim();
-    if (/<[a-z][\s\S]*>/i.test(trimmed)) return 'xml';
-    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-        try { JSON.parse(trimmed); return 'json'; } catch(e) {}
+// ===== ФУНКЦИЯ ДЛЯ УДАЛЕНИЯ ДУБЛИКАТОВ =====
+function removeDuplicates(data) {
+    const seen = new Set();
+    const unique = [];
+    
+    data.forEach(item => {
+        const key = `${item.term}|${item.category}`;
+        if (!seen.has(key)) {
+            seen.add(key);
+            unique.push(item);
+        }
+    });
+    
+    if (unique.length < data.length) {
+        console.warn(`⚠️ Найдено и удалено ${data.length - unique.length} дублирующихся записей`);
     }
-    return 'plaintext';
+    
+    return unique;
 }
 
 function renderCards(data) {
+    const uniqueData = removeDuplicates(data);
+    
     cardsGrid.innerHTML = '';
-    data.forEach(item => {
+    uniqueData.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
         card.dataset.id = item.id;
@@ -2598,7 +5812,6 @@ function renderCards(data) {
 
         const metaHtml = item.meta ? item.meta.map(m => `<span class="meta">${escapeHtml(m)}</span>`).join('') : '';
 
-        // Обработка academic - простой текст без ul/li
         let academicText = '';
         if (Array.isArray(item.academic)) {
             academicText = item.academic.map(point => `• ${escapeHtml(point)}`).join('<br>');
@@ -2606,7 +5819,6 @@ function renderCards(data) {
             academicText = escapeHtml(item.academic || '');
         }
 
-        // Простой пример без pre/code (чтобы не было лишней вложенности)
         const exampleEscaped = escapeHtml(item.example || '');
         const exampleWithBreaks = exampleEscaped.replace(/\n/g, '<br>');
 
@@ -2632,7 +5844,6 @@ function renderCards(data) {
             <div class="click-hint">Кликните, чтобы переключить определение</div>
         `;
 
-        // ===== ЛОГИКА КЛИКА =====
         let clickCount = 0;
 
         card.addEventListener('click', function(e) {
@@ -2668,7 +5879,7 @@ function renderCards(data) {
         cardsGrid.appendChild(card);
     });
 
-    totalCountEl.textContent = data.length;
+    totalCountEl.textContent = uniqueData.length;
     updateVisibleCount();
 }
 
@@ -2697,7 +5908,138 @@ function updateVisibleCount() {
     visibleCountEl.textContent = visible;
 }
 
-// ===== СОБЫТИЯ =====
+// ===== ФУНКЦИЯ ДЛЯ ЗАКРЫТИЯ ВСЕХ ДРОПДАУНОВ =====
+function closeAllDropdowns() {
+    document.querySelectorAll('.dropdown-toggle.open').forEach(el => {
+        el.classList.remove('open');
+    });
+    document.querySelectorAll('.dropdown-menu.open').forEach(el => {
+        el.classList.remove('open');
+    });
+}
+
+// ===== УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ ДРОПДАУНОВ =====
+function setupDropdown(toggleId, menuId, filterPrefix) {
+    const toggle = document.getElementById(toggleId);
+    const menu = document.getElementById(menuId);
+    
+    if (!toggle || !menu) return;
+
+    // Клик по кнопке-переключателю
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        document.querySelectorAll('.dropdown-toggle.open').forEach(el => {
+            if (el !== this) {
+                el.classList.remove('open');
+            }
+        });
+        document.querySelectorAll('.dropdown-menu.open').forEach(el => {
+            if (el !== menu) {
+                el.classList.remove('open');
+            }
+        });
+        
+        this.classList.toggle('open');
+        menu.classList.toggle('open');
+    });
+
+    // Клик по пунктам меню
+    const items = menu.querySelectorAll('.dropdown-item');
+    items.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            const filter = this.dataset.filter;
+
+            filterBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
+
+            this.classList.add('active');
+
+            currentFilter = filter;
+            filterAndSearch();
+
+            closeAllDropdowns();
+
+            // Обновляем текст кнопки этого дропдауна
+            const label = this.textContent.trim();
+            toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
+
+            // Обновляем ВСЕ дропдауны (сбрасываем те, которые не соответствуют)
+            updateMainDropdown(currentFilter);
+            updateSqlDropdown(currentFilter);
+            updatePythonDropdown(currentFilter);
+
+            if (window.innerWidth <= 768) {
+                burgerBtn.classList.remove('active');
+                filterGroup.classList.remove('open');
+            }
+        });
+    });
+
+    // Возвращаем функцию для обновления текста
+    return function updateLabel(filter) {
+        const activeItem = menu.querySelector('.dropdown-item.active');
+        if (activeItem) {
+            const label = activeItem.textContent.trim();
+            toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
+        } else {
+            const activeFilter = document.querySelector('.filter-btn.active');
+            if (activeFilter && activeFilter.dataset.filter.startsWith(filterPrefix)) {
+                const matchingItem = menu.querySelector(`.dropdown-item[data-filter="${activeFilter.dataset.filter}"]`);
+                if (matchingItem) {
+                    const label = matchingItem.textContent.trim();
+                    toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
+                    matchingItem.classList.add('active');
+                    return;
+                }
+            }
+            const defaultLabel = toggle.dataset.defaultLabel || toggle.textContent.replace('▼', '').trim();
+            toggle.innerHTML = `${defaultLabel} <span class="arrow">▼</span>`;
+        }
+    };
+}
+
+// ===== НАСТРОЙКА ВСЕХ ДРОПДАУНОВ =====
+const updateMainDropdown = setupDropdown('dropdownToggle', 'dropdownMenu', '');
+const updateSqlDropdown = setupDropdown('dropdownToggleSql', 'dropdownMenuSql', 'sql_');
+const updatePythonDropdown = setupDropdown('dropdownTogglePython', 'dropdownMenuPython', 'python_');
+
+// Сохраняем дефолтные заголовки
+document.getElementById('dropdownToggle').dataset.defaultLabel = 'Схема тестирования';
+document.getElementById('dropdownToggleSql').dataset.defaultLabel = 'SQL';
+document.getElementById('dropdownTogglePython').dataset.defaultLabel = 'Python';
+
+// ===== ОБЫЧНЫЕ КНОПКИ (НЕ ДРОПДАУН) =====
+document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        const filter = this.dataset.filter;
+        
+        filterBtns.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
+        
+        this.classList.add('active');
+        currentFilter = filter;
+        filterAndSearch();
+        
+        closeAllDropdowns();
+        
+        // Обновляем заголовки дропдаунов
+        updateMainDropdown(currentFilter);
+        updateSqlDropdown(currentFilter);
+        updatePythonDropdown(currentFilter);
+        
+        if (window.innerWidth <= 768) {
+            burgerBtn.classList.remove('active');
+            filterGroup.classList.remove('open');
+        }
+    });
+});
+
+// ===== СОБЫТИЯ ПОИСКА =====
 searchInput.addEventListener('input', function() {
     currentSearch = this.value;
     clearBtn.classList.toggle('visible', this.value.length > 0);
@@ -2712,73 +6054,27 @@ clearBtn.addEventListener('click', function() {
     searchInput.focus();
 });
 
-
-// ===== ВЫПАДАЮЩИЙ СПИСОК =====
-const dropdownToggle = document.getElementById('dropdownToggle');
-const dropdownMenu = document.getElementById('dropdownMenu');
-const dropdownItems = document.querySelectorAll('.dropdown-item');
-
-// Клик по кнопке "Схема тестирования" - ТОЛЬКО открываем/закрываем список, НЕ меняем фильтр!
-dropdownToggle.addEventListener('click', function(e) {
-    e.stopPropagation();
-    this.classList.toggle('open');
-    dropdownMenu.classList.toggle('open');
-});
-
-// Клик по пункту меню - ПРИМЕНЯЕМ фильтр
-dropdownItems.forEach(item => {
-    item.addEventListener('click', function(e) {
-        e.stopPropagation();
-        
-        const filter = this.dataset.filter;
-
-        // Убираем активные классы у всех кнопок фильтров
-        filterBtns.forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-
-        // Активируем выбранный пункт
-        this.classList.add('active');
-
-        // Применяем фильтр ТОЛЬКО при выборе пункта
-        currentFilter = filter;
-        filterAndSearch();
-
-        // Закрываем дропдаун
-        dropdownToggle.classList.remove('open');
-        dropdownMenu.classList.remove('open');
-
-        // Обновляем текст кнопки
-        const label = this.textContent.trim();
-        dropdownToggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-
-        // На мобильных закрываем бургер
-        if (window.innerWidth <= 768) {
-            burgerBtn.classList.remove('active');
-            filterGroup.classList.remove('open');
-        }
+// ============================================================
+//  УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ СХЕМ
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtns = document.querySelectorAll('.toggle-schema-btn');
+    
+    function toggleSchema(btn) {
+        const targetId = btn.dataset.target;
+        const targetBlock = document.getElementById(targetId);
+        if (!targetBlock) return;
+        targetBlock.classList.toggle('hidden');
+        btn.classList.toggle('active');
+    }
+    
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleSchema(this);
+        });
     });
 });
-
-// ===== ФУНКЦИЯ ОБНОВЛЕНИЯ ТЕКСТА ДРОПДАУНА =====
-function updateDropdownLabel(filter) {
-    const activeItem = document.querySelector('.dropdown-item.active');
-    if (activeItem) {
-        const label = activeItem.textContent.trim();
-        dropdownToggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-    } else {
-        const activeFilter = document.querySelector('.filter-btn.active');
-        if (activeFilter && activeFilter.dataset.filter !== 'all' && activeFilter.dataset.filter !== 'theory') {
-            const matchingItem = document.querySelector(`.dropdown-item[data-filter="${activeFilter.dataset.filter}"]`);
-            if (matchingItem) {
-                const label = matchingItem.textContent.trim();
-                dropdownToggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-                matchingItem.classList.add('active');
-                return;
-            }
-        }
-        dropdownToggle.innerHTML = `Схема тестирования <span class="arrow">▼</span>`;
-    }
-}
 
 // ===== ГОРЯЧИЕ КЛАВИШИ =====
 document.addEventListener('keydown', function(e) {
@@ -2795,98 +6091,97 @@ document.addEventListener('keydown', function(e) {
             filterAndSearch();
             searchInput.blur();
         }
+        closeAllDropdowns();
     }
 });
 
 // ============================================================
-//  БУРГЕР-МЕНЮ ДЛЯ МОБИЛЬНЫХ
+//  БУРГЕР-МЕНЮ
 // ============================================================
 const burgerBtn = document.getElementById('burgerBtn');
 const filterGroup = document.getElementById('filterGroup');
 
-// Открытие/закрытие бургер-меню
 burgerBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     this.classList.toggle('active');
     filterGroup.classList.toggle('open');
 });
 
-// При клике на пункт дропдауна внутри бургера
-dropdownItems.forEach(item => {
-    item.addEventListener('click', function(e) {
-        e.stopPropagation();
-        
-        const filter = this.dataset.filter;
-
-        filterBtns.forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-
-        this.classList.add('active');
-
-        currentFilter = filter;
-        filterAndSearch();
-
-        dropdownToggle.classList.remove('open');
-        dropdownMenu.classList.remove('open');
-
-        const label = this.textContent.trim();
-        dropdownToggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-
-        if (window.innerWidth <= 768) {
-            burgerBtn.classList.remove('active');
-            filterGroup.classList.remove('open');
-        }
-    });
-});
-
-// При клике на обычные фильтры (не дропдаун)
-document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        
-        const filter = this.dataset.filter;
-        
-        filterBtns.forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-        
-        this.classList.add('active');
-        currentFilter = filter;
-        filterAndSearch();
-        
-        if (window.innerWidth <= 768) {
-            burgerBtn.classList.remove('active');
-            filterGroup.classList.remove('open');
-        }
-    });
-});
-
-// Закрываем бургер-меню при клике вне его
 document.addEventListener('click', function(e) {
     if (window.innerWidth <= 768) {
         const isBurger = e.target.closest('.burger-btn');
         const isFilter = e.target.closest('.filter-group');
-        
-        if (!isBurger && !isFilter) {
+        const isDropdown = e.target.closest('.dropdown');
+        if (!isBurger && !isFilter && !isDropdown) {
             burgerBtn.classList.remove('active');
             filterGroup.classList.remove('open');
-            dropdownToggle.classList.remove('open');
-            dropdownMenu.classList.remove('open');
+            closeAllDropdowns();
+        }
+    } else {
+        const isDropdown = e.target.closest('.dropdown');
+        if (!isDropdown) {
+            closeAllDropdowns();
         }
     }
 });
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
-function initApp(data) {
-    renderCards(data);
-    updateDropdownLabel(currentFilter);
-    console.log('Тестирование ПО — полная схема загружена!');
-    console.log('Всего терминов:', data.length);
-    console.log('Клик по карточке переключает "Просто" ↔ "Академическое"');
+// ===== КНОПКА СБРОСА ФИЛЬТРОВ =====
+const resetBtn = document.getElementById('resetFiltersBtn');
+if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+        currentFilter = 'all';
+        searchInput.value = '';
+        currentSearch = '';
+        clearBtn.classList.remove('visible');
+        
+        filterBtns.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
+        
+        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allBtn) allBtn.classList.add('active');
+        
+        document.getElementById('dropdownToggle').innerHTML = 'Схема тестирования <span class="arrow">▼</span>';
+        document.getElementById('dropdownToggleSql').innerHTML = 'SQL <span class="arrow">▼</span>';
+        document.getElementById('dropdownTogglePython').innerHTML = 'Python <span class="arrow">▼</span>';
+        
+        closeAllDropdowns();
+        if (window.innerWidth <= 768) {
+            burgerBtn.classList.remove('active');
+            filterGroup.classList.remove('open');
+        }
+        
+        filterAndSearch();
+        updateVisibleCount();
+    });
 }
 
-// Автоматическая инициализация
-initApp(TERMS_DATA);
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+function initApp(data) {
+    if (!data || data.length === 0) {
+        console.error('❌ Данные не загружены!');
+        return;
+    }
+    
+    const uniqueData = removeDuplicates(data);
+    renderCards(uniqueData);
+    
+    setTimeout(() => {
+        updateMainDropdown(currentFilter);
+        updateSqlDropdown(currentFilter);
+        updatePythonDropdown(currentFilter);
+    }, 50);
+    
+    console.log('✅ Тестирование ПО — полная схема загружена!');
+    console.log(`📊 Всего терминов: ${uniqueData.length} (удалено дубликатов: ${data.length - uniqueData.length})`);
+}
+
+if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
+    initApp(TERMS_DATA);
+} else {
+    console.error('❌ TERMS_DATA не найден!');
+}
 
 window.renderCards = renderCards;
 window.filterAndSearch = filterAndSearch;
 window.initApp = initApp;
+window.closeAllDropdowns = closeAllDropdowns;
