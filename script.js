@@ -1,3 +1,11 @@
+/**
+ * ============================================================
+ *  ТЕСТИРОВАНИЕ ПО — Полные данные (219 терминов)
+ *  Все термины с подробными описаниями и примерами
+ *  • Клик по карточке переключает определение (Просто ↔ Академическое)
+ *  • Для JSON и XML используется подсветка синтаксиса
+ * ============================================================
+ */
 
 const TERMS_DATA = [
     // ============================================================
@@ -5758,7 +5766,7 @@ const TERMS_DATA = [
 
 
 // ============================================================
-//  ЛОГИКА РЕНДЕРИНГА, ФИЛЬТРАЦИИ И ПОИСКА
+//  ЛОГИКА РЕНДЕРИНГА, ФИЛЬТРАЦИИ, СВАЙПА И СТАТИСТИКИ
 // ============================================================
 
 const cardsGrid = document.getElementById('cardsGrid');
@@ -5767,11 +5775,141 @@ const clearBtn = document.getElementById('clearSearch');
 const filterBtns = document.querySelectorAll('.filter-btn');
 const visibleCountEl = document.getElementById('visibleCount');
 const totalCountEl = document.getElementById('totalCount');
+const swipeSummary = document.getElementById('swipeSummary');
+const knownListEl = document.getElementById('knownList');
+const unknownListEl = document.getElementById('unknownList');
+const resetCurrentSectionBtn = document.getElementById('resetCurrentSectionBtn');
 
 let currentFilter = 'all';
 let currentSearch = '';
+let globalProgressWrapper = null;
 
-// Функция для экранирования HTML
+// ===== ХРАНИЛИЩЕ ИЗУЧЕННЫХ КАРТОЧЕК =====
+let learnedCards = JSON.parse(localStorage.getItem('myLearnedCards')) || {};
+
+// ===== СООТВЕТСТВИЕ КАТЕГОРИЙ ИХ НАЗВАНИЯМ В МЕНЮ =====
+const FILTER_LABELS = {
+    'all': 'Все разделы',
+    'theory': 'Теория',
+    'formal': 'Формализация',
+    'scenario': 'Сценарии',
+    'methods': 'Методы',
+    'levels': 'Уровни',
+    'functional': 'Функциональное',
+    'nonfunctional': 'Нефункциональное',
+    'documentation': 'Тест. документация',
+    'api': 'API',
+    'web': 'Веб-приложения',
+    'testdesign': 'Тест-дизайн',
+    'kanban': 'Kanban',
+    'scrum': 'Scrum',
+    'requirements': 'Требования',
+    'sql_basics': 'Основы SQL',
+    'sql_filter': 'Фильтрация и сортировка',
+    'sql_aggregate': 'Агрегация (GROUP BY, HAVING)',
+    'sql_join': 'JOIN',
+    'sql_subquery': 'Подзапросы',
+    'sql_window': 'Оконные функции',
+    'sql_ddl': 'DDL (CREATE, ALTER, DROP)',
+    'sql_dml': 'DML (INSERT, UPDATE, DELETE)',
+    'sql_null': 'NULL',
+    'sql_view': 'Представления (VIEW)',
+    'sql_index': 'Индексы и оптимизация',
+    'sql_interview': 'Вопросы для собеседования',
+    'python_variables': 'Переменные и типы данных',
+    'python_structures': 'Структуры данных',
+    'python_io': 'Ввод и вывод данных',
+    'python_conditions': 'Условные операторы',
+    'python_loops': 'Циклы',
+    'python_functions': 'Функции',
+    'python_algorithms': 'Структуры данных и алгоритмы',
+    'python_files': 'Работа с файлами',
+    'python_requests': 'Модуль requests',
+    'python_pandas': 'Модуль pandas',
+    'python_db': 'Работа с БД',
+    'python_interview': 'Вопросы для собеседования'
+};
+
+// ===== СОЗДАНИЕ ПРОГРЕСС-БАРА В ПАНЕЛИ УПРАВЛЕНИЯ =====
+const controls = document.querySelector('.controls');
+let progressWrapper = null;
+
+function createProgressBar() {
+    // Локальный прогресс (по текущему фильтру)
+    if (!progressWrapper) {
+        progressWrapper = document.createElement('div');
+        progressWrapper.className = 'progress-wrapper';
+        progressWrapper.innerHTML = `
+            <span class="progress-text">0%</span>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: 0%;"></div>
+            </div>
+        `;
+        const statsEl = document.querySelector('.controls .stats');
+        if (statsEl) {
+            statsEl.after(progressWrapper);
+        } else {
+            controls.appendChild(progressWrapper);
+        }
+    }
+
+    // Глобальный прогресс (по всем терминам)
+    if (!globalProgressWrapper) {
+        globalProgressWrapper = document.createElement('div');
+        globalProgressWrapper.className = 'progress-wrapper global-progress';
+        globalProgressWrapper.innerHTML = `
+            <span class="progress-text">Общий: 0%</span>
+            <div class="progress-track">
+                <div class="progress-fill" style="width: 0%;"></div>
+            </div>
+        `;
+        // Вставляем после локального
+        if (progressWrapper) {
+            progressWrapper.after(globalProgressWrapper);
+        } else {
+            controls.appendChild(globalProgressWrapper);
+        }
+    }
+}
+
+function updateGlobalProgress() {
+    const allTerms = removeDuplicates(TERMS_DATA);
+    let total = allTerms.length;
+    let known = 0;
+    allTerms.forEach(item => {
+        const status = learnedCards[item.id];
+        if (status && status.known) known++;
+    });
+    const percent = total > 0 ? (known / total) * 100 : 0;
+    if (globalProgressWrapper) {
+        const fill = globalProgressWrapper.querySelector('.progress-fill');
+        const text = globalProgressWrapper.querySelector('.progress-text');
+        if (fill && text) {
+            fill.style.width = Math.round(percent) + '%';
+            text.textContent = `Общий: ${Math.round(percent)}% (${known}/${total})`;
+        }
+    }
+}
+
+function updateProgressBar(percent, known, unknown, total) {
+    if (!progressWrapper) createProgressBar();
+    const fill = progressWrapper.querySelector('.progress-fill');
+    const text = progressWrapper.querySelector('.progress-text');
+    if (!fill || !text) return;
+
+    if (currentFilter === 'all' || total === 0) {
+        progressWrapper.style.display = 'none';
+        return;
+    }
+    progressWrapper.style.display = 'flex';
+
+    const progress = Math.min(100, Math.max(0, percent));
+    fill.style.width = progress + '%';
+    text.textContent = Math.round(progress) + '%';
+    fill.className = 'progress-fill';
+}
+
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -5779,11 +5917,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ===== ФУНКЦИЯ ДЛЯ УДАЛЕНИЯ ДУБЛИКАТОВ =====
 function removeDuplicates(data) {
     const seen = new Set();
     const unique = [];
-    
     data.forEach(item => {
         const key = `${item.term}|${item.category}`;
         if (!seen.has(key)) {
@@ -5791,29 +5927,198 @@ function removeDuplicates(data) {
             unique.push(item);
         }
     });
-    
     if (unique.length < data.length) {
         console.warn(`⚠️ Найдено и удалено ${data.length - unique.length} дублирующихся записей`);
     }
-    
     return unique;
 }
 
+function getTermsForCurrentFilter() {
+    const uniqueData = removeDuplicates(TERMS_DATA);
+    if (currentFilter === 'all') return uniqueData;
+    return uniqueData.filter(item => item.category === currentFilter);
+}
+
+function isCurrentFilterComplete() {
+    if (currentFilter === 'all') return false;
+    const terms = getTermsForCurrentFilter();
+    if (terms.length === 0) return false;
+    return terms.every(item => learnedCards[item.id] !== undefined);
+}
+
+function collectStatsForCurrentFilter() {
+    if (currentFilter === 'all') {
+        return { total: 0, known: 0, unknown: 0, knownTerms: [], unknownTerms: [] };
+    }
+    const terms = getTermsForCurrentFilter();
+    const stats = {
+        total: terms.length,
+        known: 0,
+        unknown: 0,
+        knownTerms: [],
+        unknownTerms: []
+    };
+
+    terms.forEach(item => {
+        const status = learnedCards[item.id];
+        if (status) {
+            if (status.known) {
+                stats.known++;
+                stats.knownTerms.push(item.term);
+            } else {
+                stats.unknown++;
+                stats.unknownTerms.push(item.term);
+            }
+        } else {
+            stats.unknown++;
+            stats.unknownTerms.push(item.term);
+        }
+    });
+
+    return stats;
+}
+
+function renderSummaryForCurrentFilter() {
+    if (currentFilter === 'all') {
+        swipeSummary.style.display = 'none';
+        return;
+    }
+    const stats = collectStatsForCurrentFilter();
+    const filterLabel = FILTER_LABELS[currentFilter] || currentFilter;
+
+    // Заголовок
+    const header = document.querySelector('#swipeSummary h3');
+    if (header) {
+        header.textContent = `Итоги по разделу «${filterLabel}»`;
+    }
+
+    // Бейдж
+    const badge = document.querySelector('.summary-badge');
+    if (badge) {
+        badge.textContent = `${stats.total} терминов`;
+    }
+
+    // Общее количество
+    const total = stats.total;
+    const known = stats.known;
+    const unknown = stats.unknown;
+    const remaining = total - known - unknown;
+    const percent = total > 0 ? Math.round((known / total) * 100) : 0;
+
+    // Прогресс-бар внутри итогового блока
+    const progressBar = document.querySelector('.summary-progress-bar');
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
+    }
+
+    // Карточки статистики
+    const statTotal = document.getElementById('statTotal');
+    const statKnown = document.getElementById('statKnown');
+    const statUnknown = document.getElementById('statUnknown');
+    const statRemaining = document.getElementById('statRemaining');
+    if (statTotal) statTotal.textContent = total;
+    if (statKnown) statKnown.textContent = known;
+    if (statUnknown) statUnknown.textContent = unknown;
+    if (statRemaining) statRemaining.textContent = remaining;
+
+    // Списки терминов
+    if (knownListEl) {
+        let html = `<h4>✅ Знаю (${known})</h4>`;
+        if (known > 0) {
+            html += `<ul>${stats.knownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+        } else {
+            html += `<p style="color: #888;">Нет выученных терминов</p>`;
+        }
+        knownListEl.innerHTML = html;
+    }
+
+    if (unknownListEl) {
+        let html = `<h4>❌ Нужно повторить (${unknown})</h4>`;
+        if (unknown > 0) {
+            html += `<ul>${stats.unknownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+        } else {
+            html += `<p style="color: #888;">Все термины выучены! 🎉</p>`;
+        }
+        unknownListEl.innerHTML = html;
+    }
+
+    swipeSummary.style.display = 'block';
+}
+
+function updateStudyProgress() {
+    const terms = getTermsForCurrentFilter();
+    let total = terms.length;
+    let known = 0, unknown = 0;
+
+    terms.forEach(item => {
+        const status = learnedCards[item.id];
+        if (status) {
+            if (status.known) known++;
+            else unknown++;
+        }
+    });
+
+    const remaining = total - (known + unknown);
+    const percent = total > 0 ? (known / total) * 100 : 0;
+
+    // Обновляем маленькую статистику в тексте
+    let statsEl = document.querySelector('.study-stats');
+    if (!statsEl) {
+        const statsBlock = document.querySelector('.controls .stats');
+        if (statsBlock) {
+            statsEl = document.createElement('span');
+            statsEl.className = 'study-stats';
+            statsBlock.after(statsEl);
+        }
+    }
+    if (statsEl) {
+        const topicName = FILTER_LABELS[currentFilter] || currentFilter;
+        statsEl.innerHTML = `<strong>${topicName}</strong>: Всего: ${total} | ✅ Знаю: ${known} | ❌ Не знаю: ${unknown} | 📖 Осталось: ${remaining}`;
+    }
+
+    updateProgressBar(percent, known, unknown, total);
+    updateGlobalProgress();
+}
+
+function refreshSummary() {
+    if (isCurrentFilterComplete()) {
+        renderSummaryForCurrentFilter();
+    } else {
+        swipeSummary.style.display = 'none';
+    }
+    updateStudyProgress();
+}
+
+function resetCurrentFilterStatsAndRefresh() {
+    if (currentFilter === 'all') return;
+    const terms = getTermsForCurrentFilter();
+    terms.forEach(item => {
+        delete learnedCards[item.id];
+    });
+    localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
+    swipeSummary.style.display = 'none';
+    renderCards(TERMS_DATA);
+    filterAndSearch();
+}
+
+// ===== РЕНДЕРИНГ КАРТОЧЕК =====
 function renderCards(data) {
     const uniqueData = removeDuplicates(data);
-    
     cardsGrid.innerHTML = '';
+    
     uniqueData.forEach(item => {
         const card = document.createElement('div');
         card.className = 'card';
         card.dataset.id = item.id;
         card.dataset.category = item.category;
         card.dataset.term = item.term.toLowerCase();
-        card.dataset.mode = 'simple';
+
+        if (learnedCards[item.id]) {
+            card.classList.add('hidden');
+        }
 
         const metaHtml = item.meta ? item.meta.map(m => `<span class="meta">${escapeHtml(m)}</span>`).join('') : '';
 
-        // ===== БЛОК ДЛЯ ОПРЕДЕЛЕНИЯ =====
         let academicText = '';
         if (Array.isArray(item.academic)) {
             academicText = `<ul>${item.academic.map(point => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`;
@@ -5821,13 +6126,11 @@ function renderCards(data) {
             academicText = item.academic || '';
         }
 
-        // ===== БЛОК ДЛЯ ПРИМЕРА =====
         let exampleHtml = item.example || '';
         if (!exampleHtml.includes('<ul') && !exampleHtml.includes('<ol')) {
             exampleHtml = exampleHtml.replace(/\n/g, '<br>');
         }
 
-        // ===== СБОРКА КАРТОЧКИ (ДОБАВЛЕНА КНОПКА РАСКРЫТИЯ) =====
         card.innerHTML = `
             <div class="card-header">
                 <span class="term">${escapeHtml(item.term)}</span>
@@ -5854,10 +6157,9 @@ function renderCards(data) {
             </div>
         `;
 
-        // ===== ДОБАВЛЯЕМ КАРТОЧКУ В СПИСОК =====
         cardsGrid.appendChild(card);
 
-        // ===== УСТАНАВЛИВАЕМ СТАРТОВЫЙ ВИД (Сразу Определение) =====
+        // Стартовый вид
         card.querySelector('.definition').style.display = 'none';
         card.querySelector('.academic-definition').style.display = 'block';
         const badge = card.querySelector('.mode-badge');
@@ -5867,9 +6169,8 @@ function renderCards(data) {
         if (metaTags) metaTags.style.display = 'none';
         card.classList.add('mode-only-definition');
 
-        // ===== ЛОГИКА ПЕРЕКЛЮЧЕНИЯ ПО КЛИКУ (ТОЛЬКО 2 СОСТОЯНИЯ) =====
+        // Переключение по клику (Определение ↔ Просто)
         let clickCount = 0;
-
         card.addEventListener('click', function(e) {
             if (e.target.closest('.filter-btn') || e.target.closest('.expand-btn')) return;
 
@@ -5879,9 +6180,7 @@ function renderCards(data) {
             const metaTags = this.querySelector('.meta-tags');
 
             clickCount++;
-
             if (clickCount === 1) {
-                // 1-й клик: Показываем Обобщённое + Пример
                 simpleDef.style.display = 'block';
                 academicDef.style.display = 'none';
                 badge.textContent = 'Просто';
@@ -5890,58 +6189,117 @@ function renderCards(data) {
                 if (metaTags) metaTags.style.display = 'flex';
                 this.classList.remove('mode-only-definition');
             } else if (clickCount === 2) {
-                // 2-й клик: Возвращаем Определение
                 simpleDef.style.display = 'none';
                 academicDef.style.display = 'block';
-                badge.textContent = 'Академическое';
+                badge.textContent = 'Определение';
                 badge.style.background = '#1d3b5c';
                 badge.style.color = 'white';
                 if (metaTags) metaTags.style.display = 'none';
                 this.classList.add('mode-only-definition');
-                
-                clickCount = 0; // Сбрасываем счетчик для бесконечного цикла
+                clickCount = 0;
             }
         });
 
-        // ===== ЛОГИКА РАСКРЫТИЯ КАРТОЧКИ (новое) =====
+        // Кнопка "Показать полностью / Свернуть"
         const expandBtn = card.querySelector('.expand-btn');
-        if (expandBtn) {
-            expandBtn.addEventListener('click', function(e) {
-                e.stopPropagation(); // Важно: чтобы клик по кнопке не переключал определение
-                const currentCard = this.closest('.card');
-                currentCard.classList.toggle('expanded');
+        expandBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const currentCard = this.closest('.card');
+            currentCard.classList.toggle('expanded');
+            this.textContent = currentCard.classList.contains('expanded') ? 'Свернуть ▲' : 'Показать полностью ▼';
+        });
+
+        // Универсальный свайп (с поддержкой мобильных)
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+
+        card.addEventListener('pointerdown', function(e) {
+            if (e.button !== 0) return;
+            if (e.target.closest('.expand-btn')) return;
+            isDragging = false;
+            startX = e.clientX;
+            currentX = 0;
+            this.setPointerCapture(e.pointerId);
+        });
+
+        card.addEventListener('pointermove', function(e) {
+            if (!this.hasPointerCapture(e.pointerId)) return;
+            if (e.target.closest('.expand-btn')) return;
+            const diffX = e.clientX - startX;
+            if (Math.abs(diffX) > 15) {
+                isDragging = true;
+                e.preventDefault();
+            }
+            if (isDragging) {
+                currentX = diffX;
+                this.style.transition = 'none';
+                this.style.transform = `translateX(${diffX}px) rotate(${diffX / 20}deg)`;
+                this.style.opacity = 1 - (Math.abs(diffX) / 500);
+            }
+        });
+
+        card.addEventListener('pointerup', function(e) {
+            this.releasePointerCapture(e.pointerId);
+            this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+
+            if (isDragging && Math.abs(currentX) > 100) {
+                const isRight = currentX > 0;
+                this.classList.add(isRight ? 'swipe-right' : 'swipe-left');
                 
-                if (currentCard.classList.contains('expanded')) {
-                    this.textContent = 'Свернуть ▲';
-                } else {
-                    this.textContent = 'Показать полностью ▼';
-                }
-            });
-        }
+                learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
+                localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
+                
+                refreshSummary();
+
+                setTimeout(() => {
+                    this.classList.add('hidden');
+                    this.classList.remove('swipe-right', 'swipe-left');
+                    this.style.transform = '';
+                    this.style.opacity = '';
+                    this.style.transition = '';
+                    updateVisibleCount();
+                }, 500);
+            } else {
+                this.style.transform = '';
+                this.style.opacity = '';
+                setTimeout(() => { this.style.transition = ''; }, 400);
+            }
+            isDragging = false;
+        });
+
+        card.addEventListener('pointercancel', function(e) {
+            this.releasePointerCapture(e.pointerId);
+            this.style.transition = '';
+            this.style.transform = '';
+            this.style.opacity = '';
+            isDragging = false;
+        });
     });
 
     totalCountEl.textContent = uniqueData.length;
     updateVisibleCount();
+    refreshSummary();
 }
 
+// ===== ФИЛЬТРАЦИЯ И ПОИСК =====
 function filterAndSearch() {
     const allCards = document.querySelectorAll('.card');
     const searchTerm = currentSearch.toLowerCase().trim();
-
     allCards.forEach(card => {
         const term = card.dataset.term || '';
         const category = card.dataset.category || '';
         const matchesSearch = searchTerm === '' || term.includes(searchTerm);
         const matchesFilter = currentFilter === 'all' || category === currentFilter;
 
-        if (matchesSearch && matchesFilter) {
+        if (matchesSearch && matchesFilter && !learnedCards[card.dataset.id]) {
             card.classList.remove('hidden');
         } else {
             card.classList.add('hidden');
         }
     });
-
     updateVisibleCount();
+    refreshSummary();
 }
 
 function updateVisibleCount() {
@@ -5949,130 +6307,55 @@ function updateVisibleCount() {
     visibleCountEl.textContent = visible;
 }
 
-// ===== ФУНКЦИЯ ДЛЯ ЗАКРЫТИЯ ВСЕХ ДРОПДАУНОВ =====
+// ===== ДРОПДАУНЫ И ФИЛЬТРЫ =====
 function closeAllDropdowns() {
-    document.querySelectorAll('.dropdown-toggle.open').forEach(el => {
-        el.classList.remove('open');
-    });
-    document.querySelectorAll('.dropdown-menu.open').forEach(el => {
-        el.classList.remove('open');
-    });
+    document.querySelectorAll('.dropdown-toggle.open').forEach(el => el.classList.remove('open'));
+    document.querySelectorAll('.dropdown-menu.open').forEach(el => el.classList.remove('open'));
 }
 
-// ===== УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ДЛЯ ДРОПДАУНОВ =====
-function setupDropdown(toggleId, menuId, filterPrefix) {
+function setupDropdown(toggleId, menuId) {
     const toggle = document.getElementById(toggleId);
     const menu = document.getElementById(menuId);
-    
     if (!toggle || !menu) return;
-
-    // Клик по кнопке-переключателю
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
-        
-        document.querySelectorAll('.dropdown-toggle.open').forEach(el => {
-            if (el !== this) {
-                el.classList.remove('open');
-            }
-        });
-        document.querySelectorAll('.dropdown-menu.open').forEach(el => {
-            if (el !== menu) {
-                el.classList.remove('open');
-            }
-        });
-        
+        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if(el !== this) el.classList.remove('open'); });
+        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if(el !== menu) el.classList.remove('open'); });
         this.classList.toggle('open');
         menu.classList.toggle('open');
     });
-
-    // Клик по пунктам меню
-    const items = menu.querySelectorAll('.dropdown-item');
-    items.forEach(item => {
+    menu.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(e) {
             e.stopPropagation();
-            
             const filter = this.dataset.filter;
-
             filterBtns.forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-
             this.classList.add('active');
-
             currentFilter = filter;
             filterAndSearch();
-
+            toggle.innerHTML = `${this.textContent.trim()} <span class="arrow">▼</span>`;
             closeAllDropdowns();
-
-            // Обновляем текст кнопки этого дропдауна
-            const label = this.textContent.trim();
-            toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-
-            // Обновляем ВСЕ дропдауны (сбрасываем те, которые не соответствуют)
-            updateMainDropdown(currentFilter);
-            updateSqlDropdown(currentFilter);
-            updatePythonDropdown(currentFilter);
-
             if (window.innerWidth <= 768) {
                 burgerBtn.classList.remove('active');
                 filterGroup.classList.remove('open');
             }
         });
     });
-
-    // Возвращаем функцию для обновления текста
-    return function updateLabel(filter) {
-        const activeItem = menu.querySelector('.dropdown-item.active');
-        if (activeItem) {
-            const label = activeItem.textContent.trim();
-            toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-        } else {
-            const activeFilter = document.querySelector('.filter-btn.active');
-            if (activeFilter && activeFilter.dataset.filter.startsWith(filterPrefix)) {
-                const matchingItem = menu.querySelector(`.dropdown-item[data-filter="${activeFilter.dataset.filter}"]`);
-                if (matchingItem) {
-                    const label = matchingItem.textContent.trim();
-                    toggle.innerHTML = `${label} <span class="arrow">▼</span>`;
-                    matchingItem.classList.add('active');
-                    return;
-                }
-            }
-            const defaultLabel = toggle.dataset.defaultLabel || toggle.textContent.replace('▼', '').trim();
-            toggle.innerHTML = `${defaultLabel} <span class="arrow">▼</span>`;
-        }
-    };
 }
+setupDropdown('dropdownToggle', 'dropdownMenu');
+setupDropdown('dropdownToggleSql', 'dropdownMenuSql');
+setupDropdown('dropdownTogglePython', 'dropdownMenuPython');
 
-// ===== НАСТРОЙКА ВСЕХ ДРОПДАУНОВ =====
-const updateMainDropdown = setupDropdown('dropdownToggle', 'dropdownMenu', '');
-const updateSqlDropdown = setupDropdown('dropdownToggleSql', 'dropdownMenuSql', 'sql_');
-const updatePythonDropdown = setupDropdown('dropdownTogglePython', 'dropdownMenuPython', 'python_');
-
-// Сохраняем дефолтные заголовки
-document.getElementById('dropdownToggle').dataset.defaultLabel = 'Схема тестирования';
-document.getElementById('dropdownToggleSql').dataset.defaultLabel = 'SQL';
-document.getElementById('dropdownTogglePython').dataset.defaultLabel = 'Python';
-
-// ===== ОБЫЧНЫЕ КНОПКИ (НЕ ДРОПДАУН) =====
 document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        
         const filter = this.dataset.filter;
-        
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-        
         this.classList.add('active');
         currentFilter = filter;
         filterAndSearch();
-        
         closeAllDropdowns();
-        
-        // Обновляем заголовки дропдаунов
-        updateMainDropdown(currentFilter);
-        updateSqlDropdown(currentFilter);
-        updatePythonDropdown(currentFilter);
-        
         if (window.innerWidth <= 768) {
             burgerBtn.classList.remove('active');
             filterGroup.classList.remove('open');
@@ -6080,13 +6363,11 @@ document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
     });
 });
 
-// ===== СОБЫТИЯ ПОИСКА =====
 searchInput.addEventListener('input', function() {
     currentSearch = this.value;
     clearBtn.classList.toggle('visible', this.value.length > 0);
     filterAndSearch();
 });
-
 clearBtn.addEventListener('click', function() {
     searchInput.value = '';
     currentSearch = '';
@@ -6095,134 +6376,118 @@ clearBtn.addEventListener('click', function() {
     searchInput.focus();
 });
 
-// ============================================================
-//  УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ СХЕМ
-// ============================================================
-document.addEventListener('DOMContentLoaded', function() {
-    const toggleBtns = document.querySelectorAll('.toggle-schema-btn');
-    
-    function toggleSchema(btn) {
-        const targetId = btn.dataset.target;
-        const targetBlock = document.getElementById(targetId);
-        if (!targetBlock) return;
-        targetBlock.classList.toggle('hidden');
-        btn.classList.toggle('active');
-    }
-    
-    toggleBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleSchema(this);
-        });
-    });
-});
-
-// ===== ГОРЯЧИЕ КЛАВИШИ =====
-document.addEventListener('keydown', function(e) {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
-    }
-    if (e.key === 'Escape') {
-        if (searchInput.value) {
-            searchInput.value = '';
-            currentSearch = '';
-            clearBtn.classList.remove('visible');
-            filterAndSearch();
-            searchInput.blur();
-        }
-        closeAllDropdowns();
-    }
-});
-
-// ============================================================
-//  БУРГЕР-МЕНЮ
-// ============================================================
-const burgerBtn = document.getElementById('burgerBtn');
-const filterGroup = document.getElementById('filterGroup');
-
-burgerBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    this.classList.toggle('active');
-    filterGroup.classList.toggle('open');
-});
-
-document.addEventListener('click', function(e) {
-    if (window.innerWidth <= 768) {
-        const isBurger = e.target.closest('.burger-btn');
-        const isFilter = e.target.closest('.filter-group');
-        const isDropdown = e.target.closest('.dropdown');
-        if (!isBurger && !isFilter && !isDropdown) {
-            burgerBtn.classList.remove('active');
-            filterGroup.classList.remove('open');
-            closeAllDropdowns();
-        }
-    } else {
-        const isDropdown = e.target.closest('.dropdown');
-        if (!isDropdown) {
-            closeAllDropdowns();
-        }
-    }
-});
-
-// ===== КНОПКА СБРОСА ФИЛЬТРОВ =====
+// ===== КНОПКА "✕ Сбросить" =====
 const resetBtn = document.getElementById('resetFiltersBtn');
 if (resetBtn) {
-    resetBtn.addEventListener('click', function() {
+    let resetTapCount = 0;
+    let resetTapTimer = null;
+
+    resetBtn.addEventListener('click', function(e) {
+        resetTapCount++;
+
+        if (resetTapCount === 2) {
+            clearTimeout(resetTapTimer);
+            resetTapCount = 0;
+            if (confirm('Сбросить всю статистику изученных карточек?')) {
+                learnedCards = {};
+                localStorage.removeItem('myLearnedCards');
+                swipeSummary.style.display = 'none';
+                currentFilter = 'all';
+                searchInput.value = '';
+                currentSearch = '';
+                clearBtn.classList.remove('visible');
+                filterBtns.forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
+                document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
+                document.getElementById('dropdownToggle').innerHTML = 'Схема тестирования <span class="arrow">▼</span>';
+                document.getElementById('dropdownToggleSql').innerHTML = 'SQL <span class="arrow">▼</span>';
+                document.getElementById('dropdownTogglePython').innerHTML = 'Python <span class="arrow">▼</span>';
+                closeAllDropdowns();
+                if (window.innerWidth <= 768) {
+                    burgerBtn.classList.remove('active');
+                    filterGroup.classList.remove('open');
+                }
+                renderCards(TERMS_DATA);
+            }
+            return;
+        }
+
+        resetTapTimer = setTimeout(() => { resetTapCount = 0; }, 500);
+
+        // Одиночный клик → сброс фильтров (без сброса статистики)
         currentFilter = 'all';
         searchInput.value = '';
         currentSearch = '';
         clearBtn.classList.remove('visible');
-        
+
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
-        
-        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-        if (allBtn) allBtn.classList.add('active');
-        
+        document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
         document.getElementById('dropdownToggle').innerHTML = 'Схема тестирования <span class="arrow">▼</span>';
         document.getElementById('dropdownToggleSql').innerHTML = 'SQL <span class="arrow">▼</span>';
         document.getElementById('dropdownTogglePython').innerHTML = 'Python <span class="arrow">▼</span>';
-        
         closeAllDropdowns();
         if (window.innerWidth <= 768) {
             burgerBtn.classList.remove('active');
             filterGroup.classList.remove('open');
         }
-        
-        filterAndSearch();
-        updateVisibleCount();
+
+        renderCards(TERMS_DATA);
     });
 }
 
+// ===== КНОПКА "Сбросить и продолжить" =====
+if (resetCurrentSectionBtn) {
+    resetCurrentSectionBtn.addEventListener('click', function() {
+        resetCurrentFilterStatsAndRefresh();
+    });
+}
+
+// ===== БУРГЕР-МЕНЮ =====
+const burgerBtn = document.getElementById('burgerBtn');
+const filterGroup = document.getElementById('filterGroup');
+burgerBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    this.classList.toggle('active');
+    filterGroup.classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+    if (window.innerWidth <= 768) {
+        if (!e.target.closest('.burger-btn') && !e.target.closest('.filter-group') && !e.target.closest('.dropdown')) {
+            burgerBtn.classList.remove('active');
+            filterGroup.classList.remove('open');
+        }
+    } else {
+        if (!e.target.closest('.dropdown')) closeAllDropdowns();
+    }
+});
+
+// ============================================================
+//  УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ СХЕМ
+// ============================================================
+const toggleBtns = document.querySelectorAll('.toggle-schema-btn');
+
+function toggleSchema(btn) {
+    const targetId = btn.dataset.target;
+    const targetBlock = document.getElementById(targetId);
+    if (!targetBlock) return;
+    targetBlock.classList.toggle('hidden');
+    btn.classList.toggle('active');
+}
+
+toggleBtns.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        toggleSchema(this);
+    });
+});
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 function initApp(data) {
-    if (!data || data.length === 0) {
-        console.error('❌ Данные не загружены!');
-        return;
-    }
-    
+    if (!data || data.length === 0) return;
     const uniqueData = removeDuplicates(data);
     renderCards(uniqueData);
-    
-    setTimeout(() => {
-        updateMainDropdown(currentFilter);
-        updateSqlDropdown(currentFilter);
-        updatePythonDropdown(currentFilter);
-    }, 50);
-    
-    console.log('✅ Тестирование ПО — полная схема загружена!');
-    console.log(`📊 Всего терминов: ${uniqueData.length} (удалено дубликатов: ${data.length - uniqueData.length})`);
+    console.log(`Всего терминов: ${uniqueData.length}`);
+    createProgressBar();
 }
-
-if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
-    initApp(TERMS_DATA);
-} else {
-    console.error('❌ TERMS_DATA не найден!');
-}
-
-window.renderCards = renderCards;
-window.filterAndSearch = filterAndSearch;
-window.initApp = initApp;
-window.closeAllDropdowns = closeAllDropdowns;
+if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) initApp(TERMS_DATA);
