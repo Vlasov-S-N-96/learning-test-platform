@@ -379,9 +379,10 @@
         <div class="controls">
             <div class="search-wrap">
                 <input type="text" id="searchInput" placeholder="Поиск терминов..." />
-                <button class="clear-btn" id="clearSearch" title="Очистить"></button>
+                <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
-
+            <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">Сбросить</button>
+            
             <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
                 <span></span>
                 <span></span>
@@ -456,12 +457,21 @@
             </div>
 
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
-            <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">✕ Сбросить</button>
         </div>
 
         <div class="section-title">Справочник терминов</div>
         <div class="grid-cards" id="cardsGrid"></div>
-
+         <!-- ===== БЛОК ИТОГОВ ПОСЛЕ СВАЙПА ===== -->
+        <div id="swipeSummary" style="display: none; margin-top: 20px; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.05);">
+            <h3 style="text-align:center; color: #0a1929; margin-bottom: 20px;">Итоги изучения</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                <div id="knownList" style="flex: 1; min-width: 280px; background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 20px; border-radius: 12px;"></div>
+                <div id="unknownList" style="flex: 1; min-width: 280px; background: #fce4ec; border-left: 4px solid #c62828; padding: 20px; border-radius: 12px;"></div>
+            </div>
+            <button class="btn-reset-section" onclick="resetCurrentFilterStatsAndRefresh();">
+                Сбросить и продолжить
+            </button>
+        </div>
     </div>
 
     <script src="script.js"></script>
