@@ -17,6 +17,8 @@ body {
     background: #eef3f9;
     padding: 30px 20px;
     color: #0a1929;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .container {
@@ -438,6 +440,34 @@ body {
     overflow-wrap: break-word;
     word-break: break-word;
     max-width: 100%;
+    /* Убираем всё, что может мешать скроллу */
+    touch-action: auto;
+    overflow: visible;
+    max-height: none;
+    min-height: auto;
+    position: relative;
+}
+.card {
+    touch-action: auto;
+}
+
+/* Анимация свайпа */
+.card.swipe-right {
+    animation: swipeRight 0.4s ease forwards;
+}
+
+.card.swipe-left {
+    animation: swipeLeft 0.4s ease forwards;
+}
+
+@keyframes swipeRight {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(150px); opacity: 0; }
+}
+
+@keyframes swipeLeft {
+    0% { transform: translateX(0); opacity: 1; }
+    100% { transform: translateX(-150px); opacity: 0; }
 }
 
 .card:hover {
@@ -2046,9 +2076,6 @@ pre {
     padding: 14px 0;
 }
 
-.card {
-    touch-action: none; /* Отключает прокрутку при свайпе на мобильных */
-}
 
 /* ===== СТАТИСТИКА ===== */
 #swipeSummary {
