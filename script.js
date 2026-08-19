@@ -1,11 +1,3 @@
-/**
- * ============================================================
- *  ТЕСТИРОВАНИЕ ПО — Полные данные (219 терминов)
- *  Все термины с подробными описаниями и примерами
- *  • Клик по карточке переключает определение (Просто ↔ Академическое)
- *  • Для JSON и XML используется подсветка синтаксиса
- * ============================================================
- */
 
 const TERMS_DATA = [
     // ============================================================
@@ -5830,12 +5822,11 @@ const FILTER_LABELS = {
     'python_interview': 'Вопросы для собеседования'
 };
 
-// ===== СОЗДАНИЕ ПРОГРЕСС-БАРА В ПАНЕЛИ УПРАВЛЕНИЯ =====
+// ===== ПРОГРЕСС-БАРЫ =====
 const controls = document.querySelector('.controls');
 let progressWrapper = null;
 
 function createProgressBar() {
-    // Локальный прогресс (по текущему фильтру)
     if (!progressWrapper) {
         progressWrapper = document.createElement('div');
         progressWrapper.className = 'progress-wrapper';
@@ -5852,8 +5843,6 @@ function createProgressBar() {
             controls.appendChild(progressWrapper);
         }
     }
-
-    // Глобальный прогресс (по всем терминам)
     if (!globalProgressWrapper) {
         globalProgressWrapper = document.createElement('div');
         globalProgressWrapper.className = 'progress-wrapper global-progress';
@@ -5863,7 +5852,6 @@ function createProgressBar() {
                 <div class="progress-fill" style="width: 0%;"></div>
             </div>
         `;
-        // Вставляем после локального
         if (progressWrapper) {
             progressWrapper.after(globalProgressWrapper);
         } else {
@@ -5891,13 +5879,14 @@ function updateGlobalProgress() {
     }
 }
 
-function updateProgressBar(percent, known, unknown, total) {
+function updateProgressBar(percent) {
     if (!progressWrapper) createProgressBar();
     const fill = progressWrapper.querySelector('.progress-fill');
     const text = progressWrapper.querySelector('.progress-text');
     if (!fill || !text) return;
 
-    if (currentFilter === 'all' || total === 0) {
+    const terms = getTermsForCurrentFilter();
+    if (currentFilter === 'all' || terms.length === 0) {
         progressWrapper.style.display = 'none';
         return;
     }
@@ -5986,32 +5975,21 @@ function renderSummaryForCurrentFilter() {
     const stats = collectStatsForCurrentFilter();
     const filterLabel = FILTER_LABELS[currentFilter] || currentFilter;
 
-    // Заголовок
     const header = document.querySelector('#swipeSummary h3');
-    if (header) {
-        header.textContent = `Итоги по разделу «${filterLabel}»`;
-    }
+    if (header) header.textContent = `Итоги по разделу «${filterLabel}»`;
 
-    // Бейдж
     const badge = document.querySelector('.summary-badge');
-    if (badge) {
-        badge.textContent = `${stats.total} терминов`;
-    }
+    if (badge) badge.textContent = `${stats.total} терминов`;
 
-    // Общее количество
     const total = stats.total;
     const known = stats.known;
     const unknown = stats.unknown;
     const remaining = total - known - unknown;
     const percent = total > 0 ? Math.round((known / total) * 100) : 0;
 
-    // Прогресс-бар внутри итогового блока
     const progressBar = document.querySelector('.summary-progress-bar');
-    if (progressBar) {
-        progressBar.style.width = percent + '%';
-    }
+    if (progressBar) progressBar.style.width = percent + '%';
 
-    // Карточки статистики
     const statTotal = document.getElementById('statTotal');
     const statKnown = document.getElementById('statKnown');
     const statUnknown = document.getElementById('statUnknown');
@@ -6021,7 +5999,6 @@ function renderSummaryForCurrentFilter() {
     if (statUnknown) statUnknown.textContent = unknown;
     if (statRemaining) statRemaining.textContent = remaining;
 
-    // Списки терминов
     if (knownListEl) {
         let html = `<h4>✅ Знаю (${known})</h4>`;
         if (known > 0) {
@@ -6061,7 +6038,6 @@ function updateStudyProgress() {
     const remaining = total - (known + unknown);
     const percent = total > 0 ? (known / total) * 100 : 0;
 
-    // Обновляем маленькую статистику в тексте
     let statsEl = document.querySelector('.study-stats');
     if (!statsEl) {
         const statsBlock = document.querySelector('.controls .stats');
@@ -6076,7 +6052,7 @@ function updateStudyProgress() {
         statsEl.innerHTML = `<strong>${topicName}</strong>: Всего: ${total} | ✅ Знаю: ${known} | ❌ Не знаю: ${unknown} | 📖 Осталось: ${remaining}`;
     }
 
-    updateProgressBar(percent, known, unknown, total);
+    updateProgressBar(percent);
     updateGlobalProgress();
 }
 
@@ -6169,18 +6145,23 @@ function renderCards(data) {
         if (metaTags) metaTags.style.display = 'none';
         card.classList.add('mode-only-definition');
 
+        // ===== ФЛАГ ДЛЯ ПРЕДОТВРАЩЕНИЯ КЛИКА ПОСЛЕ СВАЙПА =====
+        let wasSwiped = false;
+
         // Переключение по клику (Определение ↔ Просто)
-        let clickCount = 0;
         card.addEventListener('click', function(e) {
             if (e.target.closest('.filter-btn') || e.target.closest('.expand-btn')) return;
+            if (wasSwiped) {
+                wasSwiped = false;
+                return;
+            }
 
             const simpleDef = this.querySelector('.definition');
             const academicDef = this.querySelector('.academic-definition');
             const badge = this.querySelector('.mode-badge');
             const metaTags = this.querySelector('.meta-tags');
 
-            clickCount++;
-            if (clickCount === 1) {
+            if (simpleDef.style.display === 'none' || simpleDef.style.display === '') {
                 simpleDef.style.display = 'block';
                 academicDef.style.display = 'none';
                 badge.textContent = 'Просто';
@@ -6188,7 +6169,7 @@ function renderCards(data) {
                 badge.style.color = '#1a2a3a';
                 if (metaTags) metaTags.style.display = 'flex';
                 this.classList.remove('mode-only-definition');
-            } else if (clickCount === 2) {
+            } else {
                 simpleDef.style.display = 'none';
                 academicDef.style.display = 'block';
                 badge.textContent = 'Определение';
@@ -6196,7 +6177,6 @@ function renderCards(data) {
                 badge.style.color = 'white';
                 if (metaTags) metaTags.style.display = 'none';
                 this.classList.add('mode-only-definition');
-                clickCount = 0;
             }
         });
 
@@ -6209,72 +6189,43 @@ function renderCards(data) {
             this.textContent = currentCard.classList.contains('expanded') ? 'Свернуть ▲' : 'Показать полностью ▼';
         });
 
-        // Универсальный свайп (с поддержкой мобильных)
-        let isDragging = false;
-        let startX = 0;
-        let currentX = 0;
+        // ===== СВАЙП (БЕЗ БЛОКИРОВКИ СКРОЛЛА) =====
+        let touchStartX = 0, touchStartY = 0;
 
-        card.addEventListener('pointerdown', function(e) {
-            if (e.button !== 0) return;
+        card.addEventListener('touchstart', function(e) {
             if (e.target.closest('.expand-btn')) return;
-            isDragging = false;
-            startX = e.clientX;
-            currentX = 0;
-            this.setPointerCapture(e.pointerId);
-        });
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            wasSwiped = false;
+        }, { passive: true });
 
-        card.addEventListener('pointermove', function(e) {
-            if (!this.hasPointerCapture(e.pointerId)) return;
+        card.addEventListener('touchend', function(e) {
             if (e.target.closest('.expand-btn')) return;
-            const diffX = e.clientX - startX;
-            if (Math.abs(diffX) > 15) {
-                isDragging = true;
-                e.preventDefault();
-            }
-            if (isDragging) {
-                currentX = diffX;
-                this.style.transition = 'none';
-                this.style.transform = `translateX(${diffX}px) rotate(${diffX / 20}deg)`;
-                this.style.opacity = 1 - (Math.abs(diffX) / 500);
-            }
-        });
+            // Определяем смещение только по горизонтали
+            const touch = e.changedTouches[0];
+            const diffX = touch.clientX - touchStartX;
+            const diffY = touch.clientY - touchStartY;
 
-        card.addEventListener('pointerup', function(e) {
-            this.releasePointerCapture(e.pointerId);
-            this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-
-            if (isDragging && Math.abs(currentX) > 100) {
-                const isRight = currentX > 0;
-                this.classList.add(isRight ? 'swipe-right' : 'swipe-left');
+            // Если смещение по горизонтали больше 100px и больше вертикального
+            if (Math.abs(diffX) > 100 && Math.abs(diffX) > Math.abs(diffY) * 1.5) {
+                const isRight = diffX > 0;
+                wasSwiped = true;
                 
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
                 
                 refreshSummary();
 
+                // Добавляем класс для анимации
+                card.classList.add(isRight ? 'swipe-right' : 'swipe-left');
                 setTimeout(() => {
-                    this.classList.add('hidden');
-                    this.classList.remove('swipe-right', 'swipe-left');
-                    this.style.transform = '';
-                    this.style.opacity = '';
-                    this.style.transition = '';
+                    card.classList.add('hidden');
+                    card.classList.remove('swipe-right', 'swipe-left');
                     updateVisibleCount();
-                }, 500);
-            } else {
-                this.style.transform = '';
-                this.style.opacity = '';
-                setTimeout(() => { this.style.transition = ''; }, 400);
+                }, 400);
             }
-            isDragging = false;
-        });
-
-        card.addEventListener('pointercancel', function(e) {
-            this.releasePointerCapture(e.pointerId);
-            this.style.transition = '';
-            this.style.transform = '';
-            this.style.opacity = '';
-            isDragging = false;
-        });
+        }, { passive: true });
     });
 
     totalCountEl.textContent = uniqueData.length;
@@ -6307,7 +6258,7 @@ function updateVisibleCount() {
     visibleCountEl.textContent = visible;
 }
 
-// ===== ДРОПДАУНЫ И ФИЛЬТРЫ =====
+// ===== ДРОПДАУНЫ =====
 function closeAllDropdowns() {
     document.querySelectorAll('.dropdown-toggle.open').forEach(el => el.classList.remove('open'));
     document.querySelectorAll('.dropdown-menu.open').forEach(el => el.classList.remove('open'));
@@ -6489,5 +6440,6 @@ function initApp(data) {
     renderCards(uniqueData);
     console.log(`Всего терминов: ${uniqueData.length}`);
     createProgressBar();
+    updateGlobalProgress();
 }
 if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) initApp(TERMS_DATA);
