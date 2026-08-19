@@ -451,14 +451,6 @@ body {
     touch-action: auto;
 }
 
-/* Анимация свайпа */
-.card.swipe-right {
-    animation: swipeRight 0.4s ease forwards;
-}
-
-.card.swipe-left {
-    animation: swipeLeft 0.4s ease forwards;
-}
 
 @keyframes swipeRight {
     0% { transform: translateX(0); opacity: 1; }
@@ -1750,7 +1742,7 @@ pre {
 }
 
 /* ============================================================
-   ВИЗУАЛЬНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО
+   ВИЗУАЛЬНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО — ЕДИНЫЙ СТИЛЬ
    ============================================================ */
 .testing-schema {
     background: linear-gradient(145deg, #f0f7ff 0%, #e8f0fa 100%);
@@ -1788,46 +1780,41 @@ pre {
 
 .testing-section .section-header {
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #0a1f3b;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     padding-bottom: 6px;
     border-bottom: 2px solid #e6edf6;
     text-align: center;
 }
 
-.method-group {
-    margin-bottom: 12px;
-}
-.method-group:last-child {
-    margin-bottom: 0;
-}
-
-.method-subtitle {
-    font-size: 0.7rem;
+.method-subtitle,
+.level-label {
+    font-size: 0.8rem;
     font-weight: 600;
-    color: #3a5a7a;
-    margin-bottom: 4px;
+    color: #1a2a3a;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    margin-right: 6px;
 }
 
-.section-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    justify-content: center;
-}
-
+/* ===== ОБЩИЙ СТИЛЬ ДЛЯ ВСЕХ ЭЛЕМЕНТОВ .item ВНУТРИ СХЕМЫ ===== */
+.testing-section .item,
+.level-items .item,
+.level-subgroups .item,
 .section-items .item {
-    padding: 4px 14px;
-    border-radius: 30px;
-    font-size: 0.7rem;
+    display: inline-block;
+    padding: 6px 18px;
+    border-radius: 30px !important;
+    font-size: 0.8rem;
     font-weight: 600;
     border: 1px solid transparent;
     white-space: nowrap;
+    color: #1a2a3a;
+    margin: 2px 0;
 }
 
+/* ===== ЦВЕТОВЫЕ КЛАССЫ ===== */
 .item.blue { background: #c5d8ef; color: #1a3a5a; }
 .item.green { background: #b8d9c8; color: #1a4a3a; }
 .item.purple { background: #d4c5e6; color: #4a2a6a; }
@@ -1835,6 +1822,7 @@ pre {
 .item.red { background: #f0c5c5; color: #6a1a1a; }
 .item.teal { background: #b8d9d9; color: #1a4a4a; }
 
+/* ===== БЛОК УРОВНЕЙ ===== */
 .level-items {
     display: flex;
     flex-wrap: wrap;
@@ -1845,7 +1833,7 @@ pre {
 
 .level-divider {
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #0a1f3b;
     text-align: center;
     margin: 6px 0 8px 0;
@@ -1868,14 +1856,47 @@ pre {
     justify-content: center;
 }
 
-.level-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: #3a5a7a;
-    margin-right: 2px;
-    white-space: nowrap;
+.method-group {
+    margin-bottom: 10px;
+}
+.method-group:last-child {
+    margin-bottom: 0;
+}
+.method-group .method-subtitle {
+    display: block;
+    margin-bottom: 4px;
+}
+.method-group .section-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
 }
 
+/* ===== УВЕЛИЧИВАЕМ ПРОМЕЖУТКИ МЕЖДУ ЭЛЕМЕНТАМИ В СХЕМЕ ТЕСТИРОВАНИЯ ===== */
+.level-items,
+.level-subgroup,
+.section-items,
+.method-group .section-items {
+    gap: 14px !important; /* увеличиваем расстояние между элементами */
+}
+
+/* Добавляем внешние отступы для каждого элемента, чтобы они точно не слипались */
+.testing-section .item,
+.level-items .item,
+.level-subgroups .item,
+.section-items .item {
+    margin: 4px 4px !important; /* небольшие отступы со всех сторон */
+}
+
+/* ===== УВЕЛИЧИВАЕМ ПРОМЕЖУТКИ ===== */
+.level-items,
+.level-subgroup,
+.section-items {
+    gap: 10px !important;
+}
+
+/* ===== АДАПТИВ ===== */
 @media (max-width: 992px) {
     .testing-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1894,15 +1915,22 @@ pre {
     .testing-section {
         padding: 12px 14px;
     }
+    .testing-section .item,
+    .level-items .item,
+    .level-subgroups .item,
     .section-items .item {
-        font-size: 0.6rem;
-        padding: 2px 10px;
+        font-size: 0.7rem;
+        padding: 4px 12px;
+    }
+    .method-subtitle,
+    .level-label {
+        font-size: 0.7rem;
+    }
+    .level-divider {
+        font-size: 0.75rem;
     }
     .level-subgroup {
         justify-content: flex-start;
-    }
-    .level-label {
-        font-size: 0.6rem;
     }
 }
 
@@ -1911,10 +1939,14 @@ pre {
         font-size: 1rem;
     }
     .testing-section .section-header {
-        font-size: 0.8rem;
+        font-size: 0.85rem;
     }
-    .level-divider {
-        font-size: 0.7rem;
+    .testing-section .item,
+    .level-items .item,
+    .level-subgroups .item,
+    .section-items .item {
+        font-size: 0.65rem;
+        padding: 3px 10px;
     }
 }
 
@@ -2579,4 +2611,53 @@ pre {
 /* Чтобы отличался от локального, можно сделать чуть меньше */
 .global-progress .progress-track {
     height: 6px;
+}
+
+/* ===== КНОПКА И ОТВЕТ ДЛЯ СОБЕСЕДОВАНИЯ ===== */
+.toggle-interview-btn {
+    margin-top: 16px;
+    padding: 6px 20px;
+    border-radius: 30px;
+    border: 1px solid #c5d8ef;
+    background: white;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #1d3b5c;
+    transition: 0.2s;
+    align-self: center;
+}
+.toggle-interview-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+.toggle-interview-btn.active {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+}
+.interview-answer {
+    margin-top: 12px;
+    padding: 16px 20px;
+    background: #f6faff;
+    border-radius: 16px;
+    border-left: 4px solid #1d3b5c;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: #1a2a3a;
+    animation: fadeInUp 0.4s ease;
+}
+.interview-answer h4 {
+    margin: 0 0 8px 0;
+    color: #0a1929;
+}
+.interview-answer ul {
+    margin: 8px 0 0 0;
+    padding-left: 24px;
+}
+.interview-answer ul li {
+    margin-bottom: 4px;
+}
+.interview-answer strong {
+    color: #0a1f3b;
 }
