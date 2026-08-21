@@ -2661,3 +2661,54 @@ pre {
 .interview-answer strong {
     color: #0a1f3b;
 }
+
+/* ============================================================
+   ВЫДЕЛЕНИЕ ТЕКСТА (маркер)
+   ============================================================ */
+.mark-yellow {
+    background: #fff59d;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-green {
+    background: #a5d6a7;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-pink {
+    background: #f8bbd0;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-blue {
+    background: #90caf9;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-orange {
+    background: #ffcc80;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-purple {
+    background: #ce93d8;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-red {
+    background: #ef9a9a;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-cyan {
+    background: #80deea;
+    padding: 0 4px;
+    border-radius: 4px;
+}
