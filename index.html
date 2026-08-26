@@ -11,18 +11,23 @@
     <div class="container">
          <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
         <div class="schema-controls">
-            <button class="toggle-schema-btn" data-target="testingSchema">Схема тестирования</button>
+            <button class="toggle-schema-btn" data-target="testingSchemaFull">Схема тестирования</button>
             <button class="toggle-schema-btn" data-target="algorithmBlock">Алгоритм тестирования</button>
             <button class="toggle-schema-btn" data-target="scrumSchema">Scrum схема</button>
             <button class="toggle-schema-btn" data-target="kanbanSchema">Kanban схема</button>
         </div>
 
-        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО ===== -->
-        <div class="testing-schema hidden" id="testingSchema">
+        <!-- ============================================================ -->
+        <!--   ПОЛНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО (исправленная версия)         -->
+        <!-- ============================================================ -->
+        <div class="testing-schema hidden" id="testingSchemaFull">
             <div class="testing-title">Схема тестирования ПО</div>
-            
+
             <div class="testing-grid">
-                <!-- Степень формализации -->
+
+                <!-- ========================================================== -->
+                <!--  1. СТЕПЕНЬ ФОРМАЛИЗАЦИИ                                   -->
+                <!-- ========================================================== -->
                 <div class="testing-section formalization">
                     <div class="section-header">Степень формализации</div>
                     <div class="section-items">
@@ -32,7 +37,9 @@
                     </div>
                 </div>
 
-                <!-- Методы -->
+                <!-- ========================================================== -->
+                <!--  2. МЕТОДЫ (Как?)                                          -->
+                <!-- ========================================================== -->
                 <div class="testing-section methods">
                     <div class="section-header">Методы (Как?)</div>
                     <div class="method-group">
@@ -53,98 +60,310 @@
                     </div>
                 </div>
 
-                <!-- Уровни -->
+
+                <!-- ========================================================== -->
+                <!--  3. УРОВНИ (Где я нахожусь?)                              -->
+                <!-- ========================================================== -->
                 <div class="testing-section levels">
                     <div class="section-header">Уровни (Где я нахожусь?)</div>
-                    <div class="level-items">
-                        <span class="item green">Модульное</span>
-                        <span class="item blue">Интеграционное</span>
-                        <span class="item purple">Системное</span>
-                    </div>
-                    <div class="level-divider">Приёмочное (Acceptance)</div>
-                    <div class="level-subgroups">
-                        <div class="level-subgroup">
-                            <span class="level-label">Когда и где:</span>
-                            <span class="item orange">Альфа</span>
-                            <span class="item orange">Бета</span>
+
+                    <!-- Модульное -->
+                    <div class="level-block">
+                        <div class="level-title item green">Модульное (Unit)</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">TDD</span>
+                            <span class="approach-tag">BDD</span>
+                            <span class="approach-tag">Property-based</span>
                         </div>
-                        <div class="level-subgroup">
-                            <span class="level-label">Что и почему:</span>
-                            <span class="item teal">Нормативное</span>
-                            <span class="item teal">Контрактное</span>
-                            <span class="item teal">Эксплуатационное</span>
-                            <span class="item teal">Пользовательское</span>
+                    </div>
+
+                    <!-- Интеграционное -->
+                    <div class="level-block">
+                        <div class="level-title item blue">Интеграционное</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">Big Bang</span>
+                            <span class="approach-tag">Top-Down</span>
+                            <span class="approach-tag">Bottom-Up</span>
+                            <span class="approach-tag">Sandwich</span>
+                            <span class="approach-tag">CI</span>
+                        </div>
+                    </div>
+
+                    <!-- Системное -->
+                    <div class="level-block">
+                        <div class="level-title item purple">Системное</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">Сквозное (E2E)</span>
+                            <span class="approach-tag">Smoke</span>
+                            <span class="approach-tag">Sanity</span>
+                            <span class="approach-tag">Регрессия</span>
+                            <span class="approach-tag">Исследовательское</span>
+                            <span class="approach-tag">Автоматизация</span>
+                        </div>
+                    </div>
+
+                    <!-- Приёмочное -->
+                    <div class="level-block">
+                        <div class="level-title item teal">Приёмочное (Acceptance)</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">UAT</span>
+                            <span class="approach-tag">BAT</span>
+                            <span class="approach-tag">OAT</span>
+                            <span class="approach-tag">Альфа</span>
+                            <span class="approach-tag">Бета</span>
+                            <span class="approach-tag">Контрактное</span>
+                            <span class="approach-tag">Нормативное</span>
+                            <span class="approach-tag">ATDD</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Функциональное -->
+                <!-- ========================================================== -->
+                <!--  4. ФУНКЦИОНАЛЬНОЕ (Что?)                                  -->
+                <!-- ========================================================== -->
                 <div class="testing-section functional">
                     <div class="section-header">Функциональное (Что?)</div>
                     <div class="section-items">
-                        <span class="item red">Regression</span>
-                        <span class="item orange">Smoke</span>
-                        <span class="item blue">Sanity</span>
+                        <span class="item red">Регрессионное</span>
+                        <span class="item orange">Дымовое (Smoke)</span>
+                        <span class="item blue">Санитарное (Sanity)</span>
                         <span class="item purple">GUI</span>
-                        <span class="item teal">Безопасность</span>
-                        <span class="item green">Installation</span>
+                        <span class="item teal">Безопасность (Security)</span>
+                        <span class="item green">Инсталляционное</span>
+                        <span class="item orange">Конфигурационное</span>
+                        <span class="item blue">Миграционное</span>
+                        <span class="item purple">Документации</span>
                     </div>
                 </div>
 
-                <!-- Нефункциональное -->
+                <!-- ========================================================== -->
+                <!--  5. НЕФУНКЦИОНАЛЬНОЕ (Качество)                            -->
+                <!-- ========================================================== -->
                 <div class="testing-section nonfunctional">
                     <div class="section-header">Нефункциональное (Качество)</div>
-                    <div class="section-items">
-                        <span class="item purple">Производительность</span>
-                        <span class="item orange">Конкурентное</span>
-                        <span class="item teal">Объёмное</span>
-                        <span class="item blue">Масштабируемость</span>
-                        <span class="item red">Стрессовое</span>
-                        <span class="item green">Удобство</span>
-                        <span class="item green">Совместимость</span>
-                        <span class="item green">Надёжность</span>
-                        <span class="item green">Доступность (A11Y)</span>
-                        <span class="item green">Локализация</span>
-                        <span class="item green">Интернационализация</span>
+
+                    <!-- Производительность -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Производительность</div>
+                        <div class="section-items">
+                            <span class="item purple">Нагрузочное (Load)</span>
+                            <span class="item red">Стрессовое (Stress)</span>
+                            <span class="item teal">Объёмное (Volume)</span>
+                            <span class="item blue">Масштабируемость</span>
+                            <span class="item orange">Конкурентное</span>
+                        </div>
+                    </div>
+
+                    <!-- Безопасность -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Безопасность</div>
+                        <div class="section-items">
+                            <span class="item red">Стойкость к атакам</span>
+                            <span class="item orange">Стойкость к перебору</span>
+                            <span class="item blue">Шифрование</span>
+                            <span class="item purple">Изоляция сессий</span>
+                        </div>
+                    </div>
+
+                    <!-- Качество использования -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Качество использования</div>
+                        <div class="section-items">
+                            <span class="item green">Удобство (Usability)</span>
+                            <span class="item green">Совместимость</span>
+                            <span class="item green">Надёжность</span>
+                            <span class="item teal">Доступность (A11Y)</span>
+                            <span class="item blue">Локализация (L10n)</span>
+                            <span class="item purple">Интернационализация (I18n)</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <button class="toggle-interview-btn" data-target="interview-testing">Ответ на собеседовании</button>
-            <div id="interview-testing" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о схеме тестирования на собеседовании:</h4>
-                
-                <p><strong>Вступление:</strong>Тестирование – это не просто поиск багов. Это комплексный процесс, который помогает нам понять, насколько продукт соответствует ожиданиям пользователей, работает ли он так, как задумано, и готов ли он к релизу. Мы проверяем не только функции, но и качество – скорость, безопасность, удобство, надёжность. И делаем это на всех этапах разработки – от модуля до готовой системы.</p>
-                
-                <p><strong>1. По уровню (где мы находимся):</strong></p>
+                <!-- ========================================================== -->
+                <!--  6 . ПО ФОРМЕ ПРОВЕДЕНИЯ                                    -->
+                <!-- ========================================================== -->
+                <div class="testing-section form">
+                    <div class="section-header">По форме проведения</div>
+                    <div class="section-items">
+                        <span class="item blue">Ручное (Manual)</span>
+                        <span class="item purple">Автоматизированное</span>
+                        <span class="item teal">Полуавтоматизированное</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  7. ПО ИЗМЕНЕНИЯМ                                          -->
+                <!-- ========================================================== -->
+                <div class="testing-section changes">
+                    <div class="section-header">По изменениям</div>
+                    <div class="section-items">
+                        <span class="item red">Регрессионное</span>
+                        <span class="item purple">Конфигурационное</span>
+                        <span class="item teal">Миграционное</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  8. ПО РЕЗУЛЬТАТУ ВЫПОЛНЕНИЯ — НОВЫЙ БЛОК                -->
+                <!-- ========================================================== -->
+                <div class="testing-section result">
+                    <div class="section-header">По результату выполнения</div>
+                    <div class="section-items">
+                        <span class="item green">Пройден (Passed)</span>
+                        <span class="item red">Не пройден (Failed)</span>
+                        <span class="item orange">Пропущен (Skipped)</span>
+                        <span class="item purple">Прерван (Aborted)</span>
+                    </div>
+                </div>
+
+            </div><!-- /testing-grid -->
+
+            <!-- ========================================================== -->
+            <!--  КНОПКА ДЛЯ ОТВЕТА НА СОБЕСЕДОВАНИИ                        -->
+            <!-- ========================================================== -->
+            <button class="toggle-interview-btn" data-target="interview-testing-full">Ответ на собеседовании</button>
+            <div id="interview-testing-full" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о полной схеме тестирования на собеседовании:</h4>
+
+                <p><strong>Вступление:</strong> «Тестирование — это не просто поиск багов. Это комплексный процесс, который помогает понять, насколько продукт соответствует ожиданиям пользователей, работает ли он так, как задумано, и готов ли к релизу. Мы проверяем не только функции, но и качество — скорость, безопасность, удобство, надёжность. И делаем это на всех этапах — от модуля до готовой системы. Давайте я пройду по схеме последовательно.»</p>
+
+                <!-- 1. СТЕПЕНЬ ФОРМАЛИЗАЦИИ -->
+                <p><strong>1. Степень формализации (Как детально мы подходим к тестированию?):</strong></p>
                 <ul>
-                    <li><strong>Модульное (Unit)</strong> – проверяем отдельные функции, классы, методы. Пишут разработчики, часто с использованием фреймворков (JUnit, pytest). Это самый быстрый и дешёвый способ найти ошибку – на уровне "кирпичика".</li>
-                    <li><strong>Интеграционное</strong> – проверяем, как модули общаются друг с другом. Например, API, база данных, внешние сервисы. Здесь мы ловим проблемы с форматами данных, таймаутами, авторизацией.</li>
-                    <li><strong>Системное (E2E)</strong> – проверяем всю систему целиком, как реальный пользователь. Это самый медленный и дорогой уровень, но он даёт уверенность, что "всё вместе работает".</li>
-                    <li><strong>Приёмочное (Acceptance)</strong> – финальная проверка заказчиком или пользователями. Здесь мы отвечаем на вопрос: "А ту ли задачу мы решаем?". Бывает альфа (внутреннее, на мощностях разработчика, но с независимой командой), бета (внешнее, реальные пользователи), а также нормативное (по законам), контрактное (по договору), эксплуатационное (готовность к работе в реальных условиях) и пользовательское (UAT – User Acceptance Testing).</li>
+                    <li><strong>На основе тест-кейсов</strong> — пошаговая инструкция. <strong>Повторяемо</strong>, подходит для <strong>регрессии</strong>, можно <strong>автоматизировать</strong>.</li>
+                    <li><strong>Исследовательское</strong> — изучаем систему в процессе. Хорошо без документации или для новых фич.</li>
+                    <li><strong>Ad-hoc</strong> — свободное, интуитивное. «А что будет, если нажать сюда?»</li>
                 </ul>
-                
-                <p><strong>2. По методу доступа к коду:</strong></p>
+
+                <!-- 2. МЕТОДЫ -->
+                <p><strong>2. Методы (С чем мы работаем?):</strong></p>
                 <ul>
-                    <li><strong>Чёрный ящик</strong> – мы не знаем внутреннего устройства, проверяем только входы и выходы. Как пользователь. Используем для функционального, UI, API-тестирования.</li>
-                    <li><strong>Белый ящик</strong> – видим код, знаем структуру. Проверяем пути выполнения, условия, циклы. Применяем для модульных тестов, статического анализа.</li>
-                    <li><strong>Серый ящик</strong> – что-то среднее. Знаем архитектуру, но не все детали. Например, знаем, что данные хранятся в БД, и можем проверить их напрямую, но не смотрим реализацию бизнес-логики.</li>
+                    <li><strong>Сценарии:</strong>
+                        <ul>
+                            <li><strong>Happy Path</strong> — основной сценарий, всё работает правильно.</li>
+                            <li><strong>Negative</strong> — пользователь ошибается, проверка обработки ошибок.</li>
+                            <li><strong>Destructive</strong> — пытаемся сломать систему.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Доступ к коду:</strong>
+                        <ul>
+                            <li><strong>Чёрный ящик</strong> — не знаем внутреннего устройства.</li>
+                            <li><strong>Белый ящик</strong> — видим код, знаем структуру.</li>
+                            <li><strong>Серый ящик</strong> — комбинация, знаем архитектуру.</li>
+                        </ul>
+                    </li>
                 </ul>
-                
-                <p><strong>3. По степени формализации:</strong></p>
+
+                <!-- 3. ПОДХОДЫ -->
+                <p><strong>3. Подходы (Стратегии) — с какой стратегией мы тестируем?:</strong></p>
                 <ul>
-                    <li><strong>На основе тест-кейсов</strong> – всё расписано заранее: шаги, данные, ожидаемый результат. Повторяемо, подходит для регрессии, можно автоматизировать.</li>
-                    <li><strong>Исследовательское</strong> – мы не пишем тест-кейсы, а исследуем систему, ищем неочевидные баги. Хорошо работает, когда нет документации или нужно быстро проверить новую фичу.</li>
-                    <li><strong>Ad-hoc</strong> – свободное, интуитивное тестирование. "А что будет, если нажать сюда?" – часто находит баги, которые не покрыты сценариями.</li>
+                    <li><strong>Сквозное (E2E)</strong> — бизнес-сценарии от начала до конца. Чёрный ящик, Системный уровень.</li>
+                    <li><strong>Регрессионное</strong> — новый код не сломал старое. Чёрный + Белый ящик, все уровни.</li>
+                    <li><strong>Дымовое (Smoke)</strong> — быстрая проверка критических функций. Чёрный ящик, Системный уровень.</li>
+                    <li><strong>Санитарное (Sanity)</strong> — проверка, что исправление работает. Чёрный ящик, Системный уровень.</li>
+                    <li><strong>Исследовательское</strong> — поиск неочевидных багов. Чёрный ящик, любой уровень.</li>
                 </ul>
-                
-                <p><strong>4. По типу проверяемых характеристик:</strong></p>
+                <p style="margin-top:8px; color:#2d3e5a; font-size:14px;"><em>Пайплайн: Smoke → Sanity → Регрессия → E2E</em></p>
+
+                <!-- 4. УРОВНИ -->
+                <p><strong>4. Уровни (Где мы находимся?):</strong></p>
                 <ul>
-                    <li><strong>Функциональное</strong> – проверяем, что система делает то, что должна. Здесь: <strong>Smoke</strong> (быстрая проверка критических функций после сборки), <strong>Sanity</strong> (проверка, что исправление работает и не сломало основное), <strong>Регрессия</strong> (проверка, что новый код не сломал старое), <strong>GUI</strong> (интерфейс – цвета, размеры, шрифты), <strong>Безопасность</strong> (проверка уязвимостей), <strong>Installation</strong> (установка, обновление, удаление).</li>
-                    <li><strong>Нефункциональное</strong> – проверяем качество: <strong>Производительность</strong> (скорость), <strong>Нагрузочное</strong> (работа при ожидаемом количестве пользователей), <strong>Стрессовое</strong> (точка отказа), <strong>Объёмное</strong> (большие данные), <strong>Масштабируемость</strong> (способность расти), <strong>Конкурентное</strong> (одновременные запросы), <strong>Удобство</strong> (UX – понятность, обучаемость), <strong>Совместимость</strong> (браузеры, ОС, устройства), <strong>Надёжность</strong> (стабильность, восстановление), <strong>Доступность (A11Y)</strong> (для людей с ограничениями), <strong>Локализация</strong> (перевод, культура), <strong>Интернационализация</strong> (готовность к переводу).</li>
+                    <!-- ===== МОДУЛЬНОЕ ===== -->
+                    <li><strong>Модульное (Unit)</strong> — проверяем отдельные функции, классы, методы. Пишут <strong>разработчики</strong>, часто с фреймворками (JUnit, pytest). <strong>Самый быстрый и дешёвый</strong> способ найти ошибку.
+                        <ul>
+                            <li><strong>TDD</strong> — сначала пишем тест, потом код (красный → зелёный → рефакторинг).</li>
+                            <li><strong>BDD</strong> — описываем поведение на естественном языке: <em>Given-When-Then</em> (Дано-Когда-Тогда). Помогает бизнесу и разработчикам говорить на одном языке.</li>
+                            <li><strong>Property-based</strong> — проверяем свойства и инварианты, а не конкретные примеры. Например, для сортировки: "результат всегда отсортирован", "длина не изменилась".</li>
+                        </ul>
+                    </li>
+
+                    <!-- ===== ИНТЕГРАЦИОННОЕ ===== -->
+                    <li><strong>Интеграционное</strong> — проверяем, как <strong>модули общаются друг с другом</strong>. API, база данных, внешние сервисы. Ловим проблемы с <strong>форматами данных, таймаутами, авторизацией</strong>.
+                        <ul>
+                            <li><strong>Big Bang</strong> — все модули собираются сразу и тестируются вместе. <em>Быстро, но если тест упал — сложно понять, какой модуль виноват.</em></li>
+                            <li><strong>Top-Down</strong> — начинаем с верхних модулей, нижние заменяем <strong>заглушками (Stubs)</strong>. Проверяем логику интерфейса.</li>
+                            <li><strong>Bottom-Up</strong> — начинаем с нижних модулей (БД, логика), верхние заменяем <strong>драйверами (Drivers)</strong>. Проверяем работу критичных нижних слоёв.</li>
+                            <li><strong>Sandwich</strong> — гибрид Top-Down и Bottom-Up. Фокус на <strong>среднем слое</strong>, верх и низ — через заглушки и драйверы. Самый эффективный для крупных проектов.</li>
+                            <li><strong>CI (Continuous Integration)</strong> — при каждом коммите код собирается, прогоняются автотесты. <em>Быстрая обратная связь, предотвращает "ад интеграции".</em></li>
+                        </ul>
+                    </li>
+
+                    <!-- ===== СИСТЕМНОЕ ===== -->
+                    <li><strong>Системное</strong> — проверяем <strong>всю систему целиком</strong> как единое целое. Здесь мы применяем различные подходы:
+                        <ul>
+                            <li><strong>Сквозное (E2E)</strong> — проверка <strong>бизнес-сценариев</strong> от начала до конца. Например: пользователь заходит → выбирает товар → оплачивает → получает уведомление. Работает с <strong>Чёрным ящиком</strong>.</li>
+                            <li><strong>Smoke</strong> — <strong>быстрая проверка критических функций</strong> после сборки. "Приложение открывается? Логин работает? Корзина доступна?" Если Smoke не прошёл — дальше тестировать бессмысленно.</li>
+                            <li><strong>Sanity</strong> — проверяем, что <strong>исправление работает</strong> и <strong>не сломало основное</strong>. После фикса бага. 15–30 минут.</li>
+                            <li><strong>Регрессионное</strong> — проверяем, что <strong>новый код не сломал старое</strong>. Прогоняем все ранее написанные тесты (часто автоматизированные) перед релизом. <em>Основа любого релиза.</em></li>
+                            <li><strong>Исследовательское</strong> — <strong>поиск неочевидных багов</strong> без сценария. Полагаемся на опыт и интуицию. Эффективно для новых фич или когда нет документации.</li>
+                            <li><strong>Автоматизация</strong> — тесты выполняются <strong>скриптами</strong> без участия человека. Снижает время, исключает человеческий фактор. Используется для регрессии, Smoke, нагрузочных тестов.</li>
+                        </ul>
+                    </li>
+
+                    <!-- ===== ПРИЁМОЧНОЕ ===== -->
+                    <li><strong>Приёмочное (Acceptance)</strong> — <strong>финальная проверка</strong> заказчиком или пользователями. Отвечаем на вопрос: <strong>«А ту ли задачу мы решаем?»</strong>
+                        <ul>
+                            <li><strong>Альфа</strong> — внутреннее тестирование на мощностях компании, но <strong>не разработчиками</strong>, а независимой командой тестировщиков. <em>Свежий взгляд помогает найти больше багов.</em></li>
+                            <li><strong>Бета</strong> — внешнее тестирование <strong>реальными пользователями</strong> на своих устройствах. <em>Обратная связь из "реального мира".</em></li>
+                            <li><strong>UAT (User Acceptance)</strong> — проверка <strong>пользователями</strong>, решает ли продукт их повседневные задачи.</li>
+                            <li><strong>BAT (Business Acceptance)</strong> — проверка <strong>бизнес-задач</strong>. Например: "выросла ли конверсия?", "снизилась ли нагрузка на поддержку?"</li>
+                            <li><strong>OAT (Operational Acceptance)</strong> — проверка <strong>готовности к эксплуатации</strong>: администрирование, бэкапы, восстановление после сбоев, масштабирование.</li>
+                            <li><strong>Контрактное</strong> — проверка соответствия <strong>договору</strong>. Например: "страница загружается за 2 секунды", "интеграция с 1С есть".</li>
+                            <li><strong>Нормативное</strong> — проверка соответствия <strong>законам и стандартам</strong>. Например: 152-ФЗ о персональных данных, HIPAA для медицины, PCI DSS для платежей.</li>
+                            <li><strong>ATDD (Acceptance Test-Driven Development)</strong> — приёмочные тесты пишутся <strong>до кода</strong> всей командой (аналитик + разработчик + тестировщик). Тесты становятся контрактом и документацией.</li>
+                        </ul>
+                    </li>
                 </ul>
-                
-                <p><strong>Заключение:</strong> «На практике мы комбинируем эти подходы. Например, для нового функционала – исследовательское + чёрный ящик + функциональное. Для регрессии – автоматизированные тест-кейсы + регрессия. Для критичных систем – добавляем нагрузку, безопасность, совместимость. Главное – выбирать то, что даёт максимальную ценность при минимальных затратах.»</p>
+
+                <!-- 5. ФУНКЦИОНАЛЬНОЕ -->
+                <p><strong>5. Функциональное (Что работает?):</strong></p>
+                <ul>
+                    <li><strong>Smoke</strong> — критические функции после сборки.</li>
+                    <li><strong>Sanity</strong> — исправление не сломало основное.</li>
+                    <li><strong>Регрессия</strong> — новый код не сломал старое.</li>
+                    <li><strong>GUI</strong> — интерфейс.</li>
+                    <li><strong>Безопасность (Security)</strong> — уязвимости.</li>
+                    <li><strong>Инсталляционное</strong> — установка/удаление.</li>
+                    <li><strong>Конфигурационное</strong> — настройки.</li>
+                    <li><strong>Миграционное</strong> — переход между версиями.</li>
+                    <li><strong>Документации</strong> — справка, подсказки.</li>
+                </ul>
+
+                <!-- 6. НЕФУНКЦИОНАЛЬНОЕ -->
+                <p><strong>6. Нефункциональное (Как качественно?):</strong></p>
+                <ul>
+                    <li><strong>Производительность:</strong> Нагрузочное, Стрессовое, Объёмное, Масштабируемость, Конкурентное.</li>
+                    <li><strong>Безопасность:</strong> Стойкость к атакам, к перебору, Шифрование, Изоляция сессий.</li>
+                    <li><strong>Качество использования:</strong> Удобство, Совместимость, Надёжность, Доступность (A11Y), Локализация, Интернационализация.</li>
+                </ul>
+
+                <!-- 7. ПО ФОРМЕ ПРОВЕДЕНИЯ -->
+                <p><strong>7. По форме проведения (Кто и как выполняет тесты?):</strong></p>
+                <ul>
+                    <li><strong>Ручное (Manual)</strong> — человек выполняет шаги вручную.</li>
+                    <li><strong>Автоматизированное</strong> — скрипты и код.</li>
+                    <li><strong>Полуавтоматизированное</strong> — часть автоматизирована, часть вручную.</li>
+                </ul>
+
+                <!-- 8. ПО ИЗМЕНЕНИЯМ -->
+                <p><strong>8. По изменениям (Что изменилось?):</strong></p>
+                <ul>
+                    <li><strong>Регрессионное</strong> — изменения не сломали старое.</li>
+                    <li><strong>Конфигурационное</strong> — изменение настроек.</li>
+                    <li><strong>Миграционное</strong> — переход между версиями.</li>
+                </ul>
+
+                <!-- 9. ПО РЕЗУЛЬТАТУ -->
+                <p><strong>9. По результату выполнения (Что получили?):</strong></p>
+                <ul>
+                    <li><strong>Пройден (Passed)</strong> — успешно.</li>
+                    <li><strong>Не пройден (Failed)</strong> — найден баг.</li>
+                    <li><strong>Пропущен (Skipped)</strong> — не выполнялся.</li>
+                    <li><strong>Прерван (Aborted)</strong> — прерван.</li>
+                </ul>
+
+                <!-- ЗАКЛЮЧЕНИЕ -->
+                <p><strong>Заключение:</strong> «На практике мы комбинируем все эти элементы. Для нового функционала — исследовательское + чёрный ящик + функциональное. Для регрессии — автоматизированные тест-кейсы. Для критичных систем — нагрузка, безопасность, совместимость. Главное — контекст: банк → безопасность, игра → производительность, стартап → скорость.»</p>
             </div>
         </div>
 
