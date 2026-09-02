@@ -6362,6 +6362,68 @@ const DEFAULT_DROPDOWN_TEXTS = {
     'dropdownTogglePython': 'Python <span class="arrow">▼</span>'
 };
 
+// ===== ФУНКЦИЯ ОБНОВЛЕНИЯ ВИДИМОСТИ КНОПКИ =====
+function updateExpandButtonVisibility(card) {
+    const content = card.querySelector('.card-content');
+    const btnWrapper = card.querySelector('.expand-btn-wrapper');
+    if (!content || !btnWrapper) return;
+
+    // Если карточка раскрыта — кнопка всегда видна
+    if (card.classList.contains('expanded')) {
+        btnWrapper.style.display = 'block';
+        return;
+    }
+
+    // Проверяем, есть ли скролл (контент выходит за пределы)
+    const hasScroll = content.scrollHeight > content.clientHeight + 1;
+    btnWrapper.style.display = hasScroll ? 'block' : 'none';
+}
+
+// ===== НАДЁЖНАЯ ОТЛОЖЕННАЯ ПРОВЕРКА =====
+function scheduleUpdateExpandButton(card) {
+    // Используем requestAnimationFrame для синхронизации с рендерингом
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setTimeout(() => {
+                updateExpandButtonVisibility(card);
+            }, 20);
+        });
+    });
+}
+
+// ===== ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ВСЕХ ВИДИМЫХ КАРТОЧЕК =====
+function updateAllVisibleCardsButtons() {
+    document.querySelectorAll('.card:not(.hidden)').forEach(card => {
+        scheduleUpdateExpandButton(card);
+    });
+}
+
+// ===== СОЗДАНИЕ RESIZEOBSERVER ДЛЯ КАРТОЧЕК =====
+function observeCardContent(card) {
+    const content = card.querySelector('.card-content');
+    if (!content) return;
+
+    // Создаём наблюдатель за изменением размера
+    const resizeObserver = new ResizeObserver(() => {
+        scheduleUpdateExpandButton(card);
+    });
+    resizeObserver.observe(content);
+
+    // Также наблюдаем за изменением DOM (переключение режимов)
+    const mutationObserver = new MutationObserver(() => {
+        scheduleUpdateExpandButton(card);
+    });
+    mutationObserver.observe(content, {
+        childList: true,
+        subtree: true,
+        attributes: false
+    });
+
+    // Сохраняем ссылки, чтобы отключить позже (опционально)
+    card._resizeObserver = resizeObserver;
+    card._mutationObserver = mutationObserver;
+}
+
 // ===== СБРОС ВСЕХ ЗАГОЛОВКОВ ДРОПДАУНОВ =====
 function resetAllDropdownTitles() {
     Object.keys(DEFAULT_DROPDOWN_TEXTS).forEach(id => {
@@ -6421,22 +6483,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function updateExpandButtonVisibility(card) {
-    const content = card.querySelector('.card-content');
-    const btnWrapper = card.querySelector('.expand-btn-wrapper');
-    if (!content || !btnWrapper) return;
-
-    // Если карточка раскрыта — кнопка всегда видна (для сворачивания)
-    if (card.classList.contains('expanded')) {
-        btnWrapper.style.display = 'block';
-        return;
-    }
-
-    // Проверяем, есть ли скролл (контент выходит за пределы)
-    const hasScroll = content.scrollHeight > content.clientHeight;
-    btnWrapper.style.display = hasScroll ? 'block' : 'none';
 }
 
 function removeDuplicates(data) {
@@ -6610,6 +6656,9 @@ function resetCurrentFilterStatsAndRefresh() {
     filterAndSearch();
 }
 
+// ============================================================
+//  РЕНДЕРИНГ КАРТОЧЕК (С НАБЛЮДАТЕЛЯМИ)
+// ============================================================
 function renderCards(data) {
     if (!data || data.length === 0) {
         cardsGrid.innerHTML = '<p style="text-align:center; padding:40px; color:#888;">Нет данных для отображения</p>';
@@ -6650,7 +6699,6 @@ function renderCards(data) {
                 <span class="mode-badge" id="modeBadge_${item.id}">Определение</span>
             </div>
 
-            <!-- ВСЁ СОДЕРЖИМОЕ В ОДНОМ СКРОЛЛИРУЕМОМ БЛОКЕ -->
             <div class="card-content">
                 <div class="definition" id="def_${item.id}" style="display: none;">
                     <div class="simple-def"><strong>Обобщённое:</strong> ${item.simple || ''}</div>
@@ -6667,7 +6715,6 @@ function renderCards(data) {
                 <div class="meta-tags" style="display: none;">${metaHtml}</div>
             </div>
 
-            <!-- КНОПКА — СНАРУЖИ, НЕ СКРОЛЛИТСЯ -->
             <div class="expand-btn-wrapper">
                 <div class="fade"></div>
                 <button class="expand-btn">Показать полностью ▼</button>
@@ -6719,8 +6766,7 @@ function renderCards(data) {
                 if (metaTags) metaTags.style.display = 'none';
                 this.classList.add('mode-only-definition');
             }
-            // Обновляем видимость кнопки после переключения режима
-            updateExpandButtonVisibility(this);
+            scheduleUpdateExpandButton(this);
         });
 
         // Кнопка "Показать полностью / Свернуть"
@@ -6730,17 +6776,18 @@ function renderCards(data) {
             const currentCard = this.closest('.card');
             currentCard.classList.toggle('expanded');
             this.textContent = currentCard.classList.contains('expanded') ? 'Свернуть ▲' : 'Показать полностью ▼';
-            // Обновляем видимость кнопки (при сворачивании она может скрыться)
-            updateExpandButtonVisibility(currentCard);
+            scheduleUpdateExpandButton(currentCard);
         });
 
-        // ===== СВАЙП: ДЛЯ МОБИЛЬНЫХ (touch) И ДЛЯ ПК (pointer) =====
+        // ===== НАБЛЮДАТЕЛИ ДЛЯ КАРТОЧКИ =====
+        observeCardContent(card);
+
+        // ===== СВАЙП (touch и pointer) =====
         let isDragging = false;
         let startX = 0;
         let startY = 0;
         let currentX = 0;
 
-        // ---- ОБРАБОТЧИКИ ДЛЯ МОБИЛЬНЫХ (touch) ----
         card.addEventListener('touchstart', function(e) {
             if (e.target.closest('.expand-btn')) return;
             const touch = e.touches[0];
@@ -6768,21 +6815,15 @@ function renderCards(data) {
 
         card.addEventListener('touchend', function(e) {
             if (!isDragging) return;
-            
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-
             if (Math.abs(currentX) > 100) {
                 const isRight = currentX > 0;
                 wasSwiped = true;
-                
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
-                
                 refreshSummary();
-
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
-                
                 setTimeout(() => {
                     this.classList.add('hidden');
                     this.style.transform = '';
@@ -6798,7 +6839,6 @@ function renderCards(data) {
             isDragging = false;
         }, { passive: true });
 
-        // ---- ОБРАБОТЧИКИ ДЛЯ ПК (pointer) ----
         card.addEventListener('pointerdown', function(e) {
             if (e.pointerType === 'touch') return;
             if (e.button !== 0) return;
@@ -6815,10 +6855,8 @@ function renderCards(data) {
             if (e.pointerType === 'touch') return;
             if (!this.hasPointerCapture(e.pointerId)) return;
             if (e.target.closest('.expand-btn')) return;
-            
             const diffX = e.clientX - startX;
             const diffY = e.clientY - startY;
-            
             if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
                 isDragging = true;
                 currentX = diffX;
@@ -6832,28 +6870,21 @@ function renderCards(data) {
         card.addEventListener('pointerup', function(e) {
             if (e.pointerType === 'touch') return;
             this.releasePointerCapture(e.pointerId);
-            
             if (!isDragging) {
                 this.style.transition = '';
                 this.style.transform = '';
                 this.style.opacity = '';
                 return;
             }
-
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-
             if (Math.abs(currentX) > 100) {
                 const isRight = currentX > 0;
                 wasSwiped = true;
-                
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
-                
                 refreshSummary();
-
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
-                
                 setTimeout(() => {
                     this.classList.add('hidden');
                     this.style.transform = '';
@@ -6878,21 +6909,23 @@ function renderCards(data) {
             isDragging = false;
         });
 
-        // ===== ИНИЦИАЛЬНАЯ ПРОВЕРКА ВИДИМОСТИ КНОПКИ =====
-        // После того как карточка полностью создана и вставлена в DOM,
-        // проверяем, нужна ли кнопка «Показать полностью»
-        // Используем setTimeout, чтобы браузер успел отрендерить содержимое
-        setTimeout(() => {
-            updateExpandButtonVisibility(card);
-        }, 10);
+        // ===== ИНИЦИАЛЬНАЯ ПРОВЕРКА =====
+        scheduleUpdateExpandButton(card);
     });
 
     totalCountEl.textContent = uniqueData.length;
     updateVisibleCount();
     refreshSummary();
+
+    // ===== ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА ПОСЛЕ ПОЛНОЙ ОТРИСОВКИ =====
+    setTimeout(() => {
+        updateAllVisibleCardsButtons();
+    }, 200);
 }
 
-// ===== ФИЛЬТРАЦИЯ И ПОИСК =====
+// ============================================================
+//  ФИЛЬТРАЦИЯ И ПОИСК
+// ============================================================
 function filterAndSearch() {
     const allCards = document.querySelectorAll('.card');
     const searchTerm = currentSearch.toLowerCase().trim();
@@ -6910,6 +6943,11 @@ function filterAndSearch() {
     });
     updateVisibleCount();
     refreshSummary();
+
+    // Обновляем кнопки у всех видимых карточек
+    setTimeout(() => {
+        updateAllVisibleCardsButtons();
+    }, 100);
 }
 
 function updateVisibleCount() {
@@ -6917,7 +6955,9 @@ function updateVisibleCount() {
     visibleCountEl.textContent = visible;
 }
 
-// ===== ДРОПДАУНЫ =====
+// ============================================================
+//  ДРОПДАУНЫ
+// ============================================================
 function closeAllDropdowns() {
     document.querySelectorAll('.dropdown-toggle.open').forEach(el => el.classList.remove('open'));
     document.querySelectorAll('.dropdown-menu.open').forEach(el => el.classList.remove('open'));
@@ -6938,7 +6978,7 @@ function setupDropdown(toggleId, menuId) {
         item.addEventListener('click', function(e) {
             e.stopPropagation();
             const filter = this.dataset.filter;
-            resetAllDropdownTitles();  // Сброс всех заголовков перед установкой нового фильтра
+            resetAllDropdownTitles();
             filterBtns.forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
@@ -6954,7 +6994,6 @@ function setupDropdown(toggleId, menuId) {
     });
 }
 
-// ===== ИНИЦИАЛИЗАЦИЯ ДРОПДАУНОВ =====
 setupDropdown('dropdownToggleInterview', 'dropdownMenuInterview');
 setupDropdown('dropdownToggleSchema', 'dropdownMenuSchema');
 setupDropdown('dropdownToggleSql', 'dropdownMenuSql');
@@ -6964,7 +7003,7 @@ document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         const filter = this.dataset.filter;
-        resetAllDropdownTitles();  // Сброс всех заголовков
+        resetAllDropdownTitles();
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
@@ -7014,7 +7053,7 @@ if (resetBtn) {
                 filterBtns.forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
                 document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
-                resetAllDropdownTitles(); // Сброс заголовков
+                resetAllDropdownTitles();
                 closeAllDropdowns();
                 if (window.innerWidth <= 768) {
                     burgerBtn.classList.remove('active');
@@ -7035,7 +7074,7 @@ if (resetBtn) {
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
         document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
-        resetAllDropdownTitles(); // Сброс заголовков
+        resetAllDropdownTitles();
         closeAllDropdowns();
         if (window.innerWidth <= 768) {
             burgerBtn.classList.remove('active');
@@ -7116,6 +7155,10 @@ function initApp(data) {
     renderCards(uniqueData);
     console.log(`✅ Всего терминов: ${uniqueData.length}`);
     createProgressBar();
+    // Дополнительная проверка через 300 мс
+    setTimeout(() => {
+        updateAllVisibleCardsButtons();
+    }, 300);
 }
 if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
     initApp(TERMS_DATA);
