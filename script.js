@@ -1596,10 +1596,11 @@ const TERMS_DATA = [
         category: 'documentation',
         tag: 'Планирование',
         tagColor: 'red',
-        simple: 'Потенциальные проблемы, которые могут помешать тестированию, и способы их смягчения.',
-        example: 'В Это потенциальные проблемы, которые могут помешать выполнению тестирования. Описываются риски и способы их смягчения (митигации).',
-        source: 'Справочник тестировщика',
-        meta: ['Риски', 'Митигация', 'Планирование']
+        simple: 'Потенциальные <span class="mark-yellow">события или условия</span>, которые могут негативно повлиять на процесс тестирования, его сроки, качество или полноту. В тест-плане риски описываются вместе с планами их <span class="mark-green">смягчения</span> (митигации) и <span class="mark-blue">реагирования</span>.',
+        example: '<span class="mark-blue">Примеры рисков в тест-плане интернет-магазина:</span>\n<ul>\n  <li><strong>Задержка передачи билда</strong> – разработчики могут не уложиться в срок, тогда тестирование сдвигается. <span class="mark-orange">Митигация:</span> заложить буфер времени в расписание, начать подготовку тест-кейсов до получения билда.</li>\n  <li><strong>Нестабильность тестового окружения</strong> – сервер может падать или база данных сбрасываться. <span class="mark-orange">Митигация:</span> договориться с DevOps о резервном окружении, иметь возможность запуска локально.</li>\n  <li><strong>Нехватка тестовых данных</strong> – сложно воспроизвести некоторые сценарии без реальных данных. <span class="mark-orange">Митигация:</span> подготовить синтетические данные или договориться об обезличенной копии продакшена.</li>\n  <li><strong>Болезнь или отпуск ключевого тестировщика</strong> – снижение ресурсов. <span class="mark-orange">Митигация:</span> перекрёстное обучение, ведение документации, чтобы другой член команды мог подхватить задачи.</li>\n  <li><strong>Изменение требований в процессе</strong> – заказчик может добавить новые фичи. <span class="mark-orange">Митигация:</span> использовать гибкие методологии (Agile), приоритизировать тесты по критичности, регулярно синхронизироваться с заказчиком.</li>\n</ul>',
+        academic: '<strong>Риск в контексте тестирования</strong> — это <span class="mark-yellow">потенциальная проблема</span>, которая может возникнуть в проекте и повлиять на его успешное завершение. Риски делятся на <span class="mark-blue">проектные</span> (сроки, ресурсы, коммуникации) и <span class="mark-orange">продуктовые</span> (качество, функциональность, безопасность). В тест-плане риски описываются с указанием <span class="mark-red">вероятности</span> и <span class="mark-red">влияния</span>, а также планов по их снижению (<span class="mark-green">митигации</span>) или реагированию. Управление рисками помогает команде подготовиться к неожиданностям и минимизировать последствия.',
+        source: 'Справочник тестировщика, ISTQB Glossary',
+        meta: ['Риски', 'Митигация', 'Планирование', 'Управление рисками']
     },
     {
         id: 131,
@@ -5697,7 +5698,7 @@ const TERMS_DATA = [
         category: 'interview_data',
         tag: 'Отношения',
         tagColor: 'teal',
-        simple: 'Типы отношений: 1:1(паспорт), 1:N (автор-книги), M:N(студенты-предметы через промежуточную таблицу).',
+        simple: "Типы отношений: <span class=\"mark-blue\">1:1</span> (паспорт), <span class=\"mark-blue\">1:N</span> (автор-книги), <span class=\"mark-blue\">M:N</span> (студенты-предметы через промежуточную таблицу).",
         example: '<span class="mark-blue">Как ответить на собеседовании:</span><br><br><span class="mark-blue">Вступление:</span> «В реляционных БД таблицы связаны между собой. Понимание типов связей помогает проектировать тесты и понимать структуру данных.»<br><span class="mark-blue">1. Один к одному (1:1):</span><br>Каждая запись в таблице A соответствует <span class="mark-red">максимум одной</span> записи в таблице B и наоборот.<br><span class="mark-blue">Пример:</span>Пользователь — Паспорт. У каждого пользователя один паспорт, у каждого паспорта один владелец.<br><span class="mark-blue">Реализация:</span>Внешний ключ в одной из таблиц с ограничением <span class="mark-purple">UNIQUE</span>.<br><br><span class="mark-blue">2. Один ко многим (1:N):</span><br>Одна запись в таблице A может быть связана с <span class="mark-red">несколькими</span> записями в таблице B, но каждая запись в B связана только с одной записью в A.<br><span class="mark-blue">Пример:</span> Автор — Книги</span>. У одного автора много книг, но у каждой книги один автор.<br><span class="mark-teal">Реализация:</span> <span class="mark-blue">Внешний ключ</span> в таблице B (книги) ссылается на <span class="mark-purple">первичный ключ</span> таблицы A (авторы).<br><br><span class="mark-blue">3. Многие ко многим (M:N):</span><br>Каждая запись в A может быть связана с <span class="mark-red">несколькими</span> записями в B и наоборот.<br><span class="mark-blue">Пример:</span> <span class="mark-teal">Студенты — Предметы</span>. У одного студента много предметов, на одном предмете много студентов.<br><span class="mark-blue">Реализация:</span> Через <span class="mark-purple">промежуточную таблицу</span> (junction table), которая содержит <span class="mark-blue">внешние ключи</span> на обе таблицы.<br><br><span class="mark-blue">Что проверяет тестировщик:</span><ul><li>Корректность связей при вставке/обновлении данных</li><li>Обработка ошибок при нарушении <span class="mark-purple">ссылочной целостности</span></li><li>Правильность <span class="mark-blue">JOIN-запросов</span></li></ul>',
         academic: 'Какие типы отношений бывают между таблицами в SQL?',
         source: 'Работа с данными.docx',
@@ -6422,6 +6423,22 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function updateExpandButtonVisibility(card) {
+    const content = card.querySelector('.card-content');
+    const btnWrapper = card.querySelector('.expand-btn-wrapper');
+    if (!content || !btnWrapper) return;
+
+    // Если карточка раскрыта — кнопка всегда видна (для сворачивания)
+    if (card.classList.contains('expanded')) {
+        btnWrapper.style.display = 'block';
+        return;
+    }
+
+    // Проверяем, есть ли скролл (контент выходит за пределы)
+    const hasScroll = content.scrollHeight > content.clientHeight;
+    btnWrapper.style.display = hasScroll ? 'block' : 'none';
+}
+
 function removeDuplicates(data) {
     const seen = new Set();
     const unique = [];
@@ -6593,7 +6610,6 @@ function resetCurrentFilterStatsAndRefresh() {
     filterAndSearch();
 }
 
-// ===== РЕНДЕРИНГ КАРТОЧЕК =====
 function renderCards(data) {
     if (!data || data.length === 0) {
         cardsGrid.innerHTML = '<p style="text-align:center; padding:40px; color:#888;">Нет данных для отображения</p>';
@@ -6633,20 +6649,25 @@ function renderCards(data) {
                 <span class="tag ${item.tagColor}">${escapeHtml(item.tag)}</span>
                 <span class="mode-badge" id="modeBadge_${item.id}">Определение</span>
             </div>
-            <div class="definition" id="def_${item.id}" style="display: none;">
-                <div class="simple-def"><strong>Обобщённое:</strong> ${escapeHtml(item.simple || '')}</div>
-                <div class="example"><strong>Пример:</strong><br>${exampleHtml}</div>
-                <span class="source">${escapeHtml(item.source || '')}</span>
-            </div>
-            <div class="academic-definition" id="acad_${item.id}">
-                <div class="academic-text">
-                    <strong>Определение:</strong><br>
-                    ${academicText}
+
+            <!-- ВСЁ СОДЕРЖИМОЕ В ОДНОМ СКРОЛЛИРУЕМОМ БЛОКЕ -->
+            <div class="card-content">
+                <div class="definition" id="def_${item.id}" style="display: none;">
+                    <div class="simple-def"><strong>Обобщённое:</strong> ${item.simple || ''}</div>
+                    <div class="example"><strong>Пример:</strong><br>${exampleHtml}</div>
+                    <span class="source">${escapeHtml(item.source || '')}</span>
                 </div>
-                <span class="source">${escapeHtml(item.source || '')}</span>
+                <div class="academic-definition" id="acad_${item.id}">
+                    <div class="academic-text">
+                        <strong>Определение:</strong><br>
+                        ${academicText}
+                    </div>
+                    <span class="source">${escapeHtml(item.source || '')}</span>
+                </div>
+                <div class="meta-tags" style="display: none;">${metaHtml}</div>
             </div>
-            <div class="meta-tags" style="display: none;">${metaHtml}</div>
-            
+
+            <!-- КНОПКА — СНАРУЖИ, НЕ СКРОЛЛИТСЯ -->
             <div class="expand-btn-wrapper">
                 <div class="fade"></div>
                 <button class="expand-btn">Показать полностью ▼</button>
@@ -6698,6 +6719,8 @@ function renderCards(data) {
                 if (metaTags) metaTags.style.display = 'none';
                 this.classList.add('mode-only-definition');
             }
+            // Обновляем видимость кнопки после переключения режима
+            updateExpandButtonVisibility(this);
         });
 
         // Кнопка "Показать полностью / Свернуть"
@@ -6707,6 +6730,8 @@ function renderCards(data) {
             const currentCard = this.closest('.card');
             currentCard.classList.toggle('expanded');
             this.textContent = currentCard.classList.contains('expanded') ? 'Свернуть ▲' : 'Показать полностью ▼';
+            // Обновляем видимость кнопки (при сворачивании она может скрыться)
+            updateExpandButtonVisibility(currentCard);
         });
 
         // ===== СВАЙП: ДЛЯ МОБИЛЬНЫХ (touch) И ДЛЯ ПК (pointer) =====
@@ -6755,7 +6780,6 @@ function renderCards(data) {
                 
                 refreshSummary();
 
-                // Плавно улетаем в сторону и исчезаем (одна анимация)
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
                 
@@ -6853,6 +6877,14 @@ function renderCards(data) {
             this.style.opacity = '';
             isDragging = false;
         });
+
+        // ===== ИНИЦИАЛЬНАЯ ПРОВЕРКА ВИДИМОСТИ КНОПКИ =====
+        // После того как карточка полностью создана и вставлена в DOM,
+        // проверяем, нужна ли кнопка «Показать полностью»
+        // Используем setTimeout, чтобы браузер успел отрендерить содержимое
+        setTimeout(() => {
+            updateExpandButtonVisibility(card);
+        }, 10);
     });
 
     totalCountEl.textContent = uniqueData.length;
