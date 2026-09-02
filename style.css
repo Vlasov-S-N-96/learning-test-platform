@@ -429,7 +429,7 @@ body {
     background: #fafcff;
     border-radius: 20px;
     border: 1px solid #e6eef9;
-    padding: 18px 20px 20px 20px;
+    padding: 18px 20px 10px 20px;
     transition: 0.25s ease;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
@@ -440,17 +440,79 @@ body {
     overflow-wrap: break-word;
     word-break: break-word;
     max-width: 100%;
-    /* Убираем всё, что может мешать скроллу */
     touch-action: auto;
-    overflow: visible;
-    max-height: none;
-    min-height: auto;
     position: relative;
-}
-.card {
-    touch-action: auto;
+
+    height: auto;
+    max-height: 380px;
+    overflow: hidden;
 }
 
+.card .card-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 6px;
+    padding-bottom: 65px;    /* подберите под вашу кнопку */
+    min-height: 0;
+}
+
+.card .card-content > *:last-child {
+    margin-bottom: 0;
+}
+
+.card .expand-btn-wrapper {
+    flex-shrink: 0;
+    width: 100%;
+    padding-top: 0;          /* убрали лишний отступ */
+    background: #fafcff;
+    z-index: 2;
+    position: sticky;        /* прилипает к низу */
+    bottom: 0;
+}
+
+.card .expand-btn-wrapper .expand-btn {
+    display: block;
+    width: 100%;
+    padding: 6px 0;          /* уменьшили высоту кнопки */
+    text-align: center;
+    background: #fafcff;
+    border: none;
+    border-radius: 0 0 20px 20px;
+    color: #1d3b5c;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.card .expand-btn-wrapper .expand-btn:hover {
+    background: #f0f5fd;
+}
+
+.card.expanded {
+    max-height: 5000px !important;
+    overflow: visible;
+}
+
+.card.expanded .card-content {
+    overflow: visible;
+    max-height: none;
+    padding-bottom: 0;       /* в раскрытом состоянии отступ не нужен */
+}
+
+.card.expanded .expand-btn-wrapper {
+    position: relative;      /* отклеиваем, идёт по потоку */
+    margin-top: 10px;
+}
+
+.card.expanded .expand-btn-wrapper .expand-btn {
+    border-top: 1px solid #e6eef9;
+}
+
+.card .academic-definition .academic-text {
+    padding-bottom: 12px;   /* увеличивает пространство внутри */
+}
 
 @keyframes swipeRight {
     0% { transform: translateX(0); opacity: 1; }
@@ -566,8 +628,8 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 12px;
-    padding-top: 10px;
+    margin-top: 4px;
+    padding-top: 4px;
     border-top: 1px solid #e6eef9;
 }
 
@@ -2035,14 +2097,6 @@ pre {
     list-style-type: decimal;
 }
 
-/* ===== ЕДИНООБРАЗНЫЙ РАЗМЕР КАРТОЧЕК И РАСКРЫТИЕ ===== */
-.card {
-    min-height: 360px;          /* Минимальная высота, чтобы все были ровными */
-    max-height: 300px;          /* Скрываем контент, который вылезает за пределы */
-    overflow: hidden;           /* Прячем лишнее */
-    transition: max-height 0.4s ease, box-shadow 0.3s ease, transform 0.3s ease;
-    position: relative;
-}
 
 /* Состояние "Раскрыто" */
 .card.expanded {
