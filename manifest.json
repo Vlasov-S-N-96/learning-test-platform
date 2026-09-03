@@ -1,8 +1,9 @@
 {
-  "name": "Тестирование ПО — Полная схема для собеседований",
+  "name": "Тестирование ПО - Справочник",
   "short_name": "QA Справочник",
   "description": "Интерактивный справочник по тестированию, тест-дизайну, SQL, Python и схемам для собеседований",
-  "start_url": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#eef3f9",
   "theme_color": "#1d3b5c",
