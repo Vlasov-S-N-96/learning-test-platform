@@ -453,7 +453,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
-    padding-bottom: 65px;    /* подберите под вашу кнопку */
+    padding-bottom: 80px;    /* подберите под вашу кнопку */
     min-height: 0;
 }
 
