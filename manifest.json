@@ -38,12 +38,6 @@
       "short_name": "Схемы",
       "url": "./?section=schemas",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
-    },
-    {
-      "name": "Справочник SQL",
-      "short_name": "SQL",
-      "url": "./?filter=sql_basics",
-      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
