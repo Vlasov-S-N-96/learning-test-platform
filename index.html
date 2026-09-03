@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Тестирование ПО — Полная схема для собеседований</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1d3b5c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
 </head>
 <body>
 
@@ -918,5 +923,14 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('✅ SW зарегистрирован:', reg))
+            .catch(err => console.log('❌ Ошибка регистрации SW:', err));
+        });
+    }
+    </script>
 </body>
 </html>
