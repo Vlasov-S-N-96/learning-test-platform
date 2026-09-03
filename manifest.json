@@ -1,5 +1,6 @@
 {
-  "name": "Тестирование ПО - Справочник",
+  "id": "./",
+  "name": "Тестирование ПО — Справочник",
   "short_name": "QA Справочник",
   "description": "Интерактивный справочник по тестированию, тест-дизайну, SQL, Python и схемам для собеседований",
   "start_url": "./",
@@ -8,6 +9,9 @@
   "background_color": "#eef3f9",
   "theme_color": "#1d3b5c",
   "orientation": "portrait-primary",
+  "lang": "ru",
+  "dir": "ltr",
+  "categories": ["education", "reference"],
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -26,6 +30,20 @@
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Схемы тестирования",
+      "short_name": "Схемы",
+      "url": "./?section=schemas",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Справочник SQL",
+      "short_name": "SQL",
+      "url": "./?filter=sql_basics",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
