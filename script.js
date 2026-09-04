@@ -3427,7 +3427,7 @@ const TERMS_DATA = [
     },
     {
         id: 517,
-        term: 'Вопрос: Что такое NULL?',
+        term: 'Что такое NULL?',
         category: 'sql_interview',
         tag: 'NULL',
         tagColor: 'red',
@@ -3439,7 +3439,7 @@ const TERMS_DATA = [
     },
     {
         id: 518,
-        term: 'Вопрос: Разница между WHERE и HAVING',
+        term: 'Разница между WHERE и HAVING',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'blue',
@@ -3451,7 +3451,7 @@ const TERMS_DATA = [
     },
     {
         id: 519,
-        term: 'Вопрос: Разница между DELETE и TRUNCATE',
+        term: 'Разница между DELETE и TRUNCATE',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'orange',
@@ -3463,7 +3463,7 @@ const TERMS_DATA = [
     },
     {
         id: 520,
-        term: 'Вопрос: UNION vs UNION ALL',
+        term: 'UNION vs UNION ALL',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'purple',
@@ -3475,7 +3475,7 @@ const TERMS_DATA = [
     },
     {
         id: 521,
-        term: 'Вопрос: Типы JOIN',
+        term: 'Типы JOIN',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'green',
@@ -3487,7 +3487,7 @@ const TERMS_DATA = [
     },
     {
         id: 522,
-        term: 'Вопрос: Что такое подзапрос?',
+        term: 'Что такое подзапрос?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'teal',
@@ -3499,7 +3499,7 @@ const TERMS_DATA = [
     },
     {
         id: 523,
-        term: 'Вопрос: Что такое CTE?',
+        term: 'Что такое CTE?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'purple',
@@ -3511,7 +3511,7 @@ const TERMS_DATA = [
     },
     {
         id: 524,
-        term: 'Вопрос: Рекурсивный CTE',
+        term: 'Рекурсивный CTE',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'red',
@@ -3523,7 +3523,7 @@ const TERMS_DATA = [
     },
     {
         id: 525,
-        term: 'Вопрос: Что такое оконные функции?',
+        term: 'Что такое оконные функции?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'blue',
@@ -3535,7 +3535,7 @@ const TERMS_DATA = [
     },
     {
         id: 526,
-        term: 'Вопрос: Что такое индексы? Когда их использовать?',
+        term: 'Что такое индексы? Когда их использовать?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'orange',
@@ -3547,7 +3547,7 @@ const TERMS_DATA = [
     },
     {
         id: 527,
-        term: 'Вопрос: Что такое нормализация? Зачем она нужна?',
+        term: 'Что такое нормализация? Зачем она нужна?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'purple',
@@ -3559,7 +3559,7 @@ const TERMS_DATA = [
     },
     {
         id: 528,
-        term: 'Вопрос: Что такое денормализация?',
+        term: 'Что такое денормализация?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'teal',
@@ -3571,7 +3571,7 @@ const TERMS_DATA = [
     },
     {
         id: 529,
-        term: 'Вопрос: Что такое первичный и внешний ключи?',
+        term: 'Что такое первичный и внешний ключи?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'green',
@@ -3583,7 +3583,7 @@ const TERMS_DATA = [
     },
     {
         id: 530,
-        term: 'Вопрос: Что такое автоинкремент?',
+        term: 'Что такое автоинкремент?',
         category: 'sql_interview',
         tag: 'Собеседование',
         tagColor: 'orange',
@@ -5908,11 +5908,11 @@ const TERMS_DATA = [
         category: 'interview_mobile',
         tag: 'Инструменты',
         tagColor: 'green',
-        simple: 'Эмулятор — программное обеспечение, создающее виртуальную машину, имитирующую аппаратное обеспечение и ОС реального устройства (например, эмулятор в Android Studio). Симулятор — программная среда, имитирующая поведение ОС, но без эмуляции аппаратуры (например, симулятор в Xcode). Ни эмулятор, ни симулятор не гарантируют 100% совпадения с реальным устройством, критичные функции нужно тестировать на реальных устройствах.',
-        example: '<span class="mark-green">Как ответить на собеседовании:</span><br><br><span class="mark-green">Вступление:</span> «Эмуляторы и симуляторы — это инструменты для тестирования мобильных приложений без реального устройства. Но они работают по-разному.»<br><br><span class="mark-green">Эмулятор:</span><br>Создаёт <span class="mark-green">виртуальную машину</span>, имитирующую аппаратное обеспечение и операционную систему реального устройства. В точности воспроизводит поведение приложения, как на реальном устройстве.<br><span class="mark-green">Пример:</span> эмулятор в Android Studio (AVD).<br><br><span class="mark-green">Симулятор:</span><br>Создаёт <span class="mark-green">программную среду</span>, имитирующую внутреннее поведение ОС, но не эмулирует аппаратное обеспечение. Полезен для тестирования UI и функциональности.<br><span class="mark-green">Пример:</span> симулятор в Xcode.<br><br><span class="mark-green">Важно помнить:</span> ни эмулятор, ни симулятор не могут гарантировать 100% повторение поведения приложения на реальном устройстве. <span class="mark-green">Критические функции нужно тестировать на реальных устройствах.</span>',
+        simple: '<strong>Эмулятор</strong> — это программа, которая <span class="mark-orange">полностью имитирует аппаратное обеспечение</span> устройства (процессор, память, GPU, датчики) и операционную систему. Позволяет настраивать количество ядер, объем ОЗУ и т.д.<br><br><strong>Симулятор</strong> — это среда, которая <span class="mark-orange">лишь воспроизводит поведение ОС и интерфейс</span>, но <strong>не эмулирует железо</strong>. Поэтому симулятор не поддерживает аппаратные функции (камера, Bluetooth, акселерометр) и не может точно предсказать производительность на реальном устройстве.',
+        example: '<span class="mark-green">Как ответить на собеседовании:</span><br><br><span class="mark-green">Вступление:</span> «Эмуляторы и симуляторы часто путают, но у них принципиально разная архитектура. Давайте разберем на примерах.»<br><br><span class="mark-green">Эмулятор (например, Android Studio AVD):</span><br>Эмулятор <span class="mark-orange">имитирует железо</span> — он создает виртуальную машину, которая эмулирует реальный процессор (например, ARM или x86), память, графический чип, а также такие датчики, как акселерометр, гироскоп, GPS и даже камеру.<br><br><span class="mark-orange">Что можно настроить в эмуляторе:</span><ul><li>Количество ядер CPU (например, 1, 2, 4)</li><li>Объем оперативной памяти (например, 1 ГБ, 2 ГБ, 4 ГБ)</li><li>Разрешение экрана и плотность пикселей (DPI)</li><li>Версию Android (от 4.4 до 14)</li><li>Наличие или отсутствие фронтальной/задней камеры</li><li>Эмуляцию SIM-карты и сети (3G, 4G, Wi-Fi)</li></ul><span class="mark-orange">Пример:</span> Вы можете создать эмулятор с 4 ядрами и 4 ГБ ОЗУ, чтобы проверить, как приложение работает на «мощном» устройстве, а затем создать другой эмулятор с 1 ядром и 512 МБ ОЗУ, чтобы увидеть, как оно тормозит на слабом. Это настоящая имитация аппаратной среды.<br><br><span class="mark-green">Симулятор (например, iOS Simulator в Xcode):</span><br>Симулятор <span class="mark-orange">не имитирует железо</span>. Он работает как обычное приложение на вашем Mac, используя его процессор и память. Он лишь воспроизводит поведение операционной системы iOS и визуальный интерфейс, но не создает виртуальный чип.<br><br><span class="mark-orange">Что недоступно в симуляторе:</span><ul><li>Камера (нельзя протестировать сканер QR или съемку)</li><li>Bluetooth (нельзя проверить подключение к устройствам)</li><li>Акселерометр, гироскоп, датчик освещенности</li><li>Телефонные звонки и SMS</li><li>Реальная производительность (так как используется железо Mac, а не мобильного устройства)</li></ul><span class="mark-orange">Почему это важно:</span> На симуляторе приложение может работать идеально быстро, но на реальном iPhone оно будет тормозить из-за слабого процессора. Именно поэтому критические функции, связанные с аппаратными возможностями, всегда тестируются на реальных устройствах.<br><br><span class="mark-green">Заключение:</span> «Эмулятор — это копия железа, симулятор — это копия только софта. Для проверки UI и базовой логики подойдет симулятор, но для глубинного тестирования, производительности и аппаратных функций нужен эмулятор (на Android) или реальное устройство (на iOS).»',
         academic: 'В чем разница между эмулятором и симулятором в мобильном тестировании?',
         source: 'Тестирование мобильных .docx',
-        meta: ['Эмулятор', 'Симулятор', 'Android Studio']
+        meta: ['Эмулятор', 'Симулятор', 'Android Studio', 'Xcode', 'Имитация железа']
     },
     {
         id: 931,
@@ -6362,26 +6362,120 @@ const DEFAULT_DROPDOWN_TEXTS = {
     'dropdownTogglePython': 'Python <span class="arrow">▼</span>'
 };
 
+// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ ОЗВУЧКИ =====
+let activeSpeech = null; // { card, btn, text, position, isPlaying, isPaused, utterance, currentUtteranceId }
+let utteranceCounter = 0;
+let globalRateIndex = 0;
+const RATES = [1.0, 1.25, 1.5, 1.75, 2.0];
+
+// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ПОДСВЕТКИ КАРТОЧКИ =====
+function setSpeakingCard(card) {
+    document.querySelectorAll('.card.currently-speaking').forEach(c => c.classList.remove('currently-speaking'));
+    if (card) {
+        card.classList.add('currently-speaking');
+    }
+}
+
+// ===== ЛОГИКА ГОЛОСОВ =====
+let voices = [];
+let selectedVoice = null;
+
+if ('speechSynthesis' in window) {
+    loadVoices();
+    speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function loadVoices() {
+    voices = speechSynthesis.getVoices();
+    const menu = document.getElementById('voiceMenu');
+    if (!menu) return;
+
+    const ruVoices = voices.filter(v => v.lang.startsWith('ru'));
+    const targetVoices = ruVoices.length > 0 ? ruVoices : voices;
+
+    menu.innerHTML = '';
+    // Добавляем пункт "Авто"
+    const autoItem = document.createElement('button');
+    autoItem.className = 'dropdown-item' + (selectedVoice === null ? ' active' : '');
+    autoItem.textContent = 'Авто (системный голос)';
+    autoItem.dataset.voice = '';
+    autoItem.addEventListener('click', () => selectVoice(null));
+    menu.appendChild(autoItem);
+
+    targetVoices.forEach(voice => {
+        const item = document.createElement('button');
+        item.className = 'dropdown-item' + (selectedVoice && selectedVoice.name === voice.name ? ' active' : '');
+        item.textContent = `${voice.name} (${voice.lang})`;
+        item.dataset.voice = voice.name;
+        item.addEventListener('click', () => selectVoice(voice));
+        menu.appendChild(item);
+    });
+
+    // Обновляем текст кнопки
+    updateVoiceToggleText();
+}
+
+function selectVoice(voice) {
+    selectedVoice = voice;
+    // Обновляем активный класс
+    document.querySelectorAll('#voiceMenu .dropdown-item').forEach(el => el.classList.remove('active'));
+    if (voice) {
+        const target = document.querySelector(`#voiceMenu .dropdown-item[data-voice="${voice.name}"]`);
+        if (target) target.classList.add('active');
+    } else {
+        document.querySelector('#voiceMenu .dropdown-item[data-voice=""]')?.classList.add('active');
+    }
+    updateVoiceToggleText();
+    if (speechSynthesis.speaking) speechSynthesis.cancel();
+}
+
+function updateVoiceToggleText() {
+    const toggle = document.getElementById('voiceToggle');
+    if (!toggle) return;
+    const text = selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'Авто (системный голос)';
+    toggle.innerHTML = `${text} <span class="arrow">▼</span>`;
+}
+
+function selectVoice(voice) {
+    selectedVoice = voice;
+    // Обновляем активный класс
+    document.querySelectorAll('#voiceMenu .dropdown-item').forEach(el => el.classList.remove('active'));
+    if (voice) {
+        const target = document.querySelector(`#voiceMenu .dropdown-item[data-voice="${voice.name}"]`);
+        if (target) target.classList.add('active');
+    } else {
+        document.querySelector('#voiceMenu .dropdown-item[data-voice=""]')?.classList.add('active');
+    }
+    updateVoiceToggleText();
+    if (speechSynthesis.speaking) speechSynthesis.cancel();
+        // 👇 Закрываем дропдаун
+    closeAllDropdowns();
+}
+
+function updateVoiceToggleText() {
+    const toggle = document.getElementById('voiceToggle');
+    if (!toggle) return;
+    const text = selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'Авто (системный голос)';
+    toggle.innerHTML = `${text} <span class="arrow">▼</span>`;
+}
+
+
 // ===== ФУНКЦИЯ ОБНОВЛЕНИЯ ВИДИМОСТИ КНОПКИ =====
 function updateExpandButtonVisibility(card) {
     const content = card.querySelector('.card-content');
     const btnWrapper = card.querySelector('.expand-btn-wrapper');
     if (!content || !btnWrapper) return;
 
-    // Если карточка раскрыта — кнопка всегда видна
     if (card.classList.contains('expanded')) {
         btnWrapper.style.display = 'block';
         return;
     }
 
-    // Проверяем, есть ли скролл (контент выходит за пределы)
     const hasScroll = content.scrollHeight > content.clientHeight + 1;
     btnWrapper.style.display = hasScroll ? 'block' : 'none';
 }
 
-// ===== НАДЁЖНАЯ ОТЛОЖЕННАЯ ПРОВЕРКА =====
 function scheduleUpdateExpandButton(card) {
-    // Используем requestAnimationFrame для синхронизации с рендерингом
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             setTimeout(() => {
@@ -6391,25 +6485,21 @@ function scheduleUpdateExpandButton(card) {
     });
 }
 
-// ===== ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ ВСЕХ ВИДИМЫХ КАРТОЧЕК =====
 function updateAllVisibleCardsButtons() {
     document.querySelectorAll('.card:not(.hidden)').forEach(card => {
         scheduleUpdateExpandButton(card);
     });
 }
 
-// ===== СОЗДАНИЕ RESIZEOBSERVER ДЛЯ КАРТОЧЕК =====
 function observeCardContent(card) {
     const content = card.querySelector('.card-content');
     if (!content) return;
 
-    // Создаём наблюдатель за изменением размера
     const resizeObserver = new ResizeObserver(() => {
         scheduleUpdateExpandButton(card);
     });
     resizeObserver.observe(content);
 
-    // Также наблюдаем за изменением DOM (переключение режимов)
     const mutationObserver = new MutationObserver(() => {
         scheduleUpdateExpandButton(card);
     });
@@ -6419,12 +6509,10 @@ function observeCardContent(card) {
         attributes: false
     });
 
-    // Сохраняем ссылки, чтобы отключить позже (опционально)
     card._resizeObserver = resizeObserver;
     card._mutationObserver = mutationObserver;
 }
 
-// ===== СБРОС ВСЕХ ЗАГОЛОВКОВ ДРОПДАУНОВ =====
 function resetAllDropdownTitles() {
     Object.keys(DEFAULT_DROPDOWN_TEXTS).forEach(id => {
         const toggle = document.getElementById(id);
@@ -6435,7 +6523,6 @@ function resetAllDropdownTitles() {
     });
 }
 
-// ===== ПРОГРЕСС-БАРЫ =====
 const controls = document.querySelector('.controls');
 let progressWrapper = null;
 
@@ -6477,7 +6564,6 @@ function updateProgressBar(percent) {
     fill.className = 'progress-fill';
 }
 
-// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -6723,6 +6809,239 @@ function renderCards(data) {
 
         cardsGrid.appendChild(card);
 
+        // ===== ЛОГИКА ОЗВУЧКИ КАРТОЧКИ (с идентификатором речи) =====
+        if ('speechSynthesis' in window) {
+            const header = card.querySelector('.card-header');
+            
+            const controls = document.createElement('div');
+            controls.className = 'speed-controls';
+
+            const speedBtn = document.createElement('button');
+            speedBtn.className = 'speed-btn';
+            speedBtn.textContent = '1x';
+            speedBtn.title = 'Скорость озвучки';
+
+            speedBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                globalRateIndex = (globalRateIndex + 1) % RATES.length;
+                const newRate = RATES[globalRateIndex];
+                speedBtn.textContent = newRate === 1.0 ? '1x' : newRate + 'x';
+
+                // Если активная речь есть на этой карточке и она воспроизводится (не на паузе)
+                if (activeSpeech && activeSpeech.card === card && activeSpeech.isPlaying) {
+                    const position = activeSpeech.position;
+                    const text = activeSpeech.text;
+                    const currentBtn = activeSpeech.btn;
+
+                    // Отменяем текущую речь
+                    if (activeSpeech.utterance) {
+                        // Не используем isRestarting – используем новый ID
+                        speechSynthesis.cancel();
+                    }
+
+                    // Создаём новую речь с остатком текста
+                    const remainingText = text.substring(position);
+                    const utterance = new SpeechSynthesisUtterance(remainingText);
+                    utterance.lang = 'ru-RU';
+                    utterance.rate = newRate;
+                    if (selectedVoice) {
+                        utterance.voice = selectedVoice;
+                    }
+
+                    // Генерируем новый ID для этой речи
+                    const newId = ++utteranceCounter;
+                    activeSpeech.currentUtteranceId = newId;
+
+                    utterance.onboundary = (event) => {
+                        if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                            activeSpeech.position = event.charIndex + (text.length - remainingText.length);
+                        }
+                    };
+
+                    utterance.onend = () => {
+                        if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                            // Только если это та же речь
+                            activeSpeech.isPlaying = false;
+                            activeSpeech.isPaused = false;
+                            if (activeSpeech.btn) {
+                                activeSpeech.btn.classList.remove('speaking');
+                                activeSpeech.btn.innerHTML = '🔊';
+                            }
+                            activeSpeech.utterance = null;
+                            if (activeSpeech.card === card) {
+                                setSpeakingCard(null);
+                            }
+                        }
+                    };
+
+                    utterance.onerror = () => {
+                        if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                            activeSpeech.isPlaying = false;
+                            activeSpeech.isPaused = false;
+                            if (activeSpeech.btn) {
+                                activeSpeech.btn.classList.remove('speaking');
+                                activeSpeech.btn.innerHTML = '🔊';
+                            }
+                            activeSpeech.utterance = null;
+                            if (activeSpeech.card === card) {
+                                setSpeakingCard(null);
+                            }
+                        }
+                    };
+
+                    speechSynthesis.speak(utterance);
+                    activeSpeech.utterance = utterance;
+                    activeSpeech.isPlaying = true;
+                    activeSpeech.isPaused = false;
+                    if (activeSpeech.btn) {
+                        activeSpeech.btn.innerHTML = '⏸';
+                        activeSpeech.btn.classList.add('speaking');
+                    }
+                    setSpeakingCard(card);
+                }
+            });
+
+            const speakBtn = document.createElement('button');
+            speakBtn.className = 'speak-btn';
+            speakBtn.innerHTML = '🔊';
+            speakBtn.title = 'Озвучить / Пауза';
+
+            speakBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Если есть активная речь на другой карточке – останавливаем её
+                if (activeSpeech && activeSpeech.card !== card && activeSpeech.isPlaying) {
+                    // Отменяем старую речь
+                    if (activeSpeech.utterance) {
+                        speechSynthesis.cancel();
+                    }
+                    // Сбрасываем состояние старой карточки
+                    if (activeSpeech.btn) {
+                        activeSpeech.btn.classList.remove('speaking');
+                        activeSpeech.btn.innerHTML = '🔊';
+                    }
+                    activeSpeech.isPlaying = false;
+                    activeSpeech.isPaused = false;
+                    activeSpeech.utterance = null;
+                    // Не сбрасываем подсветку – она переключится на новую
+                }
+
+                // Если активная речь на этой карточке
+                if (activeSpeech && activeSpeech.card === card) {
+                    if (activeSpeech.isPlaying && !activeSpeech.isPaused) {
+                        // Ставим на паузу
+                        speechSynthesis.pause();
+                        activeSpeech.isPaused = true;
+                        activeSpeech.btn.innerHTML = '▶';
+                        return;
+                    } else if (activeSpeech.isPlaying && activeSpeech.isPaused) {
+                        // Продолжаем
+                        speechSynthesis.resume();
+                        activeSpeech.isPaused = false;
+                        activeSpeech.btn.innerHTML = '⏸';
+                        return;
+                    } else {
+                        // Речь завершена, сбрасываем и начинаем заново
+                        activeSpeech.isPlaying = false;
+                        activeSpeech.isPaused = false;
+                        activeSpeech.position = 0;
+                        setSpeakingCard(null);
+                        // дальше пойдёт создание новой речи
+                    }
+                }
+
+                // Собираем текст для озвучки
+                const term = card.querySelector('.term')?.textContent || '';
+                const simpleDefBlock = card.querySelector('.definition');
+                const academicDefBlock = card.querySelector('.academic-definition');
+
+                let textToSpeak = term;
+
+                if (simpleDefBlock && simpleDefBlock.style.display !== 'none') {
+                    const simpleText = simpleDefBlock.querySelector('.simple-def')?.textContent || '';
+                    const exampleText = simpleDefBlock.querySelector('.example')?.textContent || '';
+                    textToSpeak += `. ${simpleText}. ${exampleText}`;
+                } else if (academicDefBlock && academicDefBlock.style.display !== 'none') {
+                    const academicText = academicDefBlock.querySelector('.academic-text')?.textContent || '';
+                    textToSpeak += `. ${academicText}`;
+                }
+
+                if (textToSpeak === term) {
+                    const simpleFallback = card.querySelector('.simple-def')?.textContent || '';
+                    const academicFallback = card.querySelector('.academic-text')?.textContent || '';
+                    textToSpeak += `. ${simpleFallback} ${academicFallback}`;
+                }
+
+                // Сохраняем в активный объект (или создаём новый)
+                if (!activeSpeech) {
+                    activeSpeech = {};
+                }
+                // Обновляем для новой карточки
+                activeSpeech.card = card;
+                activeSpeech.btn = speakBtn;
+                activeSpeech.text = textToSpeak;
+                activeSpeech.position = 0;
+                activeSpeech.isPlaying = true;
+                activeSpeech.isPaused = false;
+
+                const rate = RATES[globalRateIndex];
+                speedBtn.textContent = rate === 1.0 ? '1x' : rate + 'x';
+
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'ru-RU';
+                utterance.rate = rate;
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                }
+
+                // Генерируем новый ID
+                const newId = ++utteranceCounter;
+                activeSpeech.currentUtteranceId = newId;
+
+                utterance.onboundary = (event) => {
+                    if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                        activeSpeech.position = event.charIndex;
+                    }
+                };
+
+                utterance.onend = () => {
+                    if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                        activeSpeech.isPlaying = false;
+                        activeSpeech.isPaused = false;
+                        activeSpeech.btn.classList.remove('speaking');
+                        activeSpeech.btn.innerHTML = '🔊';
+                        activeSpeech.utterance = null;
+                        if (activeSpeech.card === card) {
+                            setSpeakingCard(null);
+                        }
+                    }
+                };
+
+                utterance.onerror = () => {
+                    if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
+                        activeSpeech.isPlaying = false;
+                        activeSpeech.isPaused = false;
+                        activeSpeech.btn.classList.remove('speaking');
+                        activeSpeech.btn.innerHTML = '🔊';
+                        activeSpeech.utterance = null;
+                        if (activeSpeech.card === card) {
+                            setSpeakingCard(null);
+                        }
+                    }
+                };
+
+                speechSynthesis.speak(utterance);
+                activeSpeech.utterance = utterance;
+                speakBtn.innerHTML = '⏸';
+                speakBtn.classList.add('speaking');
+                setSpeakingCard(card);
+            });
+
+            controls.appendChild(speedBtn);
+            controls.appendChild(speakBtn);
+            header.appendChild(controls);
+        }
+
         // Стартовый вид
         card.querySelector('.definition').style.display = 'none';
         card.querySelector('.academic-definition').style.display = 'block';
@@ -6736,8 +7055,8 @@ function renderCards(data) {
         // ===== ФЛАГ ДЛЯ ПРЕДОТВРАЩЕНИЯ КЛИКА ПОСЛЕ СВАЙПА =====
         let wasSwiped = false;
 
-        // Переключение по клику (Определение ↔ Просто)
         card.addEventListener('click', function(e) {
+            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.filter-btn') || e.target.closest('.expand-btn')) return;
             if (wasSwiped) {
                 wasSwiped = false;
@@ -6769,7 +7088,6 @@ function renderCards(data) {
             scheduleUpdateExpandButton(this);
         });
 
-        // Кнопка "Показать полностью / Свернуть"
         const expandBtn = card.querySelector('.expand-btn');
         expandBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -6779,16 +7097,15 @@ function renderCards(data) {
             scheduleUpdateExpandButton(currentCard);
         });
 
-        // ===== НАБЛЮДАТЕЛИ ДЛЯ КАРТОЧКИ =====
         observeCardContent(card);
 
-        // ===== СВАЙП (touch и pointer) =====
         let isDragging = false;
         let startX = 0;
         let startY = 0;
         let currentX = 0;
 
         card.addEventListener('touchstart', function(e) {
+            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.expand-btn')) return;
             const touch = e.touches[0];
             startX = touch.clientX;
@@ -6840,6 +7157,7 @@ function renderCards(data) {
         }, { passive: true });
 
         card.addEventListener('pointerdown', function(e) {
+            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.pointerType === 'touch') return;
             if (e.button !== 0) return;
             if (e.target.closest('.expand-btn')) return;
@@ -6909,7 +7227,6 @@ function renderCards(data) {
             isDragging = false;
         });
 
-        // ===== ИНИЦИАЛЬНАЯ ПРОВЕРКА =====
         scheduleUpdateExpandButton(card);
     });
 
@@ -6917,7 +7234,6 @@ function renderCards(data) {
     updateVisibleCount();
     refreshSummary();
 
-    // ===== ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА ПОСЛЕ ПОЛНОЙ ОТРИСОВКИ =====
     setTimeout(() => {
         updateAllVisibleCardsButtons();
     }, 200);
@@ -6944,7 +7260,6 @@ function filterAndSearch() {
     updateVisibleCount();
     refreshSummary();
 
-    // Обновляем кнопки у всех видимых карточек
     setTimeout(() => {
         updateAllVisibleCardsButtons();
     }, 100);
@@ -6998,6 +7313,7 @@ setupDropdown('dropdownToggleInterview', 'dropdownMenuInterview');
 setupDropdown('dropdownToggleSchema', 'dropdownMenuSchema');
 setupDropdown('dropdownToggleSql', 'dropdownMenuSql');
 setupDropdown('dropdownTogglePython', 'dropdownMenuPython');
+setupDropdown('voiceToggle', 'voiceMenu');
 
 document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
     btn.addEventListener('click', function(e) {
@@ -7111,6 +7427,7 @@ document.addEventListener('click', function(e) {
     }
 });
 
+
 // ============================================================
 //  УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ СХЕМ
 // ============================================================
@@ -7155,7 +7472,6 @@ function initApp(data) {
     renderCards(uniqueData);
     console.log(`✅ Всего терминов: ${uniqueData.length}`);
     createProgressBar();
-    // Дополнительная проверка через 300 мс
     setTimeout(() => {
         updateAllVisibleCardsButtons();
     }, 300);

@@ -453,7 +453,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
-    padding-bottom: 65px;    /* подберите под вашу кнопку */
+    padding-bottom: 80px;    /* подберите под вашу кнопку */
     min-height: 0;
 }
 
@@ -2864,4 +2864,249 @@ pre {
 
 .approach-tag:hover {
     background: #f0f4fa;
+}
+
+.card .expand-btn-wrapper .fade {
+    background: none !important; /* Убираем белый градиент */
+}
+
+/* ===== ОЗВУЧКА КАРТОЧЕК (КАК НА YOUTUBE) ===== */
+/* Обертка для кнопок */
+.speed-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto; /* Прижимает кнопки вправо */
+}
+
+/* Круглая кнопка озвучки */
+.speak-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: #e6edf6;
+    color: #1d3b5c;
+    cursor: pointer;
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.speak-btn:hover {
+    background: #1d3b5c;
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Анимация при чтении */
+.speak-btn.speaking {
+    background: #1d3b5c;
+    color: white;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+/* Кнопка скорости (как на ютубе) */
+.speed-btn {
+    background: #f0f5fd;
+    border: 1px solid #d0ddea;
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #1d3b5c;
+    cursor: pointer;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.speed-btn:hover {
+    background: #e1ebf9;
+}
+
+/* Текущая активная скорость */
+.speed-btn.active {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+}
+
+/* Выпадающий список голосов */
+.voice-select {
+    padding: 5px 14px;
+    border-radius: 40px;
+    border: 1px solid #d0ddea;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #2a405a;
+    background: white;
+    max-width: 220px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.voice-select:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+@media (max-width: 768px) {
+    .voice-select {
+        width: 100%;
+        max-width: unset;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* ===== КНОПКИ УПРАВЛЕНИЯ ВОСПРОИЗВЕДЕНИЕМ ===== */
+.playback-controls {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 6px;
+}
+
+.ctrl-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #e6edf6;
+    color: #1d3b5c;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.ctrl-btn:hover {
+    background: #1d3b5c;
+    color: white;
+    transform: scale(1.1);
+}
+
+.ctrl-btn.active {
+    background: #1d3b5c;
+    color: white;
+}
+
+/* ===== ПОДСВЕТКА ВОСПРОИЗВОДИМОЙ КАРТОЧКИ ===== */
+.card.currently-speaking {
+    border: 3px solid #ff6f00 !important;
+    box-shadow: 0 0 24px rgba(255, 111, 0, 0.5) !important;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+/* Ограничиваем ширину select и делаем его адаптивным */
+.voice-select {
+    max-width: 100% !important;
+    width: auto !important;
+    min-width: 140px;
+    box-sizing: border-box;
+}
+
+/* На мобильных переносим select на новую строку и даём всю ширину */
+@media (max-width: 768px) {
+    .voice-select {
+        width: 100% !important;
+        min-width: unset;
+        margin-top: 4px;
+    }
+}
+
+.voice-dropdown .dropdown-menu {
+    max-width: 280px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: nowrap;
+    min-width: 200px;
+}
+@media (max-width: 768px) {
+    .voice-dropdown {
+        width: 100%;
+    }
+    .voice-dropdown .dropdown-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+    .voice-dropdown .dropdown-menu {
+        max-width: 100%;
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+}
+
+.voice-dropdown .dropdown-menu {
+    max-width: 280px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: nowrap;
+    min-width: 200px;
+}
+@media (max-width: 768px) {
+    .voice-dropdown {
+        width: 100%;
+    }
+    .voice-dropdown .dropdown-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+    .voice-dropdown .dropdown-menu {
+        max-width: 100%;
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
+}
+
+/* Стили для кастомного дропдауна голосов */
+.voice-dropdown {
+    display: inline-block;
+    position: relative;
+}
+
+.voice-dropdown .dropdown-toggle {
+    /* Уже есть стили от .filter-btn, дополнительно: */
+    min-width: 180px;
+    justify-content: space-between;
+}
+
+.voice-dropdown .dropdown-menu {
+    max-width: 320px;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: nowrap;
+    min-width: 200px;
+    left: 0;
+    right: auto;
+}
+
+/* На мобильных устройствах дропдаун занимает всю ширину */
+@media (max-width: 768px) {
+    .voice-dropdown {
+        width: 100%;
+        margin-top: 4px;
+    }
+    .voice-dropdown .dropdown-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+    .voice-dropdown .dropdown-menu {
+        max-width: 100%;
+        width: 100% !important;
+        left: 0 !important;
+        right: 0 !important;
+    }
 }

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v1.0.1';
 const CACHE_NAME = `qa-cache-${CACHE_VERSION}`;
 
 // Все файлы, которые должны кешироваться для офлайн‑работы
@@ -8,6 +8,7 @@ const urlsToCache = [
   './style.css',
   './script.js',
   './manifest.json',
+  './open-nagish.min.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-180.png'

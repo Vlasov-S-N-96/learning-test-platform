@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Тестирование ПО — Полная схема для собеседований</title>
+    <title>Теория</title>
     <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1d3b5c">
@@ -12,9 +12,9 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 </head>
 <body>
-
     <div class="container">
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
+
         <div class="schema-controls">
             <button class="toggle-schema-btn" data-target="testingSchemaFull">Схема тестирования</button>
             <button class="toggle-schema-btn" data-target="algorithmBlock">Алгоритм тестирования</button>
@@ -902,7 +902,12 @@
                     </div>
                 </div>
             </div>
-
+            <div class="dropdown voice-dropdown">
+                <button class="filter-btn dropdown-toggle" id="voiceToggle">
+                    Авто (системный голос) <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="voiceMenu"></div>
+            </div>
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
         </div>
 
@@ -932,5 +937,12 @@
         });
     }
     </script>
+    <script>
+    window.OpenNagishConfig = {
+        lang: 'ru',
+        position: 'top-right'
+    };
+    </script>
+    <script src="./open-nagish.min.js" defer></script>
 </body>
 </html>
