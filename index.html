@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Теория</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1d3b5c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+</head>
+<body>
+    <div class="container">
+        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
+
+        <div class="schema-controls">
+            <button class="toggle-schema-btn" data-target="testingSchemaFull">Схема тестирования</button>
+            <button class="toggle-schema-btn" data-target="algorithmBlock">Алгоритм тестирования</button>
+            <button class="toggle-schema-btn" data-target="testingTypesBlock">Типы тестирования</button>
+            <button class="toggle-schema-btn" data-target="scrumSchema">Scrum схема</button>
+            <button class="toggle-schema-btn" data-target="kanbanSchema">Kanban схема</button>
+        </div>
+
+        <!-- ============================================================ -->
+        <!--   ПОЛНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО       -->
+        <!-- ============================================================ -->
+        <div class="testing-schema hidden" id="testingSchemaFull">
+            <div class="testing-title">Схема тестирования ПО</div>
+
+            <div class="testing-grid">
+
+                <!-- ========================================================== -->
+                <!--  1. СТЕПЕНЬ ФОРМАЛИЗАЦИИ                                   -->
+                <!-- ========================================================== -->
+                <div class="testing-section formalization">
+                    <div class="section-header">Степень формализации</div>
+                    <div class="section-items">
+                        <span class="item purple">Исследовательское</span>
+                        <span class="item blue">На основе тест-кейсов</span>
+                        <span class="item orange">Ad-hoc (свободное)</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  2. МЕТОДЫ (Как?)                                          -->
+                <!-- ========================================================== -->
+                <div class="testing-section methods">
+                    <div class="section-header">Методы (Как?)</div>
+                    <div class="method-group">
+                        <div class="method-subtitle">Сценарии</div>
+                        <div class="section-items">
+                            <span class="item green">Happy Path</span>
+                            <span class="item red">Negative</span>
+                            <span class="item orange">Destructive</span>
+                        </div>
+                    </div>
+                    <div class="method-group">
+                        <div class="method-subtitle">Доступ к коду</div>
+                        <div class="section-items">
+                            <span class="item blue">Чёрный ящик</span>
+                            <span class="item teal">Серый ящик</span>
+                            <span class="item purple">Белый ящик</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  3. УРОВНИ (Где я нахожусь?)                              -->
+                <!-- ========================================================== -->
+                <div class="testing-section levels">
+                    <div class="section-header">Уровни (Где я нахожусь?)</div>
+
+                    <!-- Модульное -->
+                    <div class="level-block">
+                        <div class="level-title item green">Модульное (Unit)</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">TDD</span>
+                            <span class="approach-tag">BDD</span>
+                            <span class="approach-tag">Property-based</span>
+                        </div>
+                    </div>
+
+                    <!-- Интеграционное -->
+                    <div class="level-block">
+                        <div class="level-title item blue">Интеграционное</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">Big Bang</span>
+                            <span class="approach-tag">Top-Down</span>
+                            <span class="approach-tag">Bottom-Up</span>
+                            <span class="approach-tag">Sandwich</span>
+                            <span class="approach-tag">CI</span>
+                        </div>
+                    </div>
+
+                    <!-- Системное -->
+                    <div class="level-block">
+                        <div class="level-title item purple">Системное</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">Сквозное (E2E)</span>
+                            <span class="approach-tag">Smoke</span>
+                            <span class="approach-tag">Sanity</span>
+                            <span class="approach-tag">Регрессия</span>
+                            <span class="approach-tag">Исследовательское</span>
+                            <span class="approach-tag">Автоматизация</span>
+                        </div>
+                    </div>
+
+                    <!-- Приёмочное -->
+                    <div class="level-block">
+                        <div class="level-title item teal">Приёмочное (Acceptance)</div>
+                        <div class="level-approaches">
+                            <span class="approach-tag">UAT</span>
+                            <span class="approach-tag">BAT</span>
+                            <span class="approach-tag">OAT</span>
+                            <span class="approach-tag">Альфа</span>
+                            <span class="approach-tag">Бета</span>
+                            <span class="approach-tag">Контрактное</span>
+                            <span class="approach-tag">Нормативное</span>
+                            <span class="approach-tag">ATDD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  4. ФУНКЦИОНАЛЬНОЕ (Что?)                                  -->
+                <!-- ========================================================== -->
+                <div class="testing-section functional">
+                    <div class="section-header">Функциональное (Что?)</div>
+                    <div class="section-items">
+                        <span class="item red">Регрессионное</span>
+                        <span class="item orange">Дымовое (Smoke)</span>
+                        <span class="item blue">Санитарное (Sanity)</span>
+                        <span class="item purple">GUI</span>
+                        <span class="item teal">Безопасность (Security)</span>
+                        <span class="item green">Инсталляционное</span>
+                        <span class="item orange">Конфигурационное</span>
+                        <span class="item blue">Миграционное</span>
+                        <span class="item purple">Документации</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  5. НЕФУНКЦИОНАЛЬНОЕ (Качество)                            -->
+                <!-- ========================================================== -->
+                <div class="testing-section nonfunctional">
+                    <div class="section-header">Нефункциональное (Качество)</div>
+
+                    <!-- Производительность -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Производительность</div>
+                        <div class="section-items">
+                            <span class="item purple">Нагрузочное (Load)</span>
+                            <span class="item red">Стрессовое (Stress)</span>
+                            <span class="item teal">Объёмное (Volume)</span>
+                            <span class="item blue">Масштабируемость</span>
+                            <span class="item orange">Конкурентное</span>
+                        </div>
+                    </div>
+
+                    <!-- Безопасность -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Безопасность</div>
+                        <div class="section-items">
+                            <span class="item red">Стойкость к атакам</span>
+                            <span class="item orange">Стойкость к перебору</span>
+                            <span class="item blue">Шифрование</span>
+                            <span class="item purple">Изоляция сессий</span>
+                        </div>
+                    </div>
+
+                    <!-- Качество использования -->
+                    <div class="nf-group">
+                        <div class="nf-subtitle">Качество использования</div>
+                        <div class="section-items">
+                            <span class="item green">Удобство (Usability)</span>
+                            <span class="item green">Совместимость</span>
+                            <span class="item green">Надёжность</span>
+                            <span class="item teal">Доступность (A11Y)</span>
+                            <span class="item blue">Локализация (L10n)</span>
+                            <span class="item purple">Интернационализация (I18n)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  6. ПО ФОРМЕ ПРОВЕДЕНИЯ                                    -->
+                <!-- ========================================================== -->
+                <div class="testing-section form">
+                    <div class="section-header">По форме проведения</div>
+                    <div class="section-items">
+                        <span class="item blue">Ручное (Manual)</span>
+                        <span class="item purple">Автоматизированное</span>
+                        <span class="item teal">Полуавтоматизированное</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  7. ПО ИЗМЕНЕНИЯМ                                          -->
+                <!-- ========================================================== -->
+                <div class="testing-section changes">
+                    <div class="section-header">По изменениям</div>
+                    <div class="section-items">
+                        <span class="item red">Регрессионное</span>
+                        <span class="item purple">Конфигурационное</span>
+                        <span class="item teal">Миграционное</span>
+                    </div>
+                </div>
+
+                <!-- ========================================================== -->
+                <!--  8. ПО РЕЗУЛЬТАТУ ВЫПОЛНЕНИЯ                              -->
+                <!-- ========================================================== -->
+                <div class="testing-section result">
+                    <div class="section-header">По результату выполнения</div>
+                    <div class="section-items">
+                        <span class="item green">Пройден (Passed)</span>
+                        <span class="item red">Не пройден (Failed)</span>
+                        <span class="item orange">Пропущен (Skipped)</span>
+                        <span class="item purple">Прерван (Aborted)</span>
+                    </div>
+                </div>
+
+            </div><!-- /testing-grid -->
+
+            <!-- ===== КНОПКА И БЛОК ОТВЕТА НА СОБЕСЕДОВАНИИ ===== -->
+            <!-- ВАЖНО: ЭТОТ БЛОК ДОЛЖЕН БЫТЬ ВНУТРИ testingSchemaFull, НО ПОСЛЕ ЗАКРЫТИЯ testing-grid -->
+            <button class="toggle-interview-btn" data-target="interview-testing-full">Ответ на собеседовании</button>
+            <div id="interview-testing-full" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о полной схеме тестирования на собеседовании:</h4>
+
+                <!-- ВСТУПЛЕНИЕ -->
+                <p><strong>Вступление:</strong> «Тестирование — это не просто поиск багов. Это комплексный процесс, который помогает понять, насколько продукт соответствует ожиданиям пользователей, работает ли он так, как задумано, и готов ли к релизу. Мы проверяем не только функции, но и качество — скорость, безопасность, удобство, надёжность. И делаем это на всех этапах — от модуля до готовой системы. Давайте я пройду по схеме последовательно.»</p>
+
+                <!-- 1. СТЕПЕНЬ ФОРМАЛИЗАЦИИ -->
+                <p><strong>1. Степень формализации (Как детально мы подходим к тестированию?):</strong></p>
+                <ul>
+                    <li><strong>На основе тест-кейсов</strong> — пошаговая инструкция. Повторяемо, подходит для регрессии, можно автоматизировать.</li>
+                    <li><strong>Исследовательское</strong> — изучаем систему в процессе. Хорошо без документации или для новых фич.</li>
+                    <li><strong>Ad-hoc</strong> — свободное, интуитивное. «А что будет, если нажать сюда?»</li>
+                </ul>
+
+                <!-- 2. МЕТОДЫ -->
+                <p><strong>2. Методы (С чем мы работаем?):</strong></p>
+                <ul>
+                    <li><strong>Сценарии:</strong>
+                        <ul>
+                            <li><strong>Happy Path</strong> — основной сценарий, всё работает правильно.</li>
+                            <li><strong>Negative</strong> — пользователь ошибается, проверка обработки ошибок.</li>
+                            <li><strong>Destructive</strong> — пытаемся сломать систему.</li>
+                        </ul>
+                    </li>
+                    <li><strong>Доступ к коду:</strong>
+                        <ul>
+                            <li><strong>Чёрный ящик</strong> — не знаем внутреннего устройства.</li>
+                            <li><strong>Белый ящик</strong> — видим код, знаем структуру.</li>
+                            <li><strong>Серый ящик</strong> — комбинация, знаем архитектуру.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- 3. УРОВНИ -->
+                <p><strong>3. Уровни (Где мы находимся?):</strong></p>
+                <ul>
+                    <li><strong>Модульное (Unit)</strong> — проверяем отдельные функции, классы, методы. Пишут разработчики, часто с фреймворками (JUnit, pytest). Самый быстрый и дешёвый способ найти ошибку.
+                        <ul>
+                            <li><strong>TDD (Разработка через тестирование)</strong> — Сначала пишем падающий тест, потом пишем минимальный код, чтобы тест прошёл, затем рефакторим..</li>
+                            <li><strong>BDD (Разработка через поведение)</strong> — описываем поведение на естественном языке: <em>(Дано) — начальные условия; (Когда) — действие пользователя;(Тогда) — ожидаемый результат</em>. Помогает бизнесу и разработчикам говорить на одном языке.</li>
+                            <li><strong>Property-based (Тестирование на основе свойств)</strong> — проверяем свойства и инварианты, а не конкретные примеры. Например, для сортировки: "результат всегда отсортирован", "длина не изменилась".</li>
+                        </ul>
+                    </li>
+                    <li><strong>Интеграционное</strong> — проверяем, как модули общаются друг с другом. API, база данных, внешние сервисы. Ловим проблемы с форматами данных, таймаутами, авторизацией.
+                        <ul>
+                            <li><strong>Big Bang</strong> — все модули собираются сразу и тестируются вместе. Быстро, но если тест упал — сложно понять, какой модуль виноват.</li>
+                            <li><strong>Top-Down</strong> — начинаем с верхних модулей, нижние заменяем заглушками (Stubs). Проверяем логику интерфейса.</li>
+                            <li><strong>Bottom-Up</strong> — начинаем с нижних модулей (БД, логика), верхние заменяем драйверами (Drivers). Проверяем работу критичных нижних слоёв.</li>
+                            <li><strong>Sandwich</strong> — гибрид Top-Down и Bottom-Up. Фокус на среднем слое, верх и низ — через заглушки и драйверы. Самый эффективный для крупных проектов.</li>
+                            <li><strong>CI (Непрерывная интеграция)</strong> — при каждом коммите код собирается, прогоняются автотесты. Быстрая обратная связь, предотвращает "ад интеграции".</li>
+                        </ul>
+                    </li>
+                    <li><strong>Системное</strong> — проверяем всю систему целиком как единое целое. Здесь мы применяем различные подходы:
+                        <ul>
+                            <li><strong>Сквозное (E2E)</strong> — проверка бизнес-сценариев от начала до конца. Например: пользователь заходит → выбирает товар → оплачивает → получает уведомление.</li>
+                            <li><strong>Smoke</strong> — быстрая проверка критических функций после сборки. "Приложение открывается? Логин работает?" Если Smoke не прошёл — дальше тестировать бессмысленно.</li>
+                            <li><strong>Sanity</strong> — проверяем, что исправление работает и не сломало основное. 15–30 минут после фикса бага.</li>
+                            <li><strong>Регрессия</strong> — проверяем, что новый код не сломал старое. Прогоняем все ранее написанные тесты перед релизом. Основа любого релиза.</li>
+                            <li><strong>Исследовательское</strong> — поиск неочевидных багов без сценария. Полагаемся на опыт и интуицию.</li>
+                            <li><strong>Автоматизация</strong> — тесты выполняются скриптами без участия человека. Используется для регрессии, Smoke, нагрузочных тестов.</li>
+                        </ul>
+                        <p style="margin-top:6px; color:#2d3e5a; font-size:14px;"><em>Пайплайн: Smoke → Sanity → Регрессия → E2E</em></p>
+                    </li>
+                    <li><strong>Приёмочное (Acceptance)</strong> — финальная проверка заказчиком или пользователями. Отвечаем на вопрос: «А ту ли задачу мы решаем?»
+                        <ul>
+                            <li><strong>Альфа</strong> — внутреннее тестирование на мощностях компании, но не разработчиками, а независимой командой тестировщиков. Свежий взгляд помогает найти больше багов.</li>
+                            <li><strong>Бета</strong> — внешнее тестирование реальными пользователями на своих устройствах. Обратная связь из "реального мира".</li>
+                            <li><strong>UAT (Пользовательское)</strong> — проверка пользователями, решает ли продукт их повседневные задачи.</li>
+                            <li><strong>BAT (Бизнес-приемочное)</strong> — проверка бизнес-задач. Например: "выросла ли конверсия?", "снизилась ли нагрузка на поддержку?"</li>
+                            <li><strong>OAT (Эксплуатационное)</strong> — проверка готовности к эксплуатации: администрирование, бэкапы, восстановление после сбоев, масштабирование.</li>
+                            <li><strong>Контрактное</strong> — проверка соответствия договору. Например: "страница загружается за 2 секунды", "интеграция с 1С есть".</li>
+                            <li><strong>Нормативное</strong> — проверка соответствия законам и стандартам. Например: 152-ФЗ о персональных данных, HIPAA для медицины, PCI DSS для платежей.</li>
+                            <li><strong>ATDD (Приёмочное тестирование, управляемое тестами)</strong> — приёмочные тесты пишутся до кода всей командой (аналитик + разработчик + тестировщик). Тесты становятся контрактом и документацией.</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <!-- 4. ФУНКЦИОНАЛЬНОЕ -->
+                <p><strong>4. Функциональное (Что работает?):</strong></p>
+                <ul>
+                    <li><strong>Smoke</strong> — критические функции после сборки.</li>
+                    <li><strong>Sanity</strong> — исправление не сломало основное.</li>
+                    <li><strong>Регрессия</strong> — новый код не сломал старое.</li>
+                    <li><strong>GUI</strong> — интерфейс.</li>
+                    <li><strong>Безопасность (Security)</strong> — уязвимости.</li>
+                    <li><strong>Инсталляционное</strong> — установка/удаление.</li>
+                    <li><strong>Конфигурационное</strong> — настройки.</li>
+                    <li><strong>Миграционное</strong> — переход между версиями.</li>
+                    <li><strong>Документации</strong> — справка, подсказки.</li>
+                </ul>
+
+                <!-- 5. НЕФУНКЦИОНАЛЬНОЕ -->
+                <p><strong>5. Нефункциональное (Как качественно?):</strong></p>
+                <ul>
+                    <li><strong>Производительность:</strong> Нагрузочное, Стрессовое, Объёмное, Масштабируемость, Конкурентное.</li>
+                    <li><strong>Безопасность:</strong> Стойкость к атакам, к перебору, Шифрование, Изоляция сессий.</li>
+                    <li><strong>Качество использования:</strong> Удобство, Совместимость, Надёжность, Доступность (A11Y), Локализация, Интернационализация.</li>
+                </ul>
+
+                <!-- 6. ПО ФОРМЕ ПРОВЕДЕНИЯ -->
+                <p><strong>6. По форме проведения (Кто и как выполняет тесты?):</strong></p>
+                <ul>
+                    <li><strong>Ручное (Manual)</strong> — человек выполняет шаги вручную.</li>
+                    <li><strong>Автоматизированное</strong> — скрипты и код.</li>
+                    <li><strong>Полуавтоматизированное</strong> — часть автоматизирована, часть вручную.</li>
+                </ul>
+
+                <!-- 7. ПО ИЗМЕНЕНИЯМ -->
+                <p><strong>7. По изменениям (Что изменилось?):</strong></p>
+                <ul>
+                    <li><strong>Регрессионное</strong> — изменения не сломали старое.</li>
+                    <li><strong>Конфигурационное</strong> — изменение настроек.</li>
+                    <li><strong>Миграционное</strong> — переход между версиями.</li>
+                </ul>
+
+                <!-- 8. ПО РЕЗУЛЬТАТУ -->
+                <p><strong>8. По результату выполнения (Что получили?):</strong></p>
+                <ul>
+                    <li><strong>Пройден (Passed)</strong> — успешно.</li>
+                    <li><strong>Не пройден (Failed)</strong> — найден баг.</li>
+                    <li><strong>Пропущен (Skipped)</strong> — не выполнялся.</li>
+                    <li><strong>Прерван (Aborted)</strong> — прерван.</li>
+                </ul>
+
+                <!-- ЗАКЛЮЧЕНИЕ -->
+                <p><strong>Заключение:</strong> «На практике мы комбинируем все эти элементы. Для нового функционала — исследовательское + чёрный ящик + функциональное. Для регрессии — автоматизированные тест-кейсы. Для критичных систем — нагрузка, безопасность, совместимость. Главное — контекст: банк → безопасность, игра → производительность, стартап → скорость.»</p>
+            </div>
+        </div><!-- /testingSchemaFull -->
+
+        <!-- ============================================================ -->
+        <!--   ТИПЫ ТЕСТИРОВАНИЯ (по классификации ISTQB)                  -->
+        <!-- ============================================================ -->
+        <div class="testing-types-block hidden" id="testingTypesBlock">
+            <div class="testing-title">Типы тестирования</div>
+
+            <div class="testing-grid">
+
+                <!-- 1. ПО ЦЕЛИ -->
+                <div class="testing-section types">
+                    <div class="section-header">По цели</div>
+                    <div class="section-items">
+                        <span class="item green">Функциональное</span>
+                        <span class="item purple">Нефункциональное</span>
+                    </div>
+                </div>
+
+                <!-- 2. ПО СПОСОБУ ВЫПОЛНЕНИЯ -->
+                <div class="testing-section types">
+                    <div class="section-header">По способу выполнения</div>
+                    <div class="section-items">
+                        <span class="item blue">Ручное (Manual)</span>
+                        <span class="item purple">Автоматизированное</span>
+                        <span class="item teal">Полуавтоматизированное</span>
+                    </div>
+                </div>
+
+                <!-- 3. ПО ИЗМЕНЕНИЯМ -->
+                <div class="testing-section types">
+                    <div class="section-header">По изменениям</div>
+                    <div class="section-items">
+                        <span class="item orange">Smoke</span>
+                        <span class="item blue">Sanity</span>
+                        <span class="item red">Регрессия</span>
+                        <span class="item green">Re-test (подтверждающее)</span>
+                    </div>
+                </div>
+
+                <!-- 4. ПО ЗАПУСКУ КОДА -->
+                <div class="testing-section types">
+                    <div class="section-header">По запуску кода</div>
+                    <div class="section-items">
+                        <span class="item teal">Статическое</span>
+                        <span class="item purple">Динамическое</span>
+                    </div>
+                </div>
+
+                <!-- 5. ПО ПРИНЦИПУ РАБОТЫ -->
+                <div class="testing-section types">
+                    <div class="section-header">По принципу работы</div>
+                    <div class="section-items">
+                        <span class="item green">Позитивное (Positive)</span>
+                        <span class="item red">Негативное (Negative)</span>
+                    </div>
+                </div>
+
+                <!-- 6. ПО СТЕПЕНИ ФОРМАЛИЗАЦИИ -->
+                <div class="testing-section types">
+                    <div class="section-header">По степени формализации</div>
+                    <div class="section-items">
+                        <span class="item blue">На основе тест-кейсов</span>
+                        <span class="item purple">Исследовательское</span>
+                        <span class="item orange">Ad-hoc (свободное)</span>
+                    </div>
+                </div>
+
+            </div><!-- /testing-grid -->
+
+            <!-- ===== КНОПКА И БЛОК ОТВЕТА НА СОБЕСЕДОВАНИИ ===== -->
+            <button class="toggle-interview-btn" data-target="interview-types">Ответ на собеседовании</button>
+            <div id="interview-types" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о типах тестирования на собеседовании:</h4>
+
+                <p><strong>Вступление:</strong> «Тип тестирования — это группа активностей, объединённых общей целью. Я классифицирую тестирование по нескольким ключевым срезам. Давайте пройду по каждому.»</p>
+
+                <p><strong>1. По цели:</strong> «Здесь два основных направления. <strong>Функциональное</strong> — проверяем, что система <em>делает</em> то, что должна. <strong>Нефункциональное</strong> — проверяем, <em>как качественно</em> она это делает: скорость, безопасность, удобство, надёжность.»</p>
+
+                <p><strong>2. По способу выполнения:</strong> «<strong>Ручное</strong> — человек выполняет шаги вручную. <strong>Автоматизированное</strong> — скрипты и код. <strong>Полуавтоматизированное</strong> — часть автоматизирована, часть вручную. Выбор зависит от задачи: регрессию чаще автоматизируем, исследовательское — делаем вручную.»</p>
+
+                <p><strong>3. По изменениям:</strong> «<strong>Smoke</strong> — быстрая проверка критических функций после сборки. <strong>Sanity</strong> — проверка, что исправление работает. <strong>Регрессия</strong> — проверка, что новый код не сломал старое. <strong>Re-test</strong> — проверка, что конкретный баг действительно исправлен. Smoke и регрессию делаем при каждом релизе.»</p>
+
+                <p><strong>4. По запуску кода:</strong> «<strong>Статическое</strong> — без запуска кода: ревью кода, статический анализ, проверка стиля. <strong>Динамическое</strong> — с запуском кода: всё, что мы обычно называем тестированием.»</p>
+
+                <p><strong>5. По принципу работы:</strong> «<strong>Позитивное</strong> — проверяем, что система работает корректно при правильных данных (Happy Path). <strong>Негативное</strong> — проверяем обработку ошибок, когда пользователь делает что-то не так.»</p>
+
+                <p><strong>6. По степени формализации:</strong> «<strong>На основе тест-кейсов</strong> — пошаговая инструкция, повторяемо. <strong>Исследовательское</strong> — изучаем систему в процессе, хорошо для новых фич. <strong>Ad-hoc</strong> — свободное, интуитивное тестирование.»</p>
+
+                <p><strong>Заключение:</strong> «На практике я комбинирую эти типы в зависимости от контекста. Для регрессии — автоматизированные тесты. Для новых фич — исследовательское + тест-кейсы. Для критичных систем — нефункциональное: нагрузка, безопасность, совместимость. Главное — понимать, какая цель у тестирования в данный момент, и выбирать подходящий тип.»</p>
+            </div>
+        </div><!-- /testingTypesBlock -->
+
+        <!-- ===== БЛОК АЛГОРИТМА ===== -->
+        <div class="algorithm-block hidden" id="algorithmBlock">
+            <div class="algorithm-title">Как применять тестирование ПО на практике</div>
+            <div class="algorithm-steps">
+                <div class="step">
+                    <span class="step-num">1</span>
+                    <span class="step-text"><strong>Начинаем с планирования</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">2</span>
+                    <span class="step-text"><strong>Определяем глубину</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">3</span>
+                    <span class="step-text"><strong>Протестируем функции</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">4</span>
+                    <span class="step-text"><strong>Проверим качество</strong></span>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step">
+                    <span class="step-num">5</span>
+                    <span class="step-text"><strong>Решаем: Release or Stop</strong></span>
+                </div>
+            </div>
+
+            <div class="algorithm-footer">
+                <div class="always-block">
+                    <span class="block-label"><strong>Делаем всегда</strong></span>
+                    <div class="block-tags">
+                        <span class="tag-green">Smoke</span>
+                        <span class="tag-orange">Sanity</span>
+                        <span class="tag-blue">Регрессия</span>
+                        <span class="hidden-tag">Скрыто</span>
+                        <span class="hidden-tag">Скрыто</span>
+                    </div>
+                </div>
+                <div class="always-block">
+                    <span class="block-label"><strong>По необходимости</strong></span>
+                    <div class="block-tags">
+                        <span class="tag-purple">Нагрузочное</span>
+                        <span class="tag-orange">Стрессовое</span>
+                        <span class="tag-red">Безопасность</span>
+                        <span class="tag-green">Usability</span>
+                        <span class="tag-teal">Совместимость</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="toggle-interview-btn" data-target="interview-algorithm">Ответ на собеседовании</button>
+            <div id="interview-algorithm" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о практическом алгоритме тестирования на собеседовании:</h4>
+                
+                <p><strong>Введение:</strong> «Когда я начинаю тестировать новую функцию или проект, я следую определённому алгоритму, чтобы ничего не упустить. Вот как это выглядит на практике.»</p>
+
+                <p><strong>Шаг 1: Планирование</strong> – «Сначала я изучаю требования: что должно работать, какие есть сценарии. Если требований нет – общаюсь с аналитиком или разработчиком, задаю вопросы. Определяю цели тестирования: что мы проверяем, какие риски есть. Составляю тест-план: объём, ресурсы, сроки, критерии входа и выхода.»</p>
+
+                <p><strong>Шаг 2: Определяем глубину</strong> – «На основе рисков я выбираю приоритетные области. Например, если это модуль оплаты – я проверяю его в первую очередь, потому что ошибка там критична. Использую тест-дизайн: эквивалентное разбиение и граничные значения, чтобы сократить количество тестов, не потеряв покрытие.»</p>
+
+                <p><strong>Шаг 3: Функциональное тестирование</strong> – «Сначала я запускаю Smoke-тесты – проверяю, что основные функции работают. Затем Sanity – убеждаюсь, что новый код не сломал старое. После этого провожу полное функциональное тестирование: все сценарии (Happy Path, Negative, Destructive), проверяю GUI, безопасность (если нужно), установку. В конце – регрессия, чтобы убедиться, что изменения не повлияли на другие части системы.»</p>
+
+                <p><strong>Шаг 4: Проверка качества (нефункциональное)</strong> – «Здесь я смотрю на производительность: как быстро открываются страницы, сколько времени занимает запрос. Если нужно – провожу нагрузочное тестирование (например, симулирую 1000 пользователей). Проверяю удобство: может ли новый пользователь разобраться без помощи. Совместимость: работает ли в разных браузерах и на мобильных устройствах. Безопасность: проверяю основные уязвимости (SQL-инъекции, XSS).»</p>
+
+                <p><strong>Шаг 5: Решение о релизе</strong> – «Анализирую результаты: сколько тестов пройдено, сколько багов найдено, их серьёзность. Если есть критичные баги – релиз откладываю. Если все критические и мажорные баги исправлены – даю зелёный свет. Готовлю отчёт о тестировании для команды и заказчика.»</p>
+
+                <p><strong>Важный нюанс:</strong> Smoke, Sanity и регрессию я делаю при каждом релизе – это база. Нагрузочное, стрессовое, безопасность – по необходимости, <strong>например</strong>, перед крупными релизами или при изменении архитектуры. Мы также всегда учитываем <strong>контекст</strong>: для банковского приложения безопасность и надёжность критичны, для игры – производительность, для стартапа – скорость выхода на рынок.</p>
+            </div>
+        </div>
+
+        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА SCRUM ===== -->
+        <div class="scrum-schema hidden" id="scrumSchema">
+            <div class="scrum-title">Структура Scrum</div>
+            <div class="schema-container">
+                <div class="scrum-values">
+                    <span class="value-badge">Приверженность</span>
+                    <span class="value-badge">Фокус</span>
+                    <span class="value-badge">Открытость</span>
+                    <span class="value-badge">Уважение</span>
+                    <span class="value-badge">Смелость</span>
+                </div>
+
+                <div class="scrum-backlogs">
+                    <div class="backlog-col">
+                        <div class="backlog-title">Product Backlog</div>
+                        <ul class="backlog-items">
+                            <li>Регистрация</li>
+                            <li>Фильтр по цене</li>
+                            <li>Оплата картой</li>
+                            <li class="backlog-owner">(ведет Product Owner)</li>
+                        </ul>
+                    </div>
+                    <div class="backlog-arrow">→</div>
+                    <div class="backlog-col">
+                        <div class="backlog-title">Sprint Backlog</div>
+                        <ul class="backlog-items">
+                            <li>Сверстать форму</li>
+                            <li>Написать тесты</li>
+                            <li>Протестировать GUI</li>
+                            <li class="backlog-goal">Sprint Goal</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="sprint-container">
+                    <div class="sprint-title">Sprint (1-4 недели)</div>
+                    <div class="sprint-content">
+                        <div class="daily-scrum">
+                            <div class="daily-title">Daily Scrum (ежедневно)</div>
+                            <ul class="daily-items">
+                                <li>Что сделано?</li>
+                                <li>Что сегодня?</li>
+                                <li>Препятствия?</li>
+                            </ul>
+                        </div>
+
+                        <div class="refinement-block">
+                            <div class="refinement-title">Backlog Refinement</div>
+                            <ul>
+                                <li>Уточнение требований</li>
+                                <li>Оценка (покер планирования)</li>
+                            </ul>
+                        </div>
+
+                        <div class="dev-block">
+                            <div class="dev-title">Development &amp; Testing</div>
+                            <div class="dev-tags">
+                                <span>Код</span>
+                                <span>Функциональное</span>
+                                <span>Интеграционное</span>
+                                <span>Регресс</span>
+                                <span>Автотесты</span>
+                                <span>Исследовательское</span>
+                            </div>
+                            <div class="kanban-board">
+                                <span>To Do</span>
+                                <span class="arrow">→</span>
+                                <span>In Progress</span>
+                                <span class="arrow">→</span>
+                                <span>Ready for Test</span>
+                                <span class="arrow">→</span>
+                                <span>Done</span>
+                            </div>
+                        </div>
+
+                        <div class="bug-triage">
+                            <span>Bug Triage (по нужде)</span>
+                            <span class="sub">Приоритизация багов</span>
+                        </div>
+
+                        <div class="review-block">
+                            <div class="review-title">Sprint Review</div>
+                            <ul>
+                                <li>Демо версия инкремента заказчику</li>
+                                <li>Сбор обратной связи</li>
+                            </ul>
+                        </div>
+
+                        <div class="retro-block">
+                            <div class="retro-title">RETROSPECTIVE</div>
+                            <ul>
+                                <li>Что хорошо?</li>
+                                <li>Что улучшить?</li>
+                                <li>План действий</li>
+                            </ul>
+                        </div>
+
+                        <div class="increment-block">
+                            <div class="increment-title">Increment</div>
+                            <ul>
+                                <li>Протестирован</li>
+                                <li>Соответствует DoD</li>
+                                <li>Готов к релизу</li>
+                            </ul>
+                        </div>
+
+                        <div class="next-sprint">Next Sprint →</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="toggle-interview-btn" data-target="interview-scrum">Ответ на собеседовании</button>
+            <div id="interview-scrum" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о Scrum на собеседовании:</h4>
+
+                <p><strong>Введение:</strong> «Scrum – это фреймворк для гибкой разработки, который помогает нам создавать качественный продукт в условиях постоянно меняющихся требований. В основе Scrum лежат ценности: приверженность, фокус, открытость, уважение и смелость. Давайте я расскажу о ролях, артефактах и событиях.»</p>
+
+                <p><strong>Роли в Scrum:</strong></p>
+                <ul>
+                    <li><strong>Product Owner (PO)</strong> – отвечает за то, ЧТО мы делаем и ПОЧЕМУ. Он общается с заказчиками, собирает требования, формирует Product Backlog и расставляет приоритеты. PO – это голос бизнеса внутри команды.</li>
+                    <li><strong>Scrum Master (SM)</strong> – помогает команде быть эффективной. Он не управляет, а фасилитирует процессы: следит, чтобы Daily Scrum не затягивался, убирает препятствия (например, если разработчик не может настроить окружение), обучает команду Scrum, защищает от внешних помех.</li>
+                    <li><strong>Developers</strong> – вся команда, создающая продукт: разработчики, тестировщики, аналитики, дизайнеры. Они сами планируют работу в спринте, следят за качеством и несут коллективную ответственность за результат.</li>
+                </ul>
+
+                <p><strong>Артефакты Scrum:</strong></p>
+                <ul>
+                    <li><strong>Product Backlog</strong> – постоянно обновляемый список всех задач, идей, требований к продукту. Им управляет PO. Задачи отсортированы по приоритету – самые важные наверху.</li>
+                    <li><strong>Sprint Backlog</strong> – список задач, которые команда взяла на текущий спринт. Это результат Sprint Planning. В течение спринта команда сама управляет этим списком.</li>
+                    <li><strong>Increment</strong> – готовый, протестированный и соответствующий Definition of Done результат спринта. Это не «почти готово», а полностью работающая фича, которую можно показать заказчику.</li>
+                </ul>
+
+                <p><strong>События (церемонии):</strong></p>
+                <ul>
+                    <li><strong>Sprint Planning</strong> – встреча в начале спринта (обычно 2–4 часа). Команда и PO выбирают задачи из Product Backlog, оценивают их в Story Points (покер-планирование) и формируют Sprint Backlog. Также определяют Sprint Goal – цель, к которой идёт команда.</li>
+                    <li><strong>Daily Scrum (Stand-up)</strong> – ежедневная 15-минутная встреча. Каждый отвечает на три вопроса: что сделал вчера, что сделает сегодня, какие есть препятствия. Это не отчёт для менеджера, а синхронизация команды.</li>
+                    <li><strong>Sprint Review</strong> – демонстрация инкремента заказчику в конце спринта. Команда показывает, что сделано, собирает обратную связь, которая попадает в Product Backlog.</li>
+                    <li><strong>Sprint Retrospective</strong> – внутренняя встреча команды после Review. Анализируем, что прошло хорошо, что можно улучшить, выбираем 1-2 действия для следующего спринта. Это ключевой элемент для постоянного совершенствования.</li>
+                    <li><strong>Backlog Refinement (Grooming)</strong> – регулярная встреча для уточнения и переоценки задач в Product Backlog. Обычно проходит раз в неделю.</li>
+                    <li><strong>Bug Triage</strong> – встреча для приоритизации багов: какие исправлять сейчас, какие отложить.</li>
+                </ul>
+
+                <p><strong>Оценка и метрики:</strong></p>
+                <ul>
+                    <li><strong>Story Points</strong> – абстрактные единицы оценки сложности (часто числа Фибоначчи: 1, 2, 3, 5, 8, 13). Не привязаны к часам, помогают сравнивать задачи.</li>
+                    <li><strong>Покер-планирование</strong> – техника оценки, где каждый участник показывает карту с числом, затем обсуждают расхождения и приходят к консенсусу.</li>
+                    <li><strong>Velocity</strong> – сколько Story Points команда выполняет за спринт в среднем (факт). Используется для планирования следующего спринта.</li>
+                    <li><strong>Capacity</strong> – прогноз, сколько работы команда может взять в текущем спринте с учётом отпусков и праздников.</li>
+                    <li><strong>Burndown Chart</strong> – график, показывающий, сколько работы осталось до конца спринта. Помогает отслеживать прогресс.</li>
+                </ul>
+
+                <p><strong>Отличие от Kanban:</strong> «Scrum работает спринтами, задачи фиксируются на время спринта. В Kanban – непрерывный поток, задачи можно менять в любой момент. Scrum больше подходит для проектов с неопределёнными требованиями, Kanban – для поддержки и оперативных задач.»</p>
+            </div>
+        </div>
+
+        <!-- ===== ВИЗУАЛЬНАЯ СХЕМА KANBAN ===== -->
+        <div class="kanban-schema hidden" id="kanbanSchema">
+            <div class="kanban-title">Структура Kanban</div>
+            <div class="schema-container">
+                <div class="kanban-values">
+                    <span class="value-badge">Прозрачность</span>
+                    <span class="value-badge">Баланс</span>
+                    <span class="value-badge">Сотрудничество</span>
+                    <span class="value-badge">Ориентация на клиента</span>
+                    <span class="value-badge">Поток</span>
+                    <span class="value-badge">Лидерство</span>
+                    <span class="value-badge">Понимание</span>
+                    <span class="value-badge">Согласие</span>
+                    <span class="value-badge">Уважение</span>
+                </div>
+
+                <div class="kanban-board-full">
+                    <div class="board-title">Kanban-доска</div>
+                    <div class="board-columns">
+                        <div class="board-col">
+                            <div class="col-header">To Do</div>
+                            <div class="col-items">
+                                <span>Задача 1</span>
+                                <span>Задача 2</span>
+                            </div>
+                            <div class="wip-limit">WIP: 3</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">In Progress</div>
+                            <div class="col-items">
+                                <span>Задача 3</span>
+                            </div>
+                            <div class="wip-limit">WIP: 2</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">Review</div>
+                            <div class="col-items">
+                                <span>Задача 4</span>
+                                <span>Задача 5</span>
+                            </div>
+                            <div class="wip-limit">WIP: 2</div>
+                        </div>
+                        <div class="col-arrow">→</div>
+                        <div class="board-col">
+                            <div class="col-header">Done</div>
+                            <div class="col-items">
+                                <span>Задача 6</span>
+                                <span>Задача 7</span>
+                                <span>Задача 8</span>
+                            </div>
+                            <div class="wip-limit">—</div>
+                        </div>
+                    </div>
+                    <div class="pull-system">Pull-система: задачи «вытягиваются» по мере готовности</div>
+                </div>
+
+                <div class="kanban-metrics-roles">
+                    <div class="metrics-block">
+                        <div class="metrics-title">Метрики</div>
+                        <ul>
+                            <li><strong>Lead Time</strong> — время от запроса до поставки</li>
+                            <li><strong>Customer Lead Time</strong> — время ожидания клиента</li>
+                            <li><strong>Delivery Rate</strong> — скорость поставки (задач/период)</li>
+                            <li><strong>Cycle Time</strong> — время выполнения одной задачи</li>
+                        </ul>
+                    </div>
+                    <div class="roles-block">
+                        <div class="roles-title">Роли</div>
+                        <ul>
+                            <li><strong>Менеджер Запросов (SRM)</strong> — отвечает за «что» делаем, приоритеты</li>
+                            <li><strong>Менеджер Поставки (SDM)</strong> — отвечает за «как» делаем, поток, WIP</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="kanban-cadences">
+                    <div class="cadences-title">Каденции (регулярные встречи)</div>
+                    <div class="cadences-list">
+                        <span>Kanban-митинг</span>
+                        <span>Собрание по пополнению</span>
+                        <span>Ревью сервиса поставки</span>
+                        <span>Ревью рисков</span>
+                        <span>Операционное ревью</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="toggle-interview-btn" data-target="interview-kanban">Ответ на собеседовании</button>
+            <div id="interview-kanban" class="interview-answer" style="display:none;">
+                <h4>Как рассказать о Kanban на собеседовании:</h4>
+
+                <p><strong>Введение:</strong> «Kanban – это метод управления потоком работы, который помогает нам визуализировать процесс, ограничивать незавершённую работу и улучшать эффективность. Его главная идея – "вытягивание" задач, а не "проталкивание". Давайте я расскажу подробнее.»</p>
+
+                <p><strong>Ценности Kanban:</strong> «Прозрачность (все видят доску), баланс (не перегружаем команду), сотрудничество (совместное решение проблем), ориентация на клиента (что важно для заказчика), поток (непрерывное движение), лидерство на всех уровнях, понимание текущего состояния, согласие (все решения принимаются консенсусом) и уважение друг к другу.»</p>
+
+                <p><strong>Kanban-доска:</strong> «Визуализация процесса – это основа. Обычно у нас есть колонки: To Do, In Progress, Review, Done. Каждая задача – это карточка, которая перемещается по доске. Это позволяет сразу видеть, где заторы, сколько задач в работе.»</p>
+
+                <p><strong>WIP-лимиты (Work In Progress):</strong> «Мы ограничиваем количество задач в каждой колонке. Например, в In Progress не больше 3 задач. Это помогает не распыляться, быстрее завершать начатое и находить узкие места. Если в какой-то колонке накапливаются задачи – значит, там проблема, которую нужно решить.»</p>
+
+                <p><strong>Pull-система:</strong> «В отличие от push-системы (когда задачи "проталкиваются" в работу), в Kanban команда "вытягивает" новую задачу только тогда, когда освобождается место. Это предотвращает перегрузку и улучшает поток.»</p>
+
+                <p><strong>Метрики:</strong></p>
+                <ul>
+                    <li><strong>Lead Time</strong> – время от момента, когда задача попала в бэклог, до её завершения. Показывает общую эффективность.</li>
+                    <li><strong>Customer Lead Time</strong> – время ожидания клиента от запроса до получения результата. Важно для SLA.</li>
+                    <li><strong>Delivery Rate</strong> – сколько задач команда завершает за неделю/месяц. Помогает прогнозировать.</li>
+                    <li><strong>Cycle Time</strong> – время, которое задача находится в активной работе (с момента начала до готовности).</li>
+                </ul>
+
+                <p><strong>Роли в Kanban:</strong> (их может и не быть, но в классическом Kanban есть две ключевые роли)</p>
+                <ul>
+                    <li><strong>Менеджер Запросов (Service Request Manager, SRM)</strong> – отвечает за «что» мы делаем: общается с заказчиком, собирает запросы, определяет приоритеты. Аналог Product Owner в Scrum.</li>
+                    <li><strong>Менеджер Поставки (Service Delivery Manager, SDM)</strong> – отвечает за «как» мы делаем: следит за потоком, WIP-лимитами, помогает устранять препятствия. Аналог Scrum Master.</li>
+                </ul>
+
+                <p><strong>Каденции (регулярные встречи):</strong></p>
+                <ul>
+                    <li><strong>Kanban-митинг</strong> – ежедневная синхронизация (аналог Daily Scrum). Смотрим на доску, обсуждаем проблемные задачи.</li>
+                    <li><strong>Собрание по пополнению</strong> – ревью запросов, добавление новых задач в бэклог.</li>
+                    <li><strong>Ревью сервиса поставки</strong> – анализ метрик, обсуждение улучшений процесса.</li>
+                    <li><strong>Ревью рисков</strong> – оценка потенциальных проблем.</li>
+                    <li><strong>Операционное ревью</strong> – общий взгляд на проект, стратегические решения.</li>
+                </ul>
+
+                <p><strong>Отличие Kanban от Scrum:</strong> «В Scrum мы работаем спринтами с фиксированным набором задач. В Kanban – непрерывный поток, задачи можно добавлять и менять приоритеты в любой момент. Kanban больше подходит для поддержки, оперативных задач и проектов с постоянно меняющимися приоритетами. Scrum – для разработки новых функций, где нужна планирование и оценка.»</p>
+            </div>
+        </div>
+
+        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ТЕРМИНАМИ ===== -->
+        <div class="controls">
+            <div class="search-wrap">
+                <input type="text" id="searchInput" placeholder="Поиск терминов..." />
+                <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
+            </div>
+            <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">Сбросить</button>
+            
+            <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <div class="filter-group" id="filterGroup">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="theory">Теория</button>
+
+                <!-- ===== ДРОПДАУН: СОБЕСЕДОВАНИЕ ===== -->
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleInterview">
+                        Собеседование <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuInterview">
+                        <button class="dropdown-item" data-filter="interview">Теория тестирования</button>
+                        <button class="dropdown-item" data-filter="interview_testdesign">Тест-дизайн</button>
+                        <button class="dropdown-item" data-filter="interview_documentation">Тестовая документация</button>
+                        <button class="dropdown-item" data-filter="interview_web">Тестирование веб-приложений</button>
+                        <button class="dropdown-item" data-filter="interview_api">Тестирование API</button>
+                        <button class="dropdown-item" data-filter="interview_data">Работа с данными</button>
+                        <button class="dropdown-item" data-filter="interview_mobile">Тестирование мобильных приложений</button>
+                        <button class="dropdown-item" data-filter="interview_cases">Ситуационные кейсы</button>
+                    </div>
+                </div>
+
+                 <!-- ===== ДРОПДАУН: СХЕМА ТЕСТИРОВАНИЯ ===== -->
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleSchema">
+                        Схема тестирования <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuSchema">
+                        <button class="dropdown-item" data-filter="formal">Формализация</button>
+                        <button class="dropdown-item" data-filter="scenario">Сценарии</button>
+                        <button class="dropdown-item" data-filter="methods">Методы</button>
+                        <button class="dropdown-item" data-filter="levels">Уровни</button>
+                        <button class="dropdown-item" data-filter="functional">Функциональное</button>
+                        <button class="dropdown-item" data-filter="nonfunctional">Нефункциональное</button>
+                    </div>
+                </div>
+                <!-- ===== ОСТАЛЬНЫЕ КНОПКИ ===== -->
+                <button class="filter-btn" data-filter="documentation">Тест. документация</button>
+                <button class="filter-btn" data-filter="api">API</button>
+                <button class="filter-btn" data-filter="web">Веб-приложения</button>
+                <button class="filter-btn" data-filter="testdesign">Тест-дизайн</button>
+                <button class="filter-btn" data-filter="kanban">Kanban</button>
+                <button class="filter-btn" data-filter="scrum">Scrum</button>
+                <button class="filter-btn" data-filter="requirements">Требования</button>
+
+
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleSql">
+                        SQL <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuSql">
+                        <button class="dropdown-item" data-filter="sql_basics">Основы SQL</button>
+                        <button class="dropdown-item" data-filter="sql_filter">Фильтрация и сортировка</button>
+                        <button class="dropdown-item" data-filter="sql_aggregate">Агрегация (GROUP BY, HAVING)</button>
+                        <button class="dropdown-item" data-filter="sql_join">JOIN</button>
+                        <button class="dropdown-item" data-filter="sql_subquery">Подзапросы</button>
+                        <button class="dropdown-item" data-filter="sql_window">Оконные функции</button>
+                        <button class="dropdown-item" data-filter="sql_ddl">DDL (CREATE, ALTER, DROP)</button>
+                        <button class="dropdown-item" data-filter="sql_dml">DML (INSERT, UPDATE, DELETE)</button>
+                        <button class="dropdown-item" data-filter="sql_null">NULL</button>
+                        <button class="dropdown-item" data-filter="sql_view">Представления (VIEW)</button>
+                        <button class="dropdown-item" data-filter="sql_index">Индексы и оптимизация</button>
+                        <button class="dropdown-item" data-filter="sql_interview">Вопросы для собеседования</button>
+                    </div>
+                </div>
+
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownTogglePython">
+                        Python <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuPython">
+                        <button class="dropdown-item" data-filter="python_variables">Переменные и типы данных</button>
+                        <button class="dropdown-item" data-filter="python_structures">Структуры данных</button>
+                        <button class="dropdown-item" data-filter="python_io">Ввод и вывод данных</button>
+                        <button class="dropdown-item" data-filter="python_conditions">Условные операторы</button>
+                        <button class="dropdown-item" data-filter="python_loops">Циклы</button>
+                        <button class="dropdown-item" data-filter="python_functions">Функции</button>
+                        <button class="dropdown-item" data-filter="python_algorithms">Структуры данных и алгоритмы</button>
+                        <button class="dropdown-item" data-filter="python_files">Работа с файлами</button>
+                        <button class="dropdown-item" data-filter="python_requests">Модуль requests</button>
+                        <button class="dropdown-item" data-filter="python_pandas">Модуль pandas</button>
+                        <button class="dropdown-item" data-filter="python_db">Работа с БД</button>
+                        <button class="dropdown-item" data-filter="python_interview">Вопросы для собеседования</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dropdown voice-dropdown">
+                <button class="filter-btn dropdown-toggle" id="voiceToggle">
+                    Авто (системный голос) <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="voiceMenu"></div>
+            </div>
+            <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
+        </div>
+
+        <div class="section-title">Справочник терминов</div>
+        <div class="grid-cards" id="cardsGrid"></div>
+
+        <!-- ===== БЛОК ИТОГОВ ПОСЛЕ СВАЙПА ===== -->
+        <div id="swipeSummary" style="display: none; margin-top: 20px; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.05);">
+            <h3 style="text-align:center; color: #0a1929; margin-bottom: 20px;">Итоги изучения</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+                <div id="knownList" style="flex: 1; min-width: 280px; background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 20px; border-radius: 12px;"></div>
+                <div id="unknownList" style="flex: 1; min-width: 280px; background: #fce4ec; border-left: 4px solid #c62828; padding: 20px; border-radius: 12px;"></div>
+            </div>
+            <button class="btn-reset-section" onclick="resetCurrentFilterStatsAndRefresh();">
+                Сбросить и продолжить
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('✅ SW зарегистрирован:', reg))
+            .catch(err => console.log('❌ Ошибка регистрации SW:', err));
+        });
+    }
+    </script>
+    <script>
+    window.OpenNagishConfig = {
+        lang: 'ru',
+        position: 'top-right'
+    };
+    </script>
+    <script src="./open-nagish.min.js" defer></script>
+</body>
+</html>
