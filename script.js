@@ -6282,9 +6282,750 @@ const TERMS_DATA = [
     }
 ];
 
-// ============================================================
-//  ЛОГИКА РЕНДЕРИНГА, ФИЛЬТРАЦИИ, СВАЙПА И СТАТИСТИКИ
-// ============================================================
+// ================================================================
+//  СУПЕР-РАСШИРЕННЫЙ СЛОВАРЬ СИНОНИМОВ
+// ================================================================
+
+const SYNONYM_MAP = {
+    // -------------------- ОСНОВНЫЕ ТЕРМИНЫ ТЕСТИРОВАНИЯ --------------------
+    'тестирование': 'тестирование',
+    'проверка': 'тестирование',
+    'верификация': 'тестирование',
+    'валидация': 'тестирование',
+    'контроль': 'тестирование',
+    'оценка': 'тестирование',
+    'испытание': 'тестирование',
+    'тест': 'тестирование',
+    'тестинг': 'тестирование',
+    'testing': 'тестирование',
+
+    'качество': 'качество',
+    'квалити': 'качество',
+    'quality': 'качество',
+
+    'обеспечение': 'обеспечение',
+    'гарантия': 'обеспечение',
+    'assurance': 'обеспечение',
+
+    'процесс': 'процесс',
+    'процедура': 'процесс',
+    'метод': 'процесс',
+    'подход': 'процесс',
+    'способ': 'процесс',
+    'алгоритм': 'процесс',
+    'методика': 'процесс',
+
+    'дефект': 'дефект',
+    'баг': 'дефект',
+    'ошибка': 'дефект',
+    'недостаток': 'дефект',
+    'проблема': 'дефект',
+    'несоответствие': 'дефект',
+    'сбой': 'дефект',
+
+    'требование': 'требование',
+    'спецификация': 'требование',
+    'условие': 'требование',
+    'пожелание': 'требование',
+    'запрос': 'требование',
+
+    'разработка': 'разработка',
+    'программирование': 'разработка',
+    'кодинг': 'разработка',
+    'coding': 'разработка',
+    'development': 'разработка',
+
+    'приложение': 'приложение',
+    'программа': 'приложение',
+    'софт': 'приложение',
+    'система': 'приложение',
+    'software': 'приложение',
+    'апп': 'приложение',
+
+    'пользователь': 'пользователь',
+    'юзер': 'пользователь',
+    'клиент': 'пользователь',
+    'потребитель': 'пользователь',
+    'user': 'пользователь',
+
+    'интерфейс': 'интерфейс',
+    'ui': 'интерфейс',
+    'gui': 'интерфейс',
+    'интерфейс пользователя': 'интерфейс',
+
+    'безопасность': 'безопасность',
+    'секьюрити': 'безопасность',
+    'защита': 'безопасность',
+    'security': 'безопасность',
+
+    'производительность': 'производительность',
+    'скорость': 'производительность',
+    'быстродействие': 'производительность',
+    'performance': 'производительность',
+
+    'надёжность': 'надёжность',
+    'надежность': 'надёжность',
+    'стабильность': 'надёжность',
+    'reliability': 'надёжность',
+
+    'удобство': 'удобство',
+    'юзабилити': 'удобство',
+    'usability': 'удобство',
+
+    'совместимость': 'совместимость',
+    'кроссплатформенность': 'совместимость',
+    'compatibility': 'совместимость',
+
+    'доступность': 'доступность',
+    'a11y': 'доступность',
+    'accessibility': 'доступность',
+
+    'локализация': 'локализация',
+    'l10n': 'локализация',
+    'localization': 'локализация',
+
+    'интернационализация': 'интернационализация',
+    'i18n': 'интернационализация',
+    'internationalization': 'интернационализация',
+
+    // -------------------- ТЕСТ-ДИЗАЙН --------------------
+    'тест-кейс': 'тест-кейс',
+    'кейс': 'тест-кейс',
+    'сценарий': 'тест-кейс',
+    'test case': 'тест-кейс',
+
+    'чек-лист': 'чек-лист',
+    'список': 'чек-лист',
+    'checklist': 'чек-лист',
+
+    'баг-репорт': 'баг-репорт',
+    'отчет': 'баг-репорт',
+    'багрепорт': 'баг-репорт',
+    'bug report': 'баг-репорт',
+
+    'эквивалентность': 'эквивалентность',
+    'разбиение': 'эквивалентность',
+    'эквивалентное разбиение': 'эквивалентность',
+
+    'граница': 'граничное значение',
+    'граничные значения': 'граничное значение',
+    'граничное тестирование': 'граничное значение',
+
+    'попарное': 'попарное тестирование',
+    'pairwise': 'попарное тестирование',
+
+    'таблица решений': 'таблица решений',
+    'decision table': 'таблица решений',
+
+    'состояние': 'состояние',
+    'переход': 'переход',
+    'диаграмма': 'диаграмма',
+    'state transition': 'состояние-переход',
+
+    'причинно-следственная': 'причинно-следственная связь',
+    'cause-effect': 'причинно-следственная связь',
+
+    'предположение об ошибках': 'предположение об ошибках',
+    'error guessing': 'предположение об ошибках',
+
+    // -------------------- УРОВНИ ТЕСТИРОВАНИЯ --------------------
+    'модульное': 'модульное тестирование',
+    'unit': 'модульное тестирование',
+    'unit test': 'модульное тестирование',
+
+    'интеграционное': 'интеграционное тестирование',
+    'интеграция': 'интеграционное тестирование',
+    'integration': 'интеграционное тестирование',
+
+    'системное': 'системное тестирование',
+    'система': 'системное тестирование',
+    'system': 'системное тестирование',
+
+    'приемочное': 'приемочное тестирование',
+    'acceptance': 'приемочное тестирование',
+    'uat': 'приемочное тестирование',
+
+    'дымовое': 'дымовое тестирование',
+    'smoke': 'дымовое тестирование',
+
+    'санитарное': 'санитарное тестирование',
+    'sanity': 'санитарное тестирование',
+
+    'регрессионное': 'регрессионное тестирование',
+    'регрессия': 'регрессионное тестирование',
+    'regression': 'регрессионное тестирование',
+
+    'исследовательское': 'исследовательское тестирование',
+    'exploratory': 'исследовательское тестирование',
+
+    'ad-hoc': 'ad-hoc тестирование',
+    'свободное': 'ad-hoc тестирование',
+
+    'сквозное': 'сквозное тестирование',
+    'end-to-end': 'сквозное тестирование',
+    'e2e': 'сквозное тестирование',
+
+    'нагрузочное': 'нагрузочное тестирование',
+    'load': 'нагрузочное тестирование',
+
+    'стрессовое': 'стрессовое тестирование',
+    'stress': 'стрессовое тестирование',
+
+    'объемное': 'объемное тестирование',
+    'volume': 'объемное тестирование',
+
+    'масштабируемость': 'масштабируемость',
+    'scalability': 'масштабируемость',
+
+    'конкурентное': 'конкурентное тестирование',
+    'concurrency': 'конкурентное тестирование',
+
+    'инсталляционное': 'инсталляционное тестирование',
+    'installation': 'инсталляционное тестирование',
+
+    'конфигурационное': 'конфигурационное тестирование',
+    'configuration': 'конфигурационное тестирование',
+
+    'миграционное': 'миграционное тестирование',
+    'migration': 'миграционное тестирование',
+
+    // -------------------- API --------------------
+    'api': 'api',
+    'интерфейс программирования': 'api',
+    'application programming interface': 'api',
+
+    'soap': 'soap',
+
+    'rest': 'rest',
+    'restful': 'rest',
+
+    'json': 'json',
+
+    'xml': 'xml',
+
+    'wsdl': 'wsdl',
+
+    'http': 'http',
+    'https': 'https',
+
+    'запрос': 'запрос',
+    'request': 'запрос',
+
+    'ответ': 'ответ',
+    'response': 'ответ',
+
+    'статус-код': 'статус-код',
+    'код ответа': 'статус-код',
+    'status code': 'статус-код',
+
+    'авторизация': 'авторизация',
+    'аутентификация': 'аутентификация',
+    'authorization': 'авторизация',
+    'authentication': 'аутентификация',
+
+    'токен': 'токен',
+    'token': 'токен',
+
+    // -------------------- SQL --------------------
+    'sql': 'sql',
+    'база данных': 'база данных',
+    'бд': 'база данных',
+    'database': 'база данных',
+
+    'таблица': 'таблица',
+    'отношение': 'таблица',
+    'table': 'таблица',
+
+    'запись': 'запись',
+    'строка': 'запись',
+    'record': 'запись',
+
+    'колонка': 'колонка',
+    'столбец': 'колонка',
+    'column': 'колонка',
+
+    'select': 'select',
+    'выборка': 'select',
+
+    'insert': 'insert',
+    'вставка': 'insert',
+
+    'update': 'update',
+    'обновление': 'update',
+
+    'delete': 'delete',
+    'удаление': 'delete',
+
+    'join': 'join',
+    'соединение': 'join',
+
+    'where': 'where',
+    'фильтр': 'where',
+
+    'group by': 'group by',
+    'группировка': 'group by',
+
+    'having': 'having',
+
+    'подзапрос': 'подзапрос',
+    'вложенный запрос': 'подзапрос',
+    'subquery': 'подзапрос',
+
+    'индекс': 'индекс',
+    'индексация': 'индекс',
+    'index': 'индекс',
+
+    'транзакция': 'транзакция',
+    'transaction': 'транзакция',
+
+    'нормализация': 'нормализация',
+    'normalization': 'нормализация',
+
+    'денормализация': 'денормализация',
+    'denormalization': 'денормализация',
+
+    'первичный ключ': 'первичный ключ',
+    'primary key': 'первичный ключ',
+
+    'внешний ключ': 'внешний ключ',
+    'foreign key': 'внешний ключ',
+
+    'уникальный ключ': 'уникальный ключ',
+    'unique key': 'уникальный ключ',
+
+    // -------------------- PYTHON --------------------
+    'python': 'python',
+
+    'переменная': 'переменная',
+    'variable': 'переменная',
+
+    'тип данных': 'тип данных',
+    'data type': 'тип данных',
+
+    'список': 'список',
+    'list': 'список',
+
+    'кортеж': 'кортеж',
+    'tuple': 'кортеж',
+
+    'множество': 'множество',
+    'set': 'множество',
+
+    'словарь': 'словарь',
+    'dict': 'словарь',
+
+    'функция': 'функция',
+    'function': 'функция',
+
+    'класс': 'класс',
+    'class': 'класс',
+
+    'декоратор': 'декоратор',
+    'decorator': 'декоратор',
+
+    'генератор': 'генератор',
+    'yield': 'генератор',
+
+    'итератор': 'итератор',
+    'iterator': 'итератор',
+
+    'исключение': 'исключение',
+    'exception': 'исключение',
+
+    'модуль': 'модуль',
+    'module': 'модуль',
+
+    'пакет': 'пакет',
+    'package': 'пакет',
+
+    'gil': 'gil',
+
+    'асинхронность': 'асинхронность',
+    'asyncio': 'асинхронность',
+
+    // -------------------- SCRUM --------------------
+    'scrum': 'scrum',
+
+    'product owner': 'product owner',
+    'po': 'product owner',
+
+    'scrum master': 'scrum master',
+    'sm': 'scrum master',
+
+    'спринт': 'спринт',
+    'итерация': 'спринт',
+    'sprint': 'спринт',
+
+    'product backlog': 'product backlog',
+    'бэклог продукта': 'product backlog',
+
+    'sprint backlog': 'sprint backlog',
+    'бэклог спринта': 'sprint backlog',
+
+    'increment': 'increment',
+    'инкремент': 'increment',
+
+    'daily': 'daily scrum',
+    'ежедневное собрание': 'daily scrum',
+
+    'review': 'sprint review',
+    'обзор спринта': 'sprint review',
+
+    'retrospective': 'sprint retrospective',
+    'ретроспектива': 'sprint retrospective',
+
+    'planning': 'sprint planning',
+    'планирование спринта': 'sprint planning',
+
+    'story points': 'story points',
+    'стори поинты': 'story points',
+
+    'velocity': 'velocity',
+    'скорость': 'velocity',
+
+    'гримминг': 'backlog refinement',
+    'refinement': 'backlog refinement',
+
+    // -------------------- KANBAN --------------------
+    'kanban': 'kanban',
+
+    'доска': 'доска',
+    'канбан-доска': 'доска',
+
+    'wip': 'wip',
+    'незавершенная работа': 'wip',
+
+    'lead time': 'lead time',
+
+    'cycle time': 'cycle time',
+
+    'pull': 'pull-система',
+    'вытягивание': 'pull-система',
+
+    // -------------------- ВЕБ-ПРИЛОЖЕНИЯ --------------------
+    'web': 'веб',
+    'веб-приложение': 'веб-приложение',
+
+    'браузер': 'браузер',
+    'browser': 'браузер',
+
+    'html': 'html',
+
+    'css': 'css',
+
+    'javascript': 'javascript',
+
+    'cookie': 'cookie',
+    'куки': 'cookie',
+
+    'кэш': 'кэш',
+    'cache': 'кэш',
+
+    'localstorage': 'localstorage',
+
+    'sessionstorage': 'sessionstorage',
+
+    'devtools': 'devtools',
+
+    'сниффер': 'сниффер',
+    'proxy': 'прокси',
+
+    // -------------------- ДОКУМЕНТАЦИЯ --------------------
+    'тест-план': 'тест-план',
+    'test plan': 'тест-план',
+
+    'тест-дизайн': 'тест-дизайн',
+    'test design': 'тест-дизайн',
+
+    'traceability matrix': 'матрица прослеживаемости',
+
+    'критерии входа': 'критерии входа',
+    'entry criteria': 'критерии входа',
+
+    'критерии выхода': 'критерии выхода',
+    'exit criteria': 'критерии выхода',
+
+    // -------------------- ОБЩИЕ ГЛАГОЛЫ И СУЩЕСТВИТЕЛЬНЫЕ --------------------
+    'делать': 'делать',
+    'проводить': 'делать',
+    'осуществлять': 'делать',
+    'выполнять': 'делать',
+
+    'проверять': 'проверять',
+    'проверить': 'проверять',
+
+    'сравнивать': 'сравнивать',
+    'сравнить': 'сравнивать',
+
+    'анализировать': 'анализировать',
+    'проанализировать': 'анализировать',
+
+    'исправлять': 'исправлять',
+    'починить': 'исправлять',
+
+    'находить': 'находить',
+    'обнаруживать': 'находить',
+
+    'работать': 'работать',
+    'функционировать': 'работать',
+
+    'использовать': 'использовать',
+    'применять': 'использовать',
+
+    'создавать': 'создавать',
+    'сделать': 'создавать',
+
+    'изменять': 'изменять',
+    'менять': 'изменять',
+
+    'улучшать': 'улучшать',
+    'оптимизировать': 'улучшать',
+
+    'запускать': 'запускать',
+    'стартовать': 'запускать',
+
+    'останавливать': 'останавливать',
+    'прекращать': 'останавливать',
+
+    'удалять': 'удалять',
+    'стирать': 'удалять',
+
+    'сохранять': 'сохранять',
+    'хранить': 'сохранять',
+
+    'загружать': 'загружать',
+    'закачивать': 'загружать',
+
+    'выгружать': 'выгружать',
+    'экспортировать': 'выгружать',
+
+    'импортировать': 'импортировать',
+    'загружать извне': 'импортировать',
+
+    // -------------------- МОДЕЛИ РАЗРАБОТКИ --------------------
+    'водопад': 'водопадная модель',
+    'waterfall': 'водопадная модель',
+
+    'v-образная': 'v-образная модель',
+    'v-model': 'v-образная модель',
+
+    'спиральная': 'спиральная модель',
+    'spiral': 'спиральная модель',
+
+    'agile': 'гибкая методология',
+    'гибкая': 'гибкая методология',
+
+    // -------------------- ОБЩИЕ СЛОВА ДЛЯ КОНТЕКСТА --------------------
+    'пример': 'пример',
+    'образец': 'пример',
+
+    'определение': 'определение',
+    'понятие': 'определение',
+
+    'суть': 'суть',
+    'сущность': 'суть',
+
+    'цель': 'цель',
+    'задача': 'цель',
+    'назначение': 'цель',
+
+    'результат': 'результат',
+    'итог': 'результат',
+
+    'данные': 'данные',
+    'информация': 'данные',
+
+    'алгоритм': 'алгоритм',
+
+    'логика': 'логика',
+
+    'обеспечение': 'обеспеч',
+    'обеспечения': 'обеспеч',
+    'обеспечить': 'обеспеч',
+    'обеспечивать': 'обеспеч',
+    'качество': 'качеств',
+    'качества': 'качеств',
+    'качественный': 'качеств',
+    'соответствует': 'соответств',
+    'соответствовать': 'соответств',
+    'согласно': 'соответств',
+    'требованиям': 'требован',
+    'требования': 'требован',
+    'требовать': 'требован',
+    'разработан': 'создан',
+    'создан': 'создан',
+    'создать': 'создан',
+    'ожиданиям': 'ожидан',
+    'ожидания': 'ожидан',
+    'пользователя': 'пользовател',
+    'валидация': 'валидац',
+    'подтверждение': 'подтвержд',
+    'проверка': 'проверк',
+    'проверить': 'проверк',
+    'процесс': 'процесс',
+    'метод': 'метод',
+    'система': 'систем',
+    'функция': 'функц',
+    'действие': 'действ',
+    'поведение': 'поведен',
+    'интерфейс': 'интерфейс',
+    'продукт': 'продукт',
+    'разработка': 'разработ',
+    'тестирование': 'тестирован',
+    'тест': 'тест',
+    'баг': 'баг',
+    'дефект': 'дефект',
+    'ошибка': 'ошибк',
+    'контроль': 'контрол',
+    'оценка': 'оценк',
+    'анализ': 'анализ',
+    'данные': 'данн',
+    'информация': 'информац',
+    'уверенность': 'уверен',
+    'выполнять': 'выполн',
+    'направленный': 'направл',
+    'активность': 'активн',
+    'превентивный': 'превентив',
+    'корректирующий': 'корректир',
+    'гарантия': 'гарант',
+    'надёжность': 'надежн',
+    'стабильность': 'стабильн',
+    'удобство': 'удобств',
+    'совместимость': 'совместим',
+    'безопасность': 'безопасн',
+    'скорость': 'скор',
+    'производительность': 'производит',
+    'нагрузка': 'нагрузк',
+    'стресс': 'стресс',
+    'объем': 'объем',
+    'масштаб': 'масштаб',
+    'конкурентность': 'конкурентн',
+    'инсталляция': 'инсталляц',
+    'конфигурация': 'конфигурац',
+    'миграция': 'миграц',
+    'документация': 'документац',
+    'соответствие': 'соответств',
+    'спецификация': 'спецификац',
+    'пользователь': 'пользовател',
+    'сценарий': 'сценари',
+    'тест-кейс': 'тесткейс',
+    'чек-лист': 'чеклист',
+    'баг-репорт': 'багрепорт',
+    'таблица': 'таблиц',
+    'решение': 'решен',
+    'состояние': 'состоян',
+    'переход': 'переход',
+    'интеграция': 'интеграц',
+    'модуль': 'модуль',
+    'компонент': 'компонент',
+    'архитектура': 'архитектур',
+    'сервер': 'сервер',
+    'клиент': 'клиент',
+    'запрос': 'запрос',
+    'ответ': 'ответ',
+    'статус': 'статус',
+    'код': 'код',
+    'токен': 'токен',
+    'авторизация': 'авторизац',
+    'аутентификация': 'аутентификац',
+    'база': 'база',
+    'данных': 'данн',
+    'запись': 'запись',
+    'столбец': 'столб',
+    'индекс': 'индекс',
+    'транзакция': 'транзакц',
+    'нормализация': 'нормализац',
+    'список': 'список',
+    'кортеж': 'кортеж',
+    'словарь': 'словар',
+    'множество': 'множеств',
+    'функция': 'функц',
+    'класс': 'класс',
+    'декоратор': 'декоратор',
+    'генератор': 'генератор',
+    'итератор': 'итератор',
+    'исключение': 'исключен',
+    'модуль': 'модуль',
+    'пакет': 'пакет',
+    'scrum': 'scrum',
+    'спринт': 'спринт',
+    'бэклог': 'бэклог',
+    'инкремент': 'инкремент',
+    'product owner': 'po',
+    'scrum master': 'sm',
+    'velocity': 'velocity',
+    'канбан': 'канбан',
+    'доска': 'доска',
+    'wip': 'wip',
+    'поток': 'поток',
+    'lead time': 'leadtime',
+    'cycle time': 'cycletime',
+    'веб': 'веб',
+    'браузер': 'браузер',
+    'html': 'html',
+    'css': 'css',
+    'javascript': 'javascript',
+    'cookie': 'cookie',
+    'кэш': 'кэш',
+    'localstorage': 'localstorage',
+    'sessionstorage': 'sessionstorage',
+    'devtools': 'devtools',
+    'прокси': 'прокси',
+    'сниффер': 'сниффер',
+};
+
+// ================================================================
+//  СТЕММЕР ДЛЯ РУССКОГО ЯЗЫКА
+// ================================================================
+
+function stemRussian(word) {
+    const suffixes = [
+        'ость', 'есть', 'ность', 'ство', 'ствие', 'зание', 'ение', 'ание',
+        'тель', 'чик', 'щик', 'ина', 'изм', 'ура', 'ция',
+        'еть', 'оть', 'ать', 'ять', 'ить', 'ыть',
+        'ет', 'ут', 'ют', 'ат', 'ят', 'ил', 'ыв', 'ив', 'ав', 'ов',
+        'ем', 'им', 'ам', 'ями', 'ами', 'ей', 'ях',
+        'вш', 'ш', 'в', 'вши', 'вшись', 'нн', 'енн', 'анн', 'ящ', 'ющ', 'ущ',
+        'ого', 'его', 'ому', 'ему', 'ым', 'им', 'ом', 'ем',
+        'ая', 'яя', 'ое', 'ее', 'ые', 'ие',
+        'ся', 'сь', 'л', 'н', 'т', 'ть', 'ти', 'чь',
+        'й', 'а', 'я', 'о', 'е', 'у', 'ю', 'ы', 'и'
+    ];
+    let stem = word.toLowerCase();
+    for (let suffix of suffixes) {
+        if (stem.endsWith(suffix) && stem.length - suffix.length >= 3) {
+            stem = stem.slice(0, -suffix.length);
+            break;
+        }
+    }
+    return stem.length >= 3 ? stem : word.toLowerCase();
+}
+
+function getWordFreq(text) {
+    const words = text.split(/\s+/).filter(w => w.length > 1);
+    const freq = {};
+    words.forEach(raw => {
+        let word = raw.toLowerCase();
+        if (SYNONYM_MAP[word]) word = SYNONYM_MAP[word];
+        else word = stemRussian(word);
+        freq[word] = (freq[word] || 0) + 1;
+    });
+    return freq;
+}
+
+function speakText(text) {
+    if (!window.speechSynthesis) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ru-RU';
+    utterance.rate = RATES[globalRateIndex] || 1;
+    if (window.selectedVoice) utterance.voice = window.selectedVoice;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+}
+
+// ================================================================
+//  ДОМ-ЭЛЕМЕНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+// ================================================================
 
 const cardsGrid = document.getElementById('cardsGrid');
 const searchInput = document.getElementById('searchInput');
@@ -6300,10 +7041,8 @@ const resetCurrentSectionBtn = document.getElementById('resetCurrentSectionBtn')
 let currentFilter = 'all';
 let currentSearch = '';
 
-// ===== ХРАНИЛИЩЕ ИЗУЧЕННЫХ КАРТОЧЕК =====
 let learnedCards = JSON.parse(localStorage.getItem('myLearnedCards')) || {};
 
-// ===== СООТВЕТСТВИЕ КАТЕГОРИЙ ИХ НАЗВАНИЯМ В МЕНЮ =====
 const FILTER_LABELS = {
     'all': 'Все разделы',
     'theory': 'Теория',
@@ -6354,7 +7093,6 @@ const FILTER_LABELS = {
     'python_interview': 'Вопросы для собеседования'
 };
 
-// ===== ИСХОДНЫЕ НАЗВАНИЯ ДРОПДАУНОВ =====
 const DEFAULT_DROPDOWN_TEXTS = {
     'dropdownToggleInterview': 'Собеседование <span class="arrow">▼</span>',
     'dropdownToggleSchema': 'Схема тестирования <span class="arrow">▼</span>',
@@ -6362,21 +7100,18 @@ const DEFAULT_DROPDOWN_TEXTS = {
     'dropdownTogglePython': 'Python <span class="arrow">▼</span>'
 };
 
-// ===== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ ОЗВУЧКИ =====
-let activeSpeech = null; // { card, btn, text, position, isPlaying, isPaused, utterance, currentUtteranceId }
+// ===== ОЗВУЧКА =====
+let activeSpeech = null;
 let utteranceCounter = 0;
 let globalRateIndex = 0;
 const RATES = [1.0, 1.25, 1.5, 1.75, 2.0];
 
-// ===== ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ПОДСВЕТКИ КАРТОЧКИ =====
 function setSpeakingCard(card) {
     document.querySelectorAll('.card.currently-speaking').forEach(c => c.classList.remove('currently-speaking'));
-    if (card) {
-        card.classList.add('currently-speaking');
-    }
+    if (card) card.classList.add('currently-speaking');
 }
 
-// ===== ЛОГИКА ГОЛОСОВ =====
+// ===== ГОЛОСА =====
 let voices = [];
 let selectedVoice = null;
 
@@ -6389,19 +7124,15 @@ function loadVoices() {
     voices = speechSynthesis.getVoices();
     const menu = document.getElementById('voiceMenu');
     if (!menu) return;
-
     const ruVoices = voices.filter(v => v.lang.startsWith('ru'));
     const targetVoices = ruVoices.length > 0 ? ruVoices : voices;
-
     menu.innerHTML = '';
-    // Добавляем пункт "Авто"
     const autoItem = document.createElement('button');
     autoItem.className = 'dropdown-item' + (selectedVoice === null ? ' active' : '');
     autoItem.textContent = 'Авто (системный голос)';
     autoItem.dataset.voice = '';
     autoItem.addEventListener('click', () => selectVoice(null));
     menu.appendChild(autoItem);
-
     targetVoices.forEach(voice => {
         const item = document.createElement('button');
         item.className = 'dropdown-item' + (selectedVoice && selectedVoice.name === voice.name ? ' active' : '');
@@ -6410,14 +7141,11 @@ function loadVoices() {
         item.addEventListener('click', () => selectVoice(voice));
         menu.appendChild(item);
     });
-
-    // Обновляем текст кнопки
     updateVoiceToggleText();
 }
 
 function selectVoice(voice) {
     selectedVoice = voice;
-    // Обновляем активный класс
     document.querySelectorAll('#voiceMenu .dropdown-item').forEach(el => el.classList.remove('active'));
     if (voice) {
         const target = document.querySelector(`#voiceMenu .dropdown-item[data-voice="${voice.name}"]`);
@@ -6427,28 +7155,6 @@ function selectVoice(voice) {
     }
     updateVoiceToggleText();
     if (speechSynthesis.speaking) speechSynthesis.cancel();
-}
-
-function updateVoiceToggleText() {
-    const toggle = document.getElementById('voiceToggle');
-    if (!toggle) return;
-    const text = selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'Авто (системный голос)';
-    toggle.innerHTML = `${text} <span class="arrow">▼</span>`;
-}
-
-function selectVoice(voice) {
-    selectedVoice = voice;
-    // Обновляем активный класс
-    document.querySelectorAll('#voiceMenu .dropdown-item').forEach(el => el.classList.remove('active'));
-    if (voice) {
-        const target = document.querySelector(`#voiceMenu .dropdown-item[data-voice="${voice.name}"]`);
-        if (target) target.classList.add('active');
-    } else {
-        document.querySelector('#voiceMenu .dropdown-item[data-voice=""]')?.classList.add('active');
-    }
-    updateVoiceToggleText();
-    if (speechSynthesis.speaking) speechSynthesis.cancel();
-        // 👇 Закрываем дропдаун
     closeAllDropdowns();
 }
 
@@ -6459,18 +7165,15 @@ function updateVoiceToggleText() {
     toggle.innerHTML = `${text} <span class="arrow">▼</span>`;
 }
 
-
-// ===== ФУНКЦИЯ ОБНОВЛЕНИЯ ВИДИМОСТИ КНОПКИ =====
+// ===== ФУНКЦИИ ДЛЯ КНОПКИ "ПОКАЗАТЬ ПОЛНОСТЬЮ" =====
 function updateExpandButtonVisibility(card) {
     const content = card.querySelector('.card-content');
     const btnWrapper = card.querySelector('.expand-btn-wrapper');
     if (!content || !btnWrapper) return;
-
     if (card.classList.contains('expanded')) {
         btnWrapper.style.display = 'block';
         return;
     }
-
     const hasScroll = content.scrollHeight > content.clientHeight + 1;
     btnWrapper.style.display = hasScroll ? 'block' : 'none';
 }
@@ -6478,37 +7181,22 @@ function updateExpandButtonVisibility(card) {
 function scheduleUpdateExpandButton(card) {
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-            setTimeout(() => {
-                updateExpandButtonVisibility(card);
-            }, 20);
+            setTimeout(() => updateExpandButtonVisibility(card), 20);
         });
     });
 }
 
 function updateAllVisibleCardsButtons() {
-    document.querySelectorAll('.card:not(.hidden)').forEach(card => {
-        scheduleUpdateExpandButton(card);
-    });
+    document.querySelectorAll('.card:not(.hidden)').forEach(card => scheduleUpdateExpandButton(card));
 }
 
 function observeCardContent(card) {
     const content = card.querySelector('.card-content');
     if (!content) return;
-
-    const resizeObserver = new ResizeObserver(() => {
-        scheduleUpdateExpandButton(card);
-    });
+    const resizeObserver = new ResizeObserver(() => scheduleUpdateExpandButton(card));
     resizeObserver.observe(content);
-
-    const mutationObserver = new MutationObserver(() => {
-        scheduleUpdateExpandButton(card);
-    });
-    mutationObserver.observe(content, {
-        childList: true,
-        subtree: true,
-        attributes: false
-    });
-
+    const mutationObserver = new MutationObserver(() => scheduleUpdateExpandButton(card));
+    mutationObserver.observe(content, { childList: true, subtree: true, attributes: false });
     card._resizeObserver = resizeObserver;
     card._mutationObserver = mutationObserver;
 }
@@ -6537,11 +7225,8 @@ function createProgressBar() {
             </div>
         `;
         const statsEl = document.querySelector('.controls .stats');
-        if (statsEl) {
-            statsEl.after(progressWrapper);
-        } else {
-            controls.appendChild(progressWrapper);
-        }
+        if (statsEl) statsEl.after(progressWrapper);
+        else controls.appendChild(progressWrapper);
     }
 }
 
@@ -6550,14 +7235,12 @@ function updateProgressBar(percent) {
     const fill = progressWrapper.querySelector('.progress-fill');
     const text = progressWrapper.querySelector('.progress-text');
     if (!fill || !text) return;
-
     const terms = getTermsForCurrentFilter();
     if (currentFilter === 'all' || terms.length === 0) {
         progressWrapper.style.display = 'none';
         return;
     }
     progressWrapper.style.display = 'flex';
-
     const progress = Math.min(100, Math.max(0, percent));
     fill.style.width = progress + '%';
     text.textContent = Math.round(progress) + '%';
@@ -6613,23 +7296,16 @@ function collectStatsForCurrentFilter() {
         knownTerms: [],
         unknownTerms: []
     };
-
     terms.forEach(item => {
         const status = learnedCards[item.id];
         if (status) {
-            if (status.known) {
-                stats.known++;
-                stats.knownTerms.push(item.term);
-            } else {
-                stats.unknown++;
-                stats.unknownTerms.push(item.term);
-            }
+            if (status.known) { stats.known++; stats.knownTerms.push(item.term); }
+            else { stats.unknown++; stats.unknownTerms.push(item.term); }
         } else {
             stats.unknown++;
             stats.unknownTerms.push(item.term);
         }
     });
-
     return stats;
 }
 
@@ -6640,22 +7316,15 @@ function renderSummaryForCurrentFilter() {
     }
     const stats = collectStatsForCurrentFilter();
     const filterLabel = FILTER_LABELS[currentFilter] || currentFilter;
-
     const header = document.querySelector('#swipeSummary h3');
     if (header) header.textContent = `Итоги по разделу «${filterLabel}»`;
-
     const badge = document.querySelector('.summary-badge');
     if (badge) badge.textContent = `${stats.total} терминов`;
-
-    const total = stats.total;
-    const known = stats.known;
-    const unknown = stats.unknown;
+    const total = stats.total, known = stats.known, unknown = stats.unknown;
     const remaining = total - known - unknown;
     const percent = total > 0 ? Math.round((known / total) * 100) : 0;
-
     const progressBar = document.querySelector('.summary-progress-bar');
     if (progressBar) progressBar.style.width = percent + '%';
-
     const statTotal = document.getElementById('statTotal');
     const statKnown = document.getElementById('statKnown');
     const statUnknown = document.getElementById('statUnknown');
@@ -6664,35 +7333,24 @@ function renderSummaryForCurrentFilter() {
     if (statKnown) statKnown.textContent = known;
     if (statUnknown) statUnknown.textContent = unknown;
     if (statRemaining) statRemaining.textContent = remaining;
-
     if (knownListEl) {
         let html = `<h4>✅ Знаю (${known})</h4>`;
-        if (known > 0) {
-            html += `<ul>${stats.knownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
-        } else {
-            html += `<p style="color: #888;">Нет выученных терминов</p>`;
-        }
+        if (known > 0) html += `<ul>${stats.knownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+        else html += `<p style="color: #888;">Нет выученных терминов</p>`;
         knownListEl.innerHTML = html;
     }
-
     if (unknownListEl) {
         let html = `<h4>❌ Нужно повторить (${unknown})</h4>`;
-        if (unknown > 0) {
-            html += `<ul>${stats.unknownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
-        } else {
-            html += `<p style="color: #888;">Все термины выучены! 🎉</p>`;
-        }
+        if (unknown > 0) html += `<ul>${stats.unknownTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>`;
+        else html += `<p style="color: #888;">Все термины выучены! 🎉</p>`;
         unknownListEl.innerHTML = html;
     }
-
     swipeSummary.style.display = 'block';
 }
 
 function updateStudyProgress() {
     const terms = getTermsForCurrentFilter();
-    let total = terms.length;
-    let known = 0, unknown = 0;
-
+    let total = terms.length, known = 0, unknown = 0;
     terms.forEach(item => {
         const status = learnedCards[item.id];
         if (status) {
@@ -6700,10 +7358,8 @@ function updateStudyProgress() {
             else unknown++;
         }
     });
-
     const remaining = total - (known + unknown);
     const percent = total > 0 ? (known / total) * 100 : 0;
-
     let statsEl = document.querySelector('.study-stats');
     if (!statsEl) {
         const statsBlock = document.querySelector('.controls .stats');
@@ -6717,34 +7373,29 @@ function updateStudyProgress() {
         const topicName = FILTER_LABELS[currentFilter] || currentFilter;
         statsEl.innerHTML = `<strong>${topicName}</strong>: Всего: ${total} | ✅ Знаю: ${known} | ❌ Не знаю: ${unknown} | 📖 Осталось: ${remaining}`;
     }
-
     updateProgressBar(percent);
 }
 
 function refreshSummary() {
-    if (isCurrentFilterComplete()) {
-        renderSummaryForCurrentFilter();
-    } else {
-        swipeSummary.style.display = 'none';
-    }
+    if (isCurrentFilterComplete()) renderSummaryForCurrentFilter();
+    else swipeSummary.style.display = 'none';
     updateStudyProgress();
 }
 
 function resetCurrentFilterStatsAndRefresh() {
     if (currentFilter === 'all' || typeof TERMS_DATA === 'undefined') return;
     const terms = getTermsForCurrentFilter();
-    terms.forEach(item => {
-        delete learnedCards[item.id];
-    });
+    terms.forEach(item => delete learnedCards[item.id]);
     localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
     swipeSummary.style.display = 'none';
-    renderCards(TERMS_DATA);
+    renderCards(getTermsForCurrentFilter());
     filterAndSearch();
 }
 
-// ============================================================
-//  РЕНДЕРИНГ КАРТОЧЕК (С НАБЛЮДАТЕЛЯМИ)
-// ============================================================
+// ================================================================
+//  РЕНДЕРИНГ КАРТОЧЕК (С ТРЕМЯ РЕЖИМАМИ)
+// ================================================================
+
 function renderCards(data) {
     if (!data || data.length === 0) {
         cardsGrid.innerHTML = '<p style="text-align:center; padding:40px; color:#888;">Нет данных для отображения</p>';
@@ -6798,7 +7449,25 @@ function renderCards(data) {
                     </div>
                     <span class="source">${escapeHtml(item.source || '')}</span>
                 </div>
+                <div class="quiz-container" id="quiz_${item.id}" style="display: none;">
+                    <div class="quiz-question" id="quizQuestion_${item.id}">Введите термин</div>
+                    <div class="quiz-controls-wrapper">
+                        <input type="text" class="quiz-input" id="quizInput_${item.id}" placeholder="Напишите ответ...">
+                        <button class="quiz-voice-btn" id="quizVoice_${item.id}" title="Голосовой ввод">🎤</button>
+                    </div>
+                    <div class="quiz-action-row">
+                        <button class="quiz-check-btn" id="quizCheck_${item.id}">Проверить</button>
+                        <button class="quiz-hint-btn" id="quizHint_${item.id}" title="Подсказка">💡</button>
+                    </div>
+                    <div class="quiz-result" id="quizResult_${item.id}"></div>
+                    <div class="quiz-hint-content" id="quizHintContent_${item.id}" style="display: none;"></div>
+                </div>
                 <div class="meta-tags" style="display: none;">${metaHtml}</div>
+            </div>
+
+            <!-- Кнопка "Тест" внизу -->
+            <div class="quiz-toggle-wrapper">
+                <button class="quiz-toggle-btn" id="quizToggle_${item.id}">Тест</button>
             </div>
 
             <div class="expand-btn-wrapper">
@@ -6809,10 +7478,9 @@ function renderCards(data) {
 
         cardsGrid.appendChild(card);
 
-        // ===== ЛОГИКА ОЗВУЧКИ КАРТОЧКИ (с идентификатором речи) =====
+        // ===== ЛОГИКА ОЗВУЧКИ =====
         if ('speechSynthesis' in window) {
             const header = card.querySelector('.card-header');
-            
             const controls = document.createElement('div');
             controls.className = 'speed-controls';
 
@@ -6827,40 +7495,24 @@ function renderCards(data) {
                 const newRate = RATES[globalRateIndex];
                 speedBtn.textContent = newRate === 1.0 ? '1x' : newRate + 'x';
 
-                // Если активная речь есть на этой карточке и она воспроизводится (не на паузе)
                 if (activeSpeech && activeSpeech.card === card && activeSpeech.isPlaying) {
                     const position = activeSpeech.position;
                     const text = activeSpeech.text;
-                    const currentBtn = activeSpeech.btn;
-
-                    // Отменяем текущую речь
-                    if (activeSpeech.utterance) {
-                        // Не используем isRestarting – используем новый ID
-                        speechSynthesis.cancel();
-                    }
-
-                    // Создаём новую речь с остатком текста
+                    if (activeSpeech.utterance) speechSynthesis.cancel();
                     const remainingText = text.substring(position);
                     const utterance = new SpeechSynthesisUtterance(remainingText);
                     utterance.lang = 'ru-RU';
                     utterance.rate = newRate;
-                    if (selectedVoice) {
-                        utterance.voice = selectedVoice;
-                    }
-
-                    // Генерируем новый ID для этой речи
+                    if (selectedVoice) utterance.voice = selectedVoice;
                     const newId = ++utteranceCounter;
                     activeSpeech.currentUtteranceId = newId;
-
                     utterance.onboundary = (event) => {
                         if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
                             activeSpeech.position = event.charIndex + (text.length - remainingText.length);
                         }
                     };
-
                     utterance.onend = () => {
                         if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
-                            // Только если это та же речь
                             activeSpeech.isPlaying = false;
                             activeSpeech.isPaused = false;
                             if (activeSpeech.btn) {
@@ -6868,12 +7520,9 @@ function renderCards(data) {
                                 activeSpeech.btn.innerHTML = '🔊';
                             }
                             activeSpeech.utterance = null;
-                            if (activeSpeech.card === card) {
-                                setSpeakingCard(null);
-                            }
+                            if (activeSpeech.card === card) setSpeakingCard(null);
                         }
                     };
-
                     utterance.onerror = () => {
                         if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
                             activeSpeech.isPlaying = false;
@@ -6883,12 +7532,9 @@ function renderCards(data) {
                                 activeSpeech.btn.innerHTML = '🔊';
                             }
                             activeSpeech.utterance = null;
-                            if (activeSpeech.card === card) {
-                                setSpeakingCard(null);
-                            }
+                            if (activeSpeech.card === card) setSpeakingCard(null);
                         }
                     };
-
                     speechSynthesis.speak(utterance);
                     activeSpeech.utterance = utterance;
                     activeSpeech.isPlaying = true;
@@ -6909,13 +7555,8 @@ function renderCards(data) {
             speakBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
 
-                // Если есть активная речь на другой карточке – останавливаем её
                 if (activeSpeech && activeSpeech.card !== card && activeSpeech.isPlaying) {
-                    // Отменяем старую речь
-                    if (activeSpeech.utterance) {
-                        speechSynthesis.cancel();
-                    }
-                    // Сбрасываем состояние старой карточки
+                    if (activeSpeech.utterance) speechSynthesis.cancel();
                     if (activeSpeech.btn) {
                         activeSpeech.btn.classList.remove('speaking');
                         activeSpeech.btn.innerHTML = '🔊';
@@ -6923,40 +7564,31 @@ function renderCards(data) {
                     activeSpeech.isPlaying = false;
                     activeSpeech.isPaused = false;
                     activeSpeech.utterance = null;
-                    // Не сбрасываем подсветку – она переключится на новую
                 }
 
-                // Если активная речь на этой карточке
                 if (activeSpeech && activeSpeech.card === card) {
                     if (activeSpeech.isPlaying && !activeSpeech.isPaused) {
-                        // Ставим на паузу
                         speechSynthesis.pause();
                         activeSpeech.isPaused = true;
                         activeSpeech.btn.innerHTML = '▶';
                         return;
                     } else if (activeSpeech.isPlaying && activeSpeech.isPaused) {
-                        // Продолжаем
                         speechSynthesis.resume();
                         activeSpeech.isPaused = false;
                         activeSpeech.btn.innerHTML = '⏸';
                         return;
                     } else {
-                        // Речь завершена, сбрасываем и начинаем заново
                         activeSpeech.isPlaying = false;
                         activeSpeech.isPaused = false;
                         activeSpeech.position = 0;
                         setSpeakingCard(null);
-                        // дальше пойдёт создание новой речи
                     }
                 }
 
-                // Собираем текст для озвучки
                 const term = card.querySelector('.term')?.textContent || '';
                 const simpleDefBlock = card.querySelector('.definition');
                 const academicDefBlock = card.querySelector('.academic-definition');
-
                 let textToSpeak = term;
-
                 if (simpleDefBlock && simpleDefBlock.style.display !== 'none') {
                     const simpleText = simpleDefBlock.querySelector('.simple-def')?.textContent || '';
                     const exampleText = simpleDefBlock.querySelector('.example')?.textContent || '';
@@ -6965,18 +7597,13 @@ function renderCards(data) {
                     const academicText = academicDefBlock.querySelector('.academic-text')?.textContent || '';
                     textToSpeak += `. ${academicText}`;
                 }
-
                 if (textToSpeak === term) {
                     const simpleFallback = card.querySelector('.simple-def')?.textContent || '';
                     const academicFallback = card.querySelector('.academic-text')?.textContent || '';
                     textToSpeak += `. ${simpleFallback} ${academicFallback}`;
                 }
 
-                // Сохраняем в активный объект (или создаём новый)
-                if (!activeSpeech) {
-                    activeSpeech = {};
-                }
-                // Обновляем для новой карточки
+                if (!activeSpeech) activeSpeech = {};
                 activeSpeech.card = card;
                 activeSpeech.btn = speakBtn;
                 activeSpeech.text = textToSpeak;
@@ -6986,24 +7613,18 @@ function renderCards(data) {
 
                 const rate = RATES[globalRateIndex];
                 speedBtn.textContent = rate === 1.0 ? '1x' : rate + 'x';
-
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'ru-RU';
                 utterance.rate = rate;
-                if (selectedVoice) {
-                    utterance.voice = selectedVoice;
-                }
+                if (selectedVoice) utterance.voice = selectedVoice;
 
-                // Генерируем новый ID
                 const newId = ++utteranceCounter;
                 activeSpeech.currentUtteranceId = newId;
-
                 utterance.onboundary = (event) => {
                     if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
                         activeSpeech.position = event.charIndex;
                     }
                 };
-
                 utterance.onend = () => {
                     if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
                         activeSpeech.isPlaying = false;
@@ -7011,12 +7632,9 @@ function renderCards(data) {
                         activeSpeech.btn.classList.remove('speaking');
                         activeSpeech.btn.innerHTML = '🔊';
                         activeSpeech.utterance = null;
-                        if (activeSpeech.card === card) {
-                            setSpeakingCard(null);
-                        }
+                        if (activeSpeech.card === card) setSpeakingCard(null);
                     }
                 };
-
                 utterance.onerror = () => {
                     if (activeSpeech && activeSpeech.currentUtteranceId === newId) {
                         activeSpeech.isPlaying = false;
@@ -7024,12 +7642,9 @@ function renderCards(data) {
                         activeSpeech.btn.classList.remove('speaking');
                         activeSpeech.btn.innerHTML = '🔊';
                         activeSpeech.utterance = null;
-                        if (activeSpeech.card === card) {
-                            setSpeakingCard(null);
-                        }
+                        if (activeSpeech.card === card) setSpeakingCard(null);
                     }
                 };
-
                 speechSynthesis.speak(utterance);
                 activeSpeech.utterance = utterance;
                 speakBtn.innerHTML = '⏸';
@@ -7042,7 +7657,7 @@ function renderCards(data) {
             header.appendChild(controls);
         }
 
-        // Стартовый вид
+        // ===== СТАРТОВЫЙ ВИД =====
         card.querySelector('.definition').style.display = 'none';
         card.querySelector('.academic-definition').style.display = 'block';
         const badge = card.querySelector('.mode-badge');
@@ -7052,21 +7667,323 @@ function renderCards(data) {
         if (metaTags) metaTags.style.display = 'none';
         card.classList.add('mode-only-definition');
 
-        // ===== ФЛАГ ДЛЯ ПРЕДОТВРАЩЕНИЯ КЛИКА ПОСЛЕ СВАЙПА =====
-        let wasSwiped = false;
+        // ===== ССЫЛКИ =====
+        const simpleDef = card.querySelector('.definition');
+        const academicDef = card.querySelector('.academic-definition');
+        const quizContainer = card.querySelector('.quiz-container');
+        const quizToggleBtn = card.querySelector('.quiz-toggle-btn');
+        const quizInput = card.querySelector('.quiz-input');
+        const quizCheckBtn = card.querySelector('.quiz-check-btn');
+        const quizResult = card.querySelector('.quiz-result');
+        const quizHintBtn = card.querySelector('.quiz-hint-btn');
+        const quizHintContent = card.querySelector('.quiz-hint-content');
+        const quizVoiceBtn = card.querySelector('.quiz-voice-btn');
+        const quizQuestion = card.querySelector('.quiz-question');
 
-        card.addEventListener('click', function(e) {
-            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
-            if (e.target.closest('.filter-btn') || e.target.closest('.expand-btn')) return;
-            if (wasSwiped) {
-                wasSwiped = false;
-                return;
+        // ===== ЗАРАНЕЕ ГОТОВИМ ТЕКСТ ДЛЯ ПРОВЕРКИ =====
+        let referenceText = '';
+        if (item.simple) referenceText += ' ' + item.simple;
+        if (Array.isArray(item.academic)) {
+            referenceText += ' ' + item.academic.join(' ');
+        } else if (item.academic) {
+            referenceText += ' ' + item.academic;
+        }
+        if (item.example) {
+            const plainExample = item.example.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+            referenceText += ' ' + plainExample;
+        }
+        referenceText = referenceText.toLowerCase().replace(/[^а-яa-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+
+        // ===== ФУНКЦИЯ ОЦЕНКИ ОТВЕТА =====
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ УМНОЙ ПРОВЕРКИ =====
+        function normalizeWord(word) {
+            let w = word.toLowerCase();
+            if (EXTRA_SYNONYMS[w]) return EXTRA_SYNONYMS[w];
+            if (SYNONYM_MAP[w]) return SYNONYM_MAP[w];
+            // Грубый стеммер: берём первые 5 символов
+            if (w.length > 5) return w.slice(0, 5);
+            return stemRussian(w);
+        }
+
+        function extractKeywords(text) {
+            const cleaned = cleanText(text);
+            const words = cleaned.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w));
+            const set = new Set();
+            words.forEach(raw => {
+                let w = raw.replace(/[^а-яa-z0-9]/g, '');
+                if (!w || STOP_WORDS.has(w)) return;
+                w = normalizeWord(w);
+                set.add(w);
+            });
+            return set;
+        }
+
+        function countMatches(userSet, targetSet) {
+            if (targetSet.size === 0) return 0;
+            let matches = 0;
+            userSet.forEach(word => {
+                if (targetSet.has(word)) matches++;
+            });
+            return Math.round((matches / targetSet.size) * 100);
+        }
+
+        const STOP_WORDS = new Set([
+            'того', 'что', 'это', 'в', 'на', 'и', 'для', 'по', 'с', 'к', 'о', 'об', 'из', 'от',
+            'как', 'так', 'же', 'а', 'но', 'или', 'не', 'да', 'нет', 'был', 'была', 'было',
+            'были', 'его', 'её', 'их', 'мы', 'вы', 'они', 'он', 'она', 'оно', 'я', 'ты',
+            'которые', 'который', 'которая', 'которое', 'этого', 'этому', 'этом', 'эти',
+            'более', 'менее', 'очень', 'также', 'при', 'через', 'между', 'под', 'над', 'про'
+        ]);
+
+        const EXTRA_SYNONYMS = {
+            'соответствует': 'соответств',
+            'соответствовать': 'соответств',
+            'соответствие': 'соответств',
+            'согласно': 'соответств',
+            'требованиям': 'требован',
+            'требования': 'требован',
+            'разработан': 'создан',
+            'создан': 'создан',
+            'ожиданиям': 'ожидан',
+            'пользователя': 'пользовател',
+            'валидация': 'валидац',
+            'подтверждение': 'подтвержд',
+            
+        };
+
+        // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ УМНОЙ ПРОВЕРКИ =====
+        function normalizeWord(word) {
+            let w = word.toLowerCase();
+            if (EXTRA_SYNONYMS[w]) return EXTRA_SYNONYMS[w];
+            if (SYNONYM_MAP[w]) return SYNONYM_MAP[w];
+            return stemRussian(w);
+        }
+
+        function cleanText(text) {
+            if (!text) return '';
+            return text
+                .replace(/<[^>]*>/g, ' ')
+                .replace(/class="[^"]*"/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function extractKeywords(text) {
+            const cleaned = cleanText(text);
+            const words = cleaned.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !STOP_WORDS.has(w));
+            const set = new Set();
+            words.forEach(raw => {
+                let w = raw.replace(/[^а-яa-z0-9]/g, '');
+                if (!w || STOP_WORDS.has(w)) return;
+                w = normalizeWord(w);
+                set.add(w);
+            });
+            return set;
+        }
+
+        function countMatches(userSet, targetSet) {
+            if (targetSet.size === 0) return 0;
+            let matches = 0;
+            userSet.forEach(word => {
+                if (targetSet.has(word)) matches++;
+            });
+            return Math.round((matches / targetSet.size) * 100);
+        }
+
+        // ===== УЛУЧШЕННАЯ ФУНКЦИЯ ОЦЕНКИ ОТВЕТА =====
+        function getAnswerScore(userAnswer) {
+            const userWords = extractKeywords(userAnswer);
+            if (userWords.size === 0) return { score: 0, missing: [] };
+
+            // Ключевые слова из всех частей карточки
+            const academicWords = extractKeywords(academicText || '');
+            const simpleWords = extractKeywords(item.simple || '');
+            const exampleWords = extractKeywords(item.example || '');
+            const allCardWords = new Set([...academicWords, ...simpleWords, ...exampleWords]);
+
+            // Считаем, сколько слов ответа найдено в определении
+            let matched = 0;
+            userWords.forEach(word => {
+                if (allCardWords.has(word)) matched++;
+            });
+
+            // Базовый процент = доля слов ответа, которые есть в определении
+            let score = (matched / userWords.size) * 100;
+
+            // Штраф за короткий ответ (менее 3 значимых слов)
+            if (userWords.size < 3) {
+                score = Math.min(score, 60);
+            }
+            // Штраф за ответ, состоящий только из термина (например, "Обеспечение качества")
+            const termWords = extractKeywords(item.term);
+            const isOnlyTerm = userWords.size <= termWords.size + 1 && matched >= userWords.size - 1;
+            if (isOnlyTerm) {
+                score = Math.min(score, 40);
             }
 
-            const simpleDef = this.querySelector('.definition');
-            const academicDef = this.querySelector('.academic-definition');
-            const badge = this.querySelector('.mode-badge');
-            const metaTags = this.querySelector('.meta-tags');
+            // Ограничиваем 100%
+            score = Math.min(100, Math.round(score));
+
+            // Пропущенные слова
+            const missing = [];
+            allCardWords.forEach(word => {
+                if (!userWords.has(word)) missing.push(word);
+            });
+
+            return { score: score, missing: missing.slice(0, 7) };
+        }
+
+        // ===== УЛУЧШЕННАЯ ПОДСКАЗКА =====
+        function getHintText() {
+            // 1. Если есть мета-теги — показываем их (кратко)
+            if (item.meta && item.meta.length > 0) {
+                return item.meta.join(', ');
+            }
+
+            // 2. Берём простой текст из simple или academic и показываем первые 5-7 слов
+            const sourceText = cleanText(item.simple || (Array.isArray(item.academic) ? item.academic.join(' ') : item.academic) || item.example || '');
+            if (sourceText) {
+                const words = sourceText.split(' ').filter(w => w.length > 2);
+                return words.slice(0, 7).join(' ') + '...';
+            }
+
+            return 'Нет подсказки';
+        }
+
+        // ===== РЕЖИМЫ =====
+        function showQuiz() {
+            card.classList.add('quiz-mode');
+            simpleDef.style.display = 'none';
+            academicDef.style.display = 'none';
+            quizContainer.style.display = 'block';
+            badge.textContent = 'Тест';
+            badge.style.background = '#6a1b9a';
+            badge.style.color = 'white';
+            metaTags.style.display = 'none';
+            card.classList.remove('mode-only-definition');
+
+            // Выбираем вопрос
+            const useExample = Math.random() > 0.5;
+            if (useExample) {
+                quizQuestion.textContent = 'Опишите своими словами, что такое "' + item.term + '"?';
+                const exampleText = simpleDef.querySelector('.example')?.textContent || '';
+                quizQuestion.textContent += ' (Похоже на: ' + exampleText.trim().replace(/^Пример:\s*/i, '').substring(0, 80) + '...)';
+            } else {
+                quizQuestion.textContent = 'Что такое "' + item.term + '"?';
+            }
+
+            quizInput.value = '';
+            quizResult.textContent = '';
+            quizHintContent.style.display = 'none';
+        }
+
+        function hideQuiz() {
+            card.classList.remove('quiz-mode');
+            quizContainer.style.display = 'none';
+            simpleDef.style.display = 'none';
+            academicDef.style.display = 'block';
+            badge.textContent = 'Определение';
+            badge.style.background = '#1d3b5c';
+            badge.style.color = 'white';
+            metaTags.style.display = 'none';
+        }
+
+        // ===== ОБРАБОТЧИКИ =====
+        quizToggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (!card.classList.contains('quiz-mode')) {
+                showQuiz();
+            } else {
+                hideQuiz();
+            }
+            scheduleUpdateExpandButton(card);
+        });
+
+        quizCheckBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const result = getAnswerScore(quizInput.value);
+            const percent = result.score;
+            let message = '';
+            if (percent >= 50) {
+                message = `<span style="color: green; font-weight: bold;">✅ Отлично! Вы передали смысл на ${percent}%.</span>`;
+            } else if (percent >= 25) {
+                message = `<span style="color: orange; font-weight: bold;">⚠️ Неплохо, но можно лучше! Смысл передан на ${percent}%.</span>`;
+            } else {
+                message = `<span style="color: red; font-weight: bold;">❌ Пока рано! Совпадение всего ${percent}%.</span>`;
+            }
+            if (result.missing.length > 0) {
+                message += `<br><span style="font-size: 0.8rem;">💡 Обратите внимание на ключевые слова: <strong>${result.missing.map(w => escapeHtml(w)).join(', ')}</strong></span>`;
+            }
+            quizResult.innerHTML = message;
+
+            // ===== ПОКАЗЫВАЕМ ОПРЕДЕЛЕНИЕ ПОСЛЕ ПРОВЕРКИ =====
+            const definitionToShow = simpleDef.style.display !== 'none' ? simpleDef : academicDef;
+            definitionToShow.style.display = 'block';
+            
+            // Обновляем бейдж на карточке
+            badge.textContent = (definitionToShow === simpleDef) ? 'Просто' : 'Определение';
+            badge.style.background = (definitionToShow === simpleDef) ? '#e6edf6' : '#1d3b5c';
+            badge.style.color = (definitionToShow === simpleDef) ? '#1a2a3a' : 'white';
+            
+            // Прокручиваем к определению, чтобы оно было видно
+            definitionToShow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        quizHintBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (quizHintContent.style.display === 'none') {
+                quizHintContent.innerHTML = `<span style="color: #1a2a3a;">🔍 <strong>Подсказка:</strong> ${escapeHtml(getHintText())}</span>`;
+                quizHintContent.style.display = 'block';
+            } else {
+                quizHintContent.style.display = 'none';
+            }
+        });
+
+        // ===== ГОЛОСОВОЙ ВВОД (если поддерживается) =====
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ru-RU';
+            recognition.interimResults = false;
+
+            quizVoiceBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                recognition.start();
+                quizVoiceBtn.textContent = '⏳';
+            });
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                quizInput.value = transcript;
+                quizVoiceBtn.textContent = '🎤';
+            };
+
+            recognition.onerror = function() {
+                quizVoiceBtn.textContent = '🎤';
+            };
+
+            recognition.onend = function() {
+                quizVoiceBtn.textContent = '🎤';
+            };
+        } else {
+            quizVoiceBtn.style.display = 'none';
+        }
+
+        // ===== КЛИК ПО КАРТОЧКЕ (переключение) =====
+        card.addEventListener('click', function(e) {
+            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
+            if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
+
+            if (card.classList.contains('quiz-mode')) {
+                hideQuiz();
+                scheduleUpdateExpandButton(card);
+                return;
+            }
 
             if (simpleDef.style.display === 'none' || simpleDef.style.display === '') {
                 simpleDef.style.display = 'block';
@@ -7075,7 +7992,7 @@ function renderCards(data) {
                 badge.style.background = '#e6edf6';
                 badge.style.color = '#1a2a3a';
                 if (metaTags) metaTags.style.display = 'flex';
-                this.classList.remove('mode-only-definition');
+                card.classList.remove('mode-only-definition');
             } else {
                 simpleDef.style.display = 'none';
                 academicDef.style.display = 'block';
@@ -7083,11 +8000,12 @@ function renderCards(data) {
                 badge.style.background = '#1d3b5c';
                 badge.style.color = 'white';
                 if (metaTags) metaTags.style.display = 'none';
-                this.classList.add('mode-only-definition');
+                card.classList.add('mode-only-definition');
             }
             scheduleUpdateExpandButton(this);
         });
 
+        // ===== РАСКРЫТИЕ =====
         const expandBtn = card.querySelector('.expand-btn');
         expandBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -7099,14 +8017,15 @@ function renderCards(data) {
 
         observeCardContent(card);
 
+        // ===== СВАЙПЫ НА КОМПЬЮТЕРЕ И МОБИЛЬНЫХ =====
         let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let currentX = 0;
+        let startX = 0, startY = 0, currentX = 0;
 
+        // Touch-события
         card.addEventListener('touchstart', function(e) {
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const touch = e.touches[0];
             startX = touch.clientX;
             startY = touch.clientY;
@@ -7116,10 +8035,10 @@ function renderCards(data) {
 
         card.addEventListener('touchmove', function(e) {
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const touch = e.touches[0];
             const diffX = touch.clientX - startX;
             const diffY = touch.clientY - startY;
-            
             if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
                 isDragging = true;
                 currentX = diffX;
@@ -7135,7 +8054,6 @@ function renderCards(data) {
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
             if (Math.abs(currentX) > 100) {
                 const isRight = currentX > 0;
-                wasSwiped = true;
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
                 refreshSummary();
@@ -7156,23 +8074,26 @@ function renderCards(data) {
             isDragging = false;
         }, { passive: true });
 
+        // Pointer-события (для мыши)
         card.addEventListener('pointerdown', function(e) {
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.pointerType === 'touch') return;
             if (e.button !== 0) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             isDragging = false;
             startX = e.clientX;
             startY = e.clientY;
             currentX = 0;
             this.setPointerCapture(e.pointerId);
-            e.preventDefault();
+            // НЕ вызываем preventDefault здесь, чтобы клик мог сработать
         });
 
         card.addEventListener('pointermove', function(e) {
             if (e.pointerType === 'touch') return;
             if (!this.hasPointerCapture(e.pointerId)) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const diffX = e.clientX - startX;
             const diffY = e.clientY - startY;
             if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
@@ -7188,6 +8109,7 @@ function renderCards(data) {
         card.addEventListener('pointerup', function(e) {
             if (e.pointerType === 'touch') return;
             this.releasePointerCapture(e.pointerId);
+            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             if (!isDragging) {
                 this.style.transition = '';
                 this.style.transform = '';
@@ -7197,7 +8119,6 @@ function renderCards(data) {
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
             if (Math.abs(currentX) > 100) {
                 const isRight = currentX > 0;
-                wasSwiped = true;
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
                 refreshSummary();
@@ -7239,9 +8160,10 @@ function renderCards(data) {
     }, 200);
 }
 
-// ============================================================
+// ================================================================
 //  ФИЛЬТРАЦИЯ И ПОИСК
-// ============================================================
+// ================================================================
+
 function filterAndSearch() {
     const allCards = document.querySelectorAll('.card');
     const searchTerm = currentSearch.toLowerCase().trim();
@@ -7250,7 +8172,6 @@ function filterAndSearch() {
         const category = card.dataset.category || '';
         const matchesSearch = searchTerm === '' || term.includes(searchTerm);
         const matchesFilter = currentFilter === 'all' || category === currentFilter;
-
         if (matchesSearch && matchesFilter && !learnedCards[card.dataset.id]) {
             card.classList.remove('hidden');
         } else {
@@ -7259,10 +8180,7 @@ function filterAndSearch() {
     });
     updateVisibleCount();
     refreshSummary();
-
-    setTimeout(() => {
-        updateAllVisibleCardsButtons();
-    }, 100);
+    setTimeout(() => updateAllVisibleCardsButtons(), 100);
 }
 
 function updateVisibleCount() {
@@ -7270,9 +8188,10 @@ function updateVisibleCount() {
     visibleCountEl.textContent = visible;
 }
 
-// ============================================================
+// ================================================================
 //  ДРОПДАУНЫ
-// ============================================================
+// ================================================================
+
 function closeAllDropdowns() {
     document.querySelectorAll('.dropdown-toggle.open').forEach(el => el.classList.remove('open'));
     document.querySelectorAll('.dropdown-menu.open').forEach(el => el.classList.remove('open'));
@@ -7284,8 +8203,8 @@ function setupDropdown(toggleId, menuId) {
     if (!toggle || !menu) return;
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if(el !== this) el.classList.remove('open'); });
-        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if(el !== menu) el.classList.remove('open'); });
+        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if (el !== this) el.classList.remove('open'); });
+        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if (el !== menu) el.classList.remove('open'); });
         this.classList.toggle('open');
         menu.classList.toggle('open');
     });
@@ -7338,6 +8257,7 @@ searchInput.addEventListener('input', function() {
     clearBtn.classList.toggle('visible', this.value.length > 0);
     filterAndSearch();
 });
+
 clearBtn.addEventListener('click', function() {
     searchInput.value = '';
     currentSearch = '';
@@ -7351,10 +8271,8 @@ const resetBtn = document.getElementById('resetFiltersBtn');
 if (resetBtn) {
     let resetTapCount = 0;
     let resetTapTimer = null;
-
     resetBtn.addEventListener('click', function(e) {
         resetTapCount++;
-
         if (resetTapCount === 2) {
             clearTimeout(resetTapTimer);
             resetTapCount = 0;
@@ -7375,18 +8293,15 @@ if (resetBtn) {
                     burgerBtn.classList.remove('active');
                     filterGroup.classList.remove('open');
                 }
-                if (typeof TERMS_DATA !== 'undefined') renderCards(TERMS_DATA);
+                renderCards(getTermsForCurrentFilter());
             }
             return;
         }
-
         resetTapTimer = setTimeout(() => { resetTapCount = 0; }, 500);
-
         currentFilter = 'all';
         searchInput.value = '';
         currentSearch = '';
         clearBtn.classList.remove('visible');
-
         filterBtns.forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.dropdown-item').forEach(b => b.classList.remove('active'));
         document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
@@ -7396,8 +8311,7 @@ if (resetBtn) {
             burgerBtn.classList.remove('active');
             filterGroup.classList.remove('open');
         }
-
-        if (typeof TERMS_DATA !== 'undefined') renderCards(TERMS_DATA);
+        renderCards(getTermsForCurrentFilter());
     });
 }
 
@@ -7427,10 +8341,10 @@ document.addEventListener('click', function(e) {
     }
 });
 
-
-// ============================================================
+// ================================================================
 //  УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ СХЕМ
-// ============================================================
+// ================================================================
+
 const toggleBtns = document.querySelectorAll('.toggle-schema-btn');
 
 function toggleSchema(btn) {
@@ -7462,7 +8376,10 @@ document.querySelectorAll('.toggle-interview-btn').forEach(btn => {
     });
 });
 
-// ===== ИНИЦИАЛИЗАЦИЯ =====
+// ================================================================
+//  ИНИЦИАЛИЗАЦИЯ
+// ================================================================
+
 function initApp(data) {
     if (!data || data.length === 0) {
         console.warn('⚠️ Нет данных для инициализации');
@@ -7472,12 +8389,12 @@ function initApp(data) {
     renderCards(uniqueData);
     console.log(`✅ Всего терминов: ${uniqueData.length}`);
     createProgressBar();
-    setTimeout(() => {
-        updateAllVisibleCardsButtons();
-    }, 300);
+    setTimeout(() => updateAllVisibleCardsButtons(), 300);
 }
+
+// Предполагается, что TERMS_DATA уже определён глобально
 if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
     initApp(TERMS_DATA);
 } else {
-    console.warn('⚠️ TERMS_DATA не найден. Проверьте подключение файла с данными.');
+    console.warn('⚠️ TERMS_DATA не найден. Проверьте, что массив определён до этого скрипта.');
 }
