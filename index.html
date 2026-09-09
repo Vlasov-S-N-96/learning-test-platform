@@ -12,6 +12,7 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 </head>
 <body>
+
     <div class="container">
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
 
@@ -358,7 +359,7 @@
         <!-- ============================================================ -->
         <!--   ТИПЫ ТЕСТИРОВАНИЯ (по классификации ISTQB)                  -->
         <!-- ============================================================ -->
-        <div class="testing-types-block hidden" id="testingTypesBlock">
+        <div class="schema-block testing-types-block hidden" id="testingTypesBlock">
             <div class="testing-title">Типы тестирования</div>
 
             <div class="testing-grid">
@@ -445,6 +446,8 @@
                 <p><strong>Заключение:</strong> «На практике я комбинирую эти типы в зависимости от контекста. Для регрессии — автоматизированные тесты. Для новых фич — исследовательское + тест-кейсы. Для критичных систем — нефункциональное: нагрузка, безопасность, совместимость. Главное — понимать, какая цель у тестирования в данный момент, и выбирать подходящий тип.»</p>
             </div>
         </div><!-- /testingTypesBlock -->
+
+        <br>
 
         <!-- ===== БЛОК АЛГОРИТМА ===== -->
         <div class="algorithm-block hidden" id="algorithmBlock">
@@ -810,7 +813,6 @@
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
             <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">Сбросить</button>
-            
             <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
                 <span></span>
                 <span></span>
@@ -910,7 +912,7 @@
             </div>
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
         </div>
-
+        <div id="dashboard" style="background:#fff;border-radius:20px;padding:20px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05);"></div>
         <div class="section-title">Справочник терминов</div>
         <div class="grid-cards" id="cardsGrid"></div>
 
