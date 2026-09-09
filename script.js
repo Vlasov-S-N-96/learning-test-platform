@@ -7925,7 +7925,12 @@ function renderCards(data) {
             const useExample = Math.random() > 0.5;
             if (useExample) {
                 const exampleText = simpleDef.querySelector('.example')?.textContent || '';
-                quizQuestion.textContent = 'Опишите своими словами, что такое "' + item.term + '"? (Похоже на: ' + exampleText.trim().replace(/^Пример:\s*/i, '').substring(0, 80) + '...)';
+                // Очищаем текст от HTML-тегов и обрезаем до 80 символов
+                const cleanExample = exampleText.replace(/<[^>]*>/g, '').trim().replace(/^Пример:\s*/i, '').substring(0, 80);
+                // Оборачиваем первые 5 слов в маркер (можно изменить количество)
+                const highlighted = highlightKeywords(cleanExample, 5);
+                // Вставляем через innerHTML, чтобы теги работали
+                quizQuestion.innerHTML = 'Опишите своими словами, что такое "' + item.term + '"? (Похоже на: ' + highlighted + '...)';
             } else {
                 quizQuestion.textContent = 'Что такое "' + item.term + '"?';
             }
@@ -8832,6 +8837,12 @@ function showToast(message, type = 'success') {
     toast.style.transform = 'translateX(-50%)';
     setTimeout(() => toast.remove(), 300);
   }, 3000);
+}
+
+function highlightKeywords(text, count = 5) {
+  const words = text.split(' ').slice(0, count).join(' ');
+  const rest = text.split(' ').slice(count).join(' ');
+  return `<span class="mark-yellow">${words}</span>${rest ? ' ' + rest : ''}`;
 }
 
 function handleTestResult(item, card, score) {
