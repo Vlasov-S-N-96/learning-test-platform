@@ -4,16 +4,87 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Теория</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Теория</title>
+    <!-- 🔥 Inline-скрипт: определяем PWA ДО отрисовки -->
+    <script>
+    (function() {
+        var isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        var isIOSStandalone = window.navigator.standalone === true;
+        var isTWA = document.referrer && document.referrer.startsWith('android-app://');
+        var isTWAParam = window.location.search.indexOf('utm_source=android-app') !== -1;
+        var isTestMode = window.location.search.indexOf('v=app') !== -1; // тест в браузере
+
+        if (isStandalone || isIOSStandalone || isTWA || isTWAParam || isTestMode) {
+            // Это PWA — помечаем body, чтобы показать лоадер
+            document.documentElement.classList.add('pwa-mode');
+        }
+    })();
+    </script>
     <link rel="stylesheet" href="style.css" />
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1d3b5c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 </head>
 <body>
 
+    <!-- ===== ЛОАДЕР ===== -->
+    <div id="appLoader">
+        <!-- Полоска прогресса сверху -->
+        <div class="loader-topbar">
+            <div class="loader-topbar-fill"></div>
+        </div>
+
+        <!-- Логотип с кольцом по центру -->
+        <div class="loader-content">
+            <div class="loader-logo">
+                <svg viewBox="0 0 100 100" width="90" height="90">
+                    <!-- Статичное кольцо (фон) -->
+                    <circle cx="50" cy="50" r="42" fill="none"
+                            stroke="#c5d8ef" stroke-width="4"/>
+                    <!-- Вращающееся кольцо -->
+                    <circle cx="50" cy="50" r="42" fill="none"
+                            stroke="#1d3b5c" stroke-width="4"
+                            stroke-dasharray="70 194"
+                            stroke-linecap="round"
+                            transform="rotate(-90 50 50)">
+                        <animateTransform attributeName="transform"
+                                          type="rotate"
+                                          from="-90 50 50"
+                                          to="270 50 50"
+                                          dur="1.2s"
+                                          repeatCount="indefinite"/>
+                    </circle>
+                    <!-- Галочка внутри -->
+                    <path d="M30 52 L45 67 L72 38"
+                          fill="none"
+                          stroke="#1d3b5c"
+                          stroke-width="6"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <div class="loader-title">QA Справочник</div>
+            <div class="loader-subtitle">Загрузка...</div>
+        </div>
+    </div>
+
+
     <div class="container">
+
+            <!-- ===== БУРГЕР — ПЕРВЫЙ ЭЛЕМЕНТ ===== -->
+        <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
 
         <div class="schema-controls">
@@ -447,8 +518,6 @@
             </div>
         </div><!-- /testingTypesBlock -->
 
-        <br>
-
         <!-- ===== БЛОК АЛГОРИТМА ===== -->
         <div class="algorithm-block hidden" id="algorithmBlock">
             <div class="algorithm-title">Как применять тестирование ПО на практике</div>
@@ -813,11 +882,6 @@
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
             <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">Сбросить</button>
-            <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
 
             <div class="filter-group" id="filterGroup">
                 <button class="filter-btn active" data-filter="all">Все</button>
@@ -912,7 +976,13 @@
             </div>
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
         </div>
-        <div id="dashboard" style="background:#fff;border-radius:20px;padding:20px;margin-bottom:20px;box-shadow:0 4px 12px rgba(0,0,0,0.05);"></div>
+        <div id="dashboard" class="dashboard-collapsed">
+            <button class="dashboard-toggle" id="dashboardToggle" aria-expanded="false">
+                <span class="dashboard-toggle-text">Статистика</span>
+                <span class="dashboard-toggle-arrow">▼</span>
+            </button>
+            <div class="dashboard-content" id="dashboardContent"></div>
+        </div>
         <div class="section-title">Справочник терминов</div>
         <div class="grid-cards" id="cardsGrid"></div>
 
