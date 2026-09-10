@@ -27,7 +27,7 @@ body {
     background: #ffffff;
     border-radius: 36px;
     box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
-    padding: 40px 35px;
+    padding: 30px 25px;
 }
 
 /* ============================================================
@@ -219,8 +219,8 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 10px 16px;
-    margin-bottom: 28px;
-    padding: 14px 20px;
+    margin-bottom: 5px;
+    padding: 10px 14px;
     background: #f6faff;
     border-radius: 20px;
     border: 1px solid #e4ecf6;
@@ -413,7 +413,7 @@ body {
     font-size: 1.2rem;
     font-weight: 700;
     color: #0a1929;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     padding-bottom: 10px;
     border-bottom: 2px solid #e6edf6;
 }
@@ -687,46 +687,6 @@ body {
     padding-top: 8px;
 }
 
-/* ============================================================
-   БУРГЕР-МЕНЮ
-   ============================================================ */
-.burger-btn {
-    display: none;
-    flex-direction: column;
-    gap: 4px;
-    background: none;
-    border: none;
-    padding: 8px 6px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: 0.2s;
-    flex-shrink: 0;
-}
-
-.burger-btn:hover {
-    background: #e6edf6;
-}
-
-.burger-btn span {
-    display: block;
-    width: 24px;
-    height: 2px;
-    background: #1a2a3a;
-    border-radius: 2px;
-    transition: 0.3s;
-}
-
-.burger-btn.active span:nth-child(1) {
-    transform: rotate(45deg) translate(4px, 4px);
-}
-
-.burger-btn.active span:nth-child(2) {
-    opacity: 0;
-}
-
-.burger-btn.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(4px, -4px);
-}
 
 /* ============================================================
    АДАПТИВНОСТЬ (МОБИЛЬНАЯ ВЕРСИЯ)
@@ -884,10 +844,6 @@ body {
     .controls .dropdown-item.active {
         background: #1d3b5c;
         color: white;
-    }
-
-    .burger-btn {
-        display: flex;
     }
 
     .algorithm-steps {
@@ -1746,7 +1702,7 @@ pre {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 2px;
     padding: 8px 12px;
     background: #f6faff;
     border-radius: 16px;
@@ -3252,6 +3208,43 @@ pre {
     border-left: 3px solid #f57f17;
 }
 
+/* Обёртка для поля ввода и микрофона */
+.quiz-input-wrapper {
+    position: relative;
+    margin-bottom: 8px;
+}
+
+/* Само поле ввода — оставляем место снизу для кнопки */
+.quiz-input-wrapper .quiz-input {
+    width: 100%;
+    padding-bottom: 50px; /* чтобы текст не залезал под кнопку */
+    resize: vertical;
+    line-height: 1.5;
+}
+
+/* Микрофон — закреплён в правом нижнем углу */
+.quiz-input-wrapper .quiz-voice-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #e1ebf9;
+    border: 1px solid #c5d8ef;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.quiz-input-wrapper .quiz-voice-btn:hover {
+    background: #c5d8ef;
+}
+
+
 
 /* ===== АДАПТАЦИЯ ТЕСТА ПОД МОБИЛЬНЫЕ УСТРОЙСТВА ===== */
 @media (max-width: 768px) {
@@ -3307,6 +3300,14 @@ pre {
         padding: 6px 10px;
         font-size: 0.8rem;
     }
+
+    .quiz-input-wrapper .quiz-voice-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+    bottom: 6px;
+    right: 6px;
+}
 }
 
 @media (max-width: 480px) {
@@ -3404,8 +3405,8 @@ pre {
 #dashboard {
   background: #fff;
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 20px;
+  padding: 12px;
+  margin-bottom: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 #dashboard h3 {
@@ -3471,4 +3472,531 @@ pre {
   .grid-cards {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+
+
+/* ============================================================
+   БУРГЕР — ТОЛЬКО ФИКСАЦИЯ СВЕРХУ
+   ============================================================ */
+
+/* ПК, планшеты и широкие экраны: бургер скрыт */
+.burger-btn {
+    display: none;
+}
+
+/* ============================================================
+   ТЕЛЕФОНЫ И УЗКИЕ ЭКРАНЫ (≤ 768px)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* ---------- Бургер — фиксированная полоса сверху ---------- */
+    .burger-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 5px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        height: 52px;
+        padding: 0 18px 0 25px; 
+        margin: 0;
+        background: #fff;
+        border: none;
+        border-bottom: 1px solid #e4ecf6;
+        border-radius: 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        z-index: 2000;
+        cursor: pointer;
+    }
+
+    .burger-btn span {
+        display: block;
+        width: 26px;
+        height: 2px;
+        background: #1a2a3a;
+        border-radius: 2px;
+        transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .burger-btn.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .burger-btn.active span:nth-child(2) {
+        opacity: 0;
+    }
+    .burger-btn.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    /* Отступ контейнеру, чтобы контент не уходил под бургер */
+    .container {
+        padding-top: 68px !important;
+    }
+
+    /* ---------- ВНЕШНЕЕ МЕНЮ — гарантированный скролл ---------- */
+    .controls .filter-group {
+        position: fixed !important;
+        top: 52px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+
+        height: auto !important;
+        max-height: none !important;
+
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+
+        padding: 12px 12px 120px 12px !important;
+        margin: 0 !important;
+
+        background: #fff !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+        display: none;
+        flex-direction: column !important;
+        gap: 8px !important;
+
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+
+        z-index: 1999 !important;
+    }
+
+    .controls .filter-group.open {
+        display: flex !important;
+    }
+
+    /* ---------- ДРОПДАУН — свой скролл ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu {
+        position: static !important;
+        display: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+
+        margin: 6px 0 0 0 !important;
+        padding: 4px 0 !important;
+
+        border: 1px solid #e4ecf6 !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+        background: #f6faff !important;
+
+        max-height: 160px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        animation: none !important;
+
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        bottom: auto !important;
+        transform: none !important;
+    }
+
+    .controls .filter-group > .dropdown > .dropdown-menu.open {
+        display: block !important;
+    }
+
+    /* ---------- Пункты дропдауна ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item {
+        padding: 8px 14px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.3 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    /* ---------- Скроллбар внутри дропдауна ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu::-webkit-scrollbar {
+        width: 5px;
+    }
+    .controls .filter-group > .dropdown > .dropdown-menu::-webkit-scrollbar-thumb {
+        background: #c5d8ef;
+        border-radius: 3px;
+    }
+    .controls .filter-group > .dropdown > .dropdown-menu::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
+
+/* ============================================================
+   ОБЁРТКА ДЛЯ БЛОКА "ТИПЫ ТЕСТИРОВАНИЯ"
+   ============================================================ */
+.testing-types-block {
+    background: linear-gradient(145deg, #f0f7ff 0%, #e6eff9 100%);
+    border-radius: 24px;
+    padding: 24px 28px;
+    margin-bottom: 30px;
+    border: 1px solid #c5d8ef;
+    box-shadow: 0 4px 16px rgba(29, 59, 92, 0.06);
+}
+
+/* Заголовок */
+.testing-types-block .testing-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0a1f3b;
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+}
+
+/* Секции внутри (По цели, По способу выполнения и т.д.) */
+.testing-types-block .testing-section {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 16px 18px;
+    border: 1px solid #d0ddea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.testing-types-block .section-header {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0a1f3b;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e6edf6;
+    text-align: center;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+    .testing-types-block {
+        padding: 16px 12px;
+        border-radius: 16px;
+    }
+    .testing-types-block .testing-title {
+        font-size: 1.1rem;
+    }
+}
+
+/* ============================================================
+   ЕДИНЫЕ ОТСТУПЫ МЕЖДУ СХЕМАМИ
+   ============================================================ */
+
+/* Все блоки-схемы: одинаковый отступ снизу и скругление */
+
+
+/* ============================================================
+   1. ФИКС: Алгоритм тестирования — не выходит за рамки
+   ============================================================ */
+.algorithm-block {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    padding: 20px 24px !important;
+}
+
+.algorithm-steps {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.algorithm-steps .step {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+}
+
+.algorithm-footer {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.algorithm-footer .always-block {
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+    flex: 1 1 260px !important;
+    min-width: 0 !important;
+}
+
+.algorithm-footer .always-block .block-tags {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+}
+
+/* На мобильных/планшетах — колонкой */
+@media (max-width: 768px) {
+    .algorithm-steps {
+        flex-direction: column !important;
+    }
+    .algorithm-steps .step {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .algorithm-steps .step-arrow {
+        transform: rotate(90deg) !important;
+    }
+    .algorithm-footer {
+        grid-template-columns: 1fr !important;
+        flex-direction: column !important;
+    }
+    .algorithm-footer .always-block {
+        flex: 1 1 100% !important;
+    }
+}
+
+/* ============================================================
+   2. DASHBOARD — фон как у controls
+   ============================================================ */
+#dashboard {
+    background: #f6faff !important;      /* тот же фон, что у .controls */
+    border: 1px solid #e4ecf6 !important; /* та же граница */
+    border-radius: 20px !important;       /* то же скругление */
+    padding: 14px 20px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02) !important;
+}
+
+
+/* ============================================================
+   ОДИНАКОВОЕ РАССТОЯНИЕ МЕЖДУ БЛОКАМИ (ФИНАЛ)
+   ============================================================ */
+.schema-controls {
+    margin: 0 0 16px 0 !important;
+}
+
+.controls {
+    margin: 0 0 16px 0 !important;
+}
+
+#dashboard {
+    margin: 0 0 16px 0 !important;
+}
+
+/* ============================================================
+   DASHBOARD — СВОРАЧИВАЕМЫЙ
+   ============================================================ */
+#dashboard {
+    background: #fff;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+}
+
+#dashboard:hover {
+    box-shadow: 0 6px 20px rgba(29, 59, 92, 0.10);
+}
+
+/* Кнопка-заголовок */
+.dashboard-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 18px 22px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0a1929;
+    text-align: left;
+    transition: background 0.2s;
+}
+
+.dashboard-toggle:hover {
+    background: #f0f5fd;
+}
+
+.dashboard-toggle-text {
+    flex: 1;
+}
+
+.dashboard-toggle-arrow {
+    font-size: 0.7rem;
+    color: #6a8aaa;
+    transition: transform 0.3s ease;
+}
+
+/* Поворот стрелки при раскрытии */
+#dashboard:not(.dashboard-collapsed) .dashboard-toggle-arrow {
+    transform: rotate(180deg);
+}
+
+/* Контент (сворачивается) */
+.dashboard-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    padding: 0 22px;
+}
+
+#dashboard:not(.dashboard-collapsed) .dashboard-content {
+    max-height: 3000px;
+    padding: 0 22px 20px 22px;
+}
+
+/* ============================================================
+   ЛОАДЕР: ПОЛОСКА СВЕРХУ + ЛОГОТИП В ЦЕНТРЕ
+   ============================================================ */
+
+/* --- Общий контейнер лоадера --- */
+#appLoader {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(145deg, #eef3f9 0%, #dce7f3 100%);
+    display: none;              /* ← СКРЫТ по умолчанию! */
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 1;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+
+/* Показываем лоадер только когда добавлен класс pwa-loader */
+#appLoader.pwa-loader {
+    display: flex;
+}
+
+#appLoader.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* --- Полоска прогресса сверху --- */
+.loader-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: transparent;
+    overflow: hidden;
+    z-index: 100000;
+}
+
+.loader-topbar-fill {
+    height: 100%;
+    width: 40%;
+    background: linear-gradient(90deg, #4caf50, #81c784, #4caf50);
+    border-radius: 6px;
+    animation: topbar-run 1.4s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+}
+
+@keyframes topbar-run {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+}
+
+/* --- Логотип с кольцом --- */
+.loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    animation: content-fade-in 0.6s ease;
+}
+
+@keyframes content-fade-in {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.loader-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: logo-pulse 2s ease-in-out infinite;
+}
+
+.loader-logo svg {
+    filter: drop-shadow(0 4px 12px rgba(29, 59, 92, 0.15));
+}
+
+@keyframes logo-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.06); }
+}
+
+.loader-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #1d3b5c;
+    letter-spacing: 0.5px;
+    animation: title-glow 2s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+    0%, 100% { text-shadow: 0 0 0 rgba(29, 59, 92, 0); }
+    50%      { text-shadow: 0 0 20px rgba(29, 59, 92, 0.2); }
+}
+
+.loader-subtitle {
+    font-size: 0.9rem;
+    color: #5a7a9a;
+    font-weight: 500;
+    animation: subtitle-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes subtitle-pulse {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+}
+
+/* --- Адаптив --- */
+@media (max-width: 768px) {
+    .loader-logo svg {
+        width: 70px;
+        height: 70px;
+    }
+    .loader-title {
+        font-size: 1.2rem;
+    }
+    .loader-subtitle {
+        font-size: 0.8rem;
+    }
+}
+
+/* Лоадер скрыт по умолчанию */
+#appLoader {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(145deg, #eef3f9 0%, #dce7f3 100%);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    opacity: 1;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+/* Показываем только если html.pwa-mode */
+html.pwa-mode #appLoader {
+    display: flex;
+}
+
+#appLoader.hidden {
+    opacity: 0;
+    visibility: hidden;
 }
