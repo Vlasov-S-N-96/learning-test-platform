@@ -7269,9 +7269,9 @@ function removeDuplicates(data) {
             unique.push(item);
         }
     });
-    if (unique.length < data.length) {
-        console.warn(`⚠️ Найдено и удалено ${data.length - unique.length} дублирующихся записей`);
-    }
+    //if (unique.length < data.length) {
+    //    console.warn(`⚠️ Найдено и удалено ${data.length - unique.length} дублирующихся записей`);
+    //}
     return unique;
 }
 
@@ -7472,7 +7472,7 @@ function renderCards(data) {
                 </div>
                 <div class="quiz-container" id="quiz_${item.id}" style="display: none;">
                     <div class="quiz-question" id="quizQuestion_${item.id}">Введите термин</div>
-                    <div class="quiz-controls-wrapper">
+                    <div class="quiz-input-wrapper">
                         <textarea class="quiz-input" id="quizInput_${item.id}" placeholder="Напишите ответ..." rows=""></textarea>
                         <button class="quiz-voice-btn" id="quizVoice_${item.id}" title="Голосовой ввод">🎙️</button>
                     </div>
@@ -8602,9 +8602,32 @@ if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
 
 
 async function evaluateWithAI(userAnswer, term, item) {
-  // Всегда используем только академическое определение
-  const fullText = (item.academic || '').trim();
-  return getBasicScore(userAnswer, fullText);
+  const academicText = (item.academic || '').trim();
+  const simpleText = (item.simple || '').trim();
+  const exampleText = (item.example || '')
+    .replace(/<[^>]*>/g, ' ')   // убираем HTML-теги
+    .replace(/\s+/g, ' ')        // убираем лишние пробелы
+    .trim();
+
+  // Категория "Собеседование" — academic содержит вопрос, ответ в simple/example
+  const isInterviewCategory = item.category && item.category.startsWith('interview');
+
+  if (isInterviewCategory) {
+    const scoreSimple = simpleText ? getBasicScore(userAnswer, simpleText) : 0;
+    const scoreExample = exampleText ? getBasicScore(userAnswer, exampleText) : 0;
+    // Если по simple уже 70%+, не смешиваем
+    if (scoreSimple >= 70) return scoreSimple;
+    return Math.max(scoreSimple, scoreExample);
+  }
+
+  // Для ВСЕХ остальных карточек — берём максимум из трёх полей
+  // Это решает проблему HTML/CSS/Python, где код лежит в example,
+  // а определение — в academic
+  const scoreAcademic = academicText ? getBasicScore(userAnswer, academicText) : 0;
+  const scoreSimple = simpleText ? getBasicScore(userAnswer, simpleText) : 0;
+  const scoreExample = exampleText ? getBasicScore(userAnswer, exampleText) : 0;
+
+  return Math.max(scoreAcademic, scoreSimple, scoreExample);
 }
 
 function cosineSimilarity(a, b) {
@@ -8685,7 +8708,6 @@ function updateDashboard() {
 
   // ---- Формируем HTML ----
   var html = `
-    <h3>Ваш прогресс</h3>
     <p>Уровень: <strong>${level}</strong></p>
     <p>Всего ответов: ${total} | Средний балл: ${avg}%</p>
     <div style="height:10px;background:#e0e0e0;border-radius:5px;margin:10px 0;">
@@ -8754,8 +8776,8 @@ function updateDashboard() {
       <span style="font-size:13px;">Рекомендуем повторить эти разделы и пройти тест заново.</span>
     </div>`;
   }
-
-  dashboard.innerHTML = html;
+   var content = document.getElementById('dashboardContent');
+   if (content) content.innerHTML = html;
 }
 
 function resetCategoryStats(category) {
@@ -8768,8 +8790,8 @@ function resetCategoryStats(category) {
 
 function getBasicScore(userAnswer, correctText) {
   // Удаляем HTML-теги
-  const cleanUser = (userAnswer || '').replace(/<[^>]*>/g, ' ').toLowerCase().replace(/[^а-яa-z0-9\s]/g, ' ').trim();
-  const cleanCorrect = (correctText || '').replace(/<[^>]*>/g, ' ').toLowerCase().replace(/[^а-яa-z0-9\s]/g, ' ').trim();
+  const cleanUser = (userAnswer || '').replace(/<[^>]*>/g, ' ').toLowerCase().replace(/[^а-яa-z0-9\s\.\#\-\_]/g, ' ').trim();
+  const cleanCorrect = (correctText || '').replace(/<[^>]*>/g, ' ').toLowerCase().replace(/[^а-яa-z0-9\s\.\#\-\_]/g, ' ').trim();
 
   if (!cleanUser || !cleanCorrect) return 0;
 
@@ -8805,6 +8827,30 @@ function getBasicScore(userAnswer, correctText) {
 
   return score;
 }
+
+
+// ================================================================
+//  СКРЫТИЕ ЛОАДЕРА В PWA ПОСЛЕ ЗАГРУЗКИ
+// ================================================================
+(function() {
+    // Работаем только если это PWA (класс добавлен inline-скриптом)
+    if (!document.documentElement.classList.contains('pwa-mode')) return;
+
+    function hideLoader() {
+        var loader = document.getElementById('appLoader');
+        if (!loader) return;
+        setTimeout(function() {
+            loader.classList.add('hidden');
+            setTimeout(function() { loader.remove(); }, 600);
+        }, 800);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hideLoader);
+    } else {
+        hideLoader();
+    }
+})();
 
 // Всплывающее уведомление (тост)
 function showToast(message, type = 'success') {
@@ -8881,3 +8927,72 @@ if (aiBtn) {
 
 // Инициализация аналитики после полной загрузки скрипта
 updateDashboard();
+
+// ================================================================
+//  ДРОПДАУНЫ: НЕ ВЫЛЕТАЮТ ЗА ПРАВЫЙ КРАЙ
+// ================================================================
+document.addEventListener('click', function(e) {
+    const toggle = e.target.closest('.dropdown-toggle');
+    if (!toggle) return;
+
+    const parent = toggle.closest('.dropdown');
+    if (!parent) return;
+    const menu = parent.querySelector('.dropdown-menu');
+    if (!menu) return;
+
+    // Ждём раскрытия, потом проверяем и сдвигаем
+    setTimeout(function() {
+        // Сбрасываем
+        menu.style.left = '0';
+        menu.style.right = 'auto';
+        menu.style.transform = 'none';
+
+        // Проверяем, не вылезает ли за правый край окна
+        const rect = menu.getBoundingClientRect();
+        const overflowRight = rect.right - (window.innerWidth - 10);
+
+        if (overflowRight > 0) {
+            // Прижимаем к правому краю toggle-кнопки
+            menu.style.left = 'auto';
+            menu.style.right = '0';
+        }
+    }, 20);
+});
+
+// ================================================================
+//  СВОРАЧИВАНИЕ DASHBOARD
+// ================================================================
+(function initDashboardToggle() {
+    function setup() {
+        var toggle = document.getElementById('dashboardToggle');
+        var dashboard = document.getElementById('dashboard');
+        if (!toggle || !dashboard) {
+            // Если DOM ещё не готов — пробуем позже
+            setTimeout(setup, 100);
+            return;
+        }
+
+        // Восстанавливаем состояние из localStorage
+        var isCollapsed = localStorage.getItem('dashboardCollapsed') !== 'false';
+        if (isCollapsed) {
+            dashboard.classList.add('dashboard-collapsed');
+            toggle.setAttribute('aria-expanded', 'false');
+        } else {
+            dashboard.classList.remove('dashboard-collapsed');
+            toggle.setAttribute('aria-expanded', 'true');
+        }
+
+        // Клик по кнопке
+        toggle.addEventListener('click', function() {
+            var collapsed = dashboard.classList.toggle('dashboard-collapsed');
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            localStorage.setItem('dashboardCollapsed', String(collapsed));
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup);
+    } else {
+        setup();
+    }
+})();
