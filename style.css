@@ -4779,3 +4779,29 @@ html.pwa-mode #appLoader {
         padding: 10px 14px !important;
     }
 }
+
+/* Базовые стили для десктопа */
+.custom-theme-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.theme-sections-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 200px;
+    z-index: 300;
+    display: none;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 20, 40, 0.12);
+    border: 1px solid #e4ecf6;
+    padding: 6px 0;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.theme-sections-menu.open {
+    display: block;
+}
