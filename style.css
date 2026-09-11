@@ -4649,3 +4649,133 @@ html.pwa-mode #appLoader {
 .card .expand-btn-wrapper .expand-btn:hover {
     background: #e1ebf9 !important;
 }
+
+/* ============================================================
+   МОБИЛЬНЫЙ ФИКС: ДРОПДАУНЫ И КАСТОМНЫЕ ТЕМЫ
+   Перебиваем инлайн-стили через !important
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* ─── Все элементы в бургер-меню — на всю ширину ─── */
+    .controls .filter-group > * {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        flex: 0 0 auto !important;
+    }
+
+    /* ─── Обычные кнопки ─── */
+    .controls .filter-group .filter-btn {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        text-align: center !important;
+    }
+
+    /* ─── Обычные дропдауны (Собеседование, SQL, Python) ─── */
+    .controls .filter-group .dropdown {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+        overflow: visible !important;
+    }
+
+    /* Кнопка-переключатель дропдауна */
+    .controls .filter-group .dropdown > .dropdown-toggle {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    /* Меню обычного дропдауна — СТАТИЧНОЕ, под кнопкой */
+    .controls .filter-group .dropdown > .dropdown-menu {
+        position: static !important;
+        display: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border: 1px solid #e4ecf6 !important;
+        border-radius: 14px !important;
+        margin: 6px 0 0 0 !important;
+        padding: 4px 0 !important;
+        background: #f6faff !important;
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .controls .filter-group .dropdown > .dropdown-menu.open {
+        display: block !important;
+    }
+
+    /* Пункты меню — по центру */
+    .controls .filter-group .dropdown > .dropdown-menu .dropdown-item {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 10px 14px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+    }
+
+    /* ─── КАСТОМНЫЕ ТЕМЫ (обёртки) ─── */
+    .controls .filter-group .custom-theme-wrapper {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+    }
+
+    /* Кнопка кастомной темы — на всю ширину, текст слева, стрелка справа */
+    .controls .filter-group .custom-theme-btn {
+        width: 100% !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        padding: 10px 14px !important;
+    }
+
+    /* Меню подтем кастомной темы — СТАТИЧНОЕ, под кнопкой */
+    .controls .filter-group .theme-sections-menu {
+        position: static !important;
+        display: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        box-shadow: none !important;
+        border: 1px solid #e4ecf6 !important;
+        border-radius: 14px !important;
+        margin: 6px 0 0 0 !important;
+        padding: 4px 0 !important;
+        background: #f6faff !important;
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ⚡ Открытое меню подтем — показываем, перебивая inline display:none */
+    .controls .filter-group .theme-sections-menu[style*="display: block"],
+    .controls .filter-group .theme-sections-menu[style*="display:block"],
+    .controls .filter-group .theme-sections-menu.is-open {
+        display: block !important;
+    }
+
+    /* Пункты меню подтем — по центру */
+    .controls .filter-group .theme-sections-menu .dropdown-item {
+        width: 100% !important;
+        text-align: center !important;
+        padding: 10px 14px !important;
+    }
+}
