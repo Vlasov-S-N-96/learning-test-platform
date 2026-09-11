@@ -302,9 +302,10 @@ body {
 }
 
 .controls .filter-btn.active {
-    background: #1d3b5c;
-    color: white;
-    border-color: #1d3b5c;
+    background: white; /* Убираем темный фон */
+    color: #2a405a;
+    border-color: #d0ddea;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .controls .stats {
@@ -3999,4 +4000,652 @@ html.pwa-mode #appLoader {
 #appLoader.hidden {
     opacity: 0;
     visibility: hidden;
+}
+
+/* ============================================================
+   ЦВЕТА ТЕКСТА
+   ============================================================ */
+.text-red    { color: #c62828; }
+.text-green  { color: #2e7d32; }
+.text-blue   { color: #1565c0; }
+.text-orange { color: #e65100; }
+.text-purple { color: #6a1b9a; }
+.text-teal   { color: #00695c; }
+.text-gray   { color: #6a8aaa; }
+.text-dark   { color: #0a1929; }
+
+/* ============================================================
+   РАЗМЕРЫ ШРИФТА
+   ============================================================ */
+.text-xs   { font-size: 0.7rem; }
+.text-sm   { font-size: 0.85rem; }
+.text-base { font-size: 1rem; }
+.text-md   { font-size: 1.1rem; }
+.text-lg   { font-size: 1.3rem; }
+.text-xl   { font-size: 1.6rem; }
+.text-2xl  { font-size: 2rem; }
+
+/* ============================================================
+   ЖИРНОСТЬ И НАЧЕРТАНИЕ
+   ============================================================ */
+.text-bold      { font-weight: 700; }
+.text-semibold  { font-weight: 600; }
+.text-normal    { font-weight: 400; }
+.text-light     { font-weight: 300; }
+.text-italic    { font-style: italic; }
+.text-underline { text-decoration: underline; text-decoration-thickness: 2px; }
+.text-strike    { text-decoration: line-through; color: #999; }
+.text-mono      { font-family: 'Fira Code', 'Consolas', monospace; }
+
+/* ============================================================
+   ФОНОВЫЕ ПОДЛОЖКИ
+   ============================================================ */
+.bg-yellow { background: #fff8e1; border-left: 4px solid #f57f17; padding: 8px 12px; border-radius: 8px; }
+.bg-green  { background: #e8f5e9; border-left: 4px solid #2e7d32; padding: 8px 12px; border-radius: 8px; }
+.bg-blue   { background: #e3f2fd; border-left: 4px solid #1565c0; padding: 8px 12px; border-radius: 8px; }
+.bg-red    { background: #ffebee; border-left: 4px solid #c62828; padding: 8px 12px; border-radius: 8px; }
+.bg-purple { background: #f3e5f5; border-left: 4px solid #6a1b9a; padding: 8px 12px; border-radius: 8px; }
+.bg-gray   { background: #f5f5f5; border-left: 4px solid #888;    padding: 8px 12px; border-radius: 8px; }
+
+/* ============================================================
+   МОДАЛЬНОЕ ОКНО
+   ============================================================ */
+.card-modal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.card-modal-content {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.card-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-bottom: 2px solid #e6edf6;
+    position: sticky;
+    top: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    z-index: 10;
+}
+
+.card-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #0a1929;
+}
+
+.card-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #6a8aaa;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+.card-modal-close:hover { background: #e6edf6; color: #1a2a3a; }
+
+.card-modal-body {
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-modal-body label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #2a405a;
+    gap: 4px;
+}
+
+.card-modal-body input,
+.card-modal-body select,
+.card-modal-body textarea {
+    padding: 8px 12px;
+    border: 1px solid #d0ddea;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.card-modal-body input:focus,
+.card-modal-body select:focus,
+.card-modal-body textarea:focus {
+    border-color: #4a90d9;
+}
+.card-modal-body textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+.card-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid #e6edf6;
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-radius: 0 0 20px 20px;
+}
+
+.card-modal-footer button {
+    padding: 10px 24px;
+    border-radius: 30px;
+    border: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-cancel { background: #f0f5fd; color: #2a405a; }
+.btn-cancel:hover { background: #e1ebf9; }
+.btn-save { background: #1d3b5c; color: white; }
+.btn-save:hover { background: #2a5a7a; }
+
+/* ============================================================
+   ТУЛБАР ВИЗУАЛЬНОГО РЕДАКТОРА
+   ============================================================ */
+.editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 6px 8px;
+    background: #f6faff;
+    border: 1px solid #d0ddea;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+
+.editor-toolbar button {
+    background: white;
+    border: 1px solid #d0ddea;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    padding: 0;
+    color: #2a405a;
+}
+.editor-toolbar button:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+    transform: translateY(-1px);
+}
+.editor-toolbar .sep {
+    width: 1px;
+    height: 22px;
+    background: #d0ddea;
+    margin: 4px 3px;
+    align-self: center;
+}
+.editor-toolbar + textarea {
+    border-radius: 0 0 8px 8px !important;
+    margin-top: 0;
+}
+
+.editor-preview {
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: #fafcff;
+    border: 1px dashed #b0c8e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #1a2a3a;
+}
+
+/* ============================================================
+   СПИСОК ТЕМ В МОДАЛЬНОМ ОКНЕ УПРАВЛЕНИЯ
+   ============================================================ */
+.theme-manage-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f6faff;
+    border: 1px solid #e4ecf6;
+    border-radius: 12px;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.theme-manage-item:hover {
+    background: #eef5fd;
+}
+
+.theme-manage-item .theme-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    font-weight: 600;
+    color: #0a1929;
+    font-size: 0.9rem;
+    word-break: break-word;
+}
+
+.theme-manage-item .theme-info .color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.08);
+}
+
+.theme-manage-item .theme-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.theme-manage-item .theme-actions button {
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.theme-manage-item .btn-rename {
+    background: #e1ebf9;
+    color: #1d3b5c;
+    border-color: #c5d8ef;
+    min-width: 32px;
+}
+.theme-manage-item .btn-rename:hover {
+    background: #1d3b5c;
+    color: white;
+}
+
+.theme-manage-item .btn-delete {
+    background: #fce8e8;
+    color: #c62828;
+    border-color: #f0c5c5;
+    min-width: 32px;
+}
+.theme-manage-item .btn-delete:hover {
+    background: #c62828;
+    color: white;
+}
+
+.theme-manage-item .btn-restore {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-color: #b8d9c8;
+}
+.theme-manage-item .btn-restore:hover {
+    background: #2e7d32;
+    color: white;
+}
+
+/* Обертка для кастомных тем (чтобы крестики не лезли на текст) */
+.custom-theme-wrapper {
+    display: inline-flex;
+    align-items: stretch;
+}
+
+/* ============================================================
+   КНОПКИ ДЕЙСТВИЙ НА КАРТОЧКЕ (Редактировать / Скрыть)
+   ============================================================ */
+.card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px dashed #e6eef9;
+}
+
+.card-actions .edit-card-btn,
+.card-actions .delete-card-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 30px;
+    border: 1px solid transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+/* Иконки в кнопках */
+.card-actions .edit-card-btn svg,
+.card-actions .delete-card-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* ===== Кнопка "Редактировать" ===== */
+.card-actions .edit-card-btn {
+    background: #e1ebf9;
+    color: #1d3b5c;
+    border-color: #c5d8ef;
+}
+
+.card-actions .edit-card-btn:hover {
+    background: #1d3b5c;
+    color: #fff;
+    border-color: #1d3b5c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(29, 59, 92, 0.25);
+}
+
+.card-actions .edit-card-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(29, 59, 92, 0.2);
+}
+
+/* Изменённая карточка (override) — оранжевый акцент */
+.card-actions .edit-card-btn.modified {
+    background: #fff3e0;
+    color: #e65100;
+    border-color: #f0d5b8;
+}
+.card-actions .edit-card-btn.modified:hover {
+    background: #e65100;
+    color: #fff;
+    border-color: #e65100;
+    box-shadow: 0 4px 10px rgba(230, 81, 0, 0.25);
+}
+
+/* ===== Кнопка "Скрыть" / "Удалить" ===== */
+.card-actions .delete-card-btn {
+    background: #fce8e8;
+    color: #c62828;
+    border-color: #f0c5c5;
+}
+
+.card-actions .delete-card-btn:hover {
+    background: #c62828;
+    color: #fff;
+    border-color: #c62828;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(198, 40, 40, 0.25);
+}
+
+.card-actions .delete-card-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(198, 40, 40, 0.2);
+}
+
+/* На мобильных — компактнее */
+@media (max-width: 480px) {
+    .card-actions {
+        gap: 6px;
+    }
+    .card-actions .edit-card-btn,
+    .card-actions .delete-card-btn {
+        padding: 7px 10px;
+        font-size: 0.72rem;
+        gap: 4px;
+    }
+    .card-actions .edit-card-btn svg,
+    .card-actions .delete-card-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Кнопка "Скрыть" — синевато-серая */
+.theme-manage-item .btn-hide {
+    background: #eef3f9;
+    color: #4a6a8a;
+    border-color: #d0ddea;
+    min-width: 32px;
+}
+.theme-manage-item .btn-hide:hover {
+    background: #4a6a8a;
+    color: white;
+    border-color: #4a6a8a;
+}
+
+/* Кнопка "Удалить" — красная */
+.theme-manage-item .btn-delete {
+    background: #fce8e8;
+    color: #c62828;
+    border-color: #f0c5c5;
+    min-width: 32px;
+}
+.theme-manage-item .btn-delete:hover {
+    background: #c62828;
+    color: white;
+    border-color: #c62828;
+}
+
+/* Кнопка темы */
+.custom-theme-btn {
+    position: relative !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 14px !important;
+    border-radius: 40px !important;
+    border: 1px solid #d0ddea !important;
+    background: white !important;
+    color: #2a405a !important;
+    font-weight: 600 !important;
+    font-size: 0.7rem !important;
+    cursor: pointer !important;
+    transition: 0.2s !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+}
+
+.custom-theme-btn:hover {
+    background: #e1ebf9 !important;
+    border-color: #8aacc9 !important;
+}
+
+.custom-theme-btn.active {
+    background: white !important;
+    color: #2a405a !important;
+    border-color: #d0ddea !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Когда открыто меню подтем — подсветить кнопку */
+.custom-theme-btn.has-sections {
+    padding-right: 10px !important;
+}
+
+/* Меню подтем внутри кнопки */
+.theme-sections-menu {
+    animation: dropdownFade 0.2s ease;
+}
+
+.theme-sections-menu .dropdown-item {
+    text-align: left;
+    padding: 8px 18px;
+}
+
+.theme-section-row {
+    cursor: default;
+}
+
+/* На мобильных меню подтем разворачивается под кнопкой */
+@media (max-width: 768px) {
+    .custom-theme-wrapper {
+        display: block !important;
+        width: 100%;
+    }
+    .custom-theme-btn {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    .theme-sections-menu {
+        position: static !important;
+        width: 100% !important;
+        margin-top: 6px !important;
+        box-shadow: none !important;
+        border: 1px solid #e4ecf6 !important;
+    }
+}
+
+/* ============================================================
+   В РЕЖИМЕ ТЕСТА — СКРЫВАЕМ "ПОКАЗАТЬ ПОЛНОСТЬЮ"
+   ============================================================ */
+.card.quiz-mode .expand-btn-wrapper {
+    display: none !important;
+}
+
+/* И убираем лишний padding снизу у card-content в тесте */
+.card.quiz-mode .card-content {
+    padding-bottom: 0 !important;
+}
+
+/* Стилизуем кнопку "Вернуться" в режиме теста */
+.card.quiz-mode .quiz-toggle-wrapper {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #e6eef9;
+}
+
+.card.quiz-mode .quiz-toggle-btn {
+    background: #f0f5fd;
+    color: #1d3b5c;
+    border-color: #c5d8ef;
+    font-weight: 700;
+}
+
+.card.quiz-mode .quiz-toggle-btn:hover {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+}
+
+/* ============================================================
+   УБИРАЕМ ЛИШНИЕ ОТСТУПЫ В КАРТОЧКЕ
+   ============================================================ */
+
+/* 1. Уменьшаем резервное место под кнопку "Показать полностью" */
+.card .card-content {
+    padding-bottom: 12px !important;  /* было 80px */
+}
+
+/* 2. Делаем кнопку "Показать полностью" частью потока, а не абсолютной */
+.card .expand-btn-wrapper {
+    position: relative !important;
+    bottom: auto !important;
+    margin-top: 4px !important;    /* маленький отступ сверху */
+    background: transparent !important;
+}
+
+/* 3. Убираем градиент-заглушку (он не нужен, если кнопка в потоке) */
+.card .expand-btn-wrapper .fade {
+    display: none !important;
+}
+
+/* 4. Кнопка "Показать полностью" — компактная */
+.card .expand-btn-wrapper .expand-btn {
+    padding: 8px 0 !important;     /* было 6px 0 14px 0 */
+    background: transparent !important;
+    border-top: none !important;   /* убираем верхнюю линию */
+}
+
+/* 5. Кнопка "Проверь себя" — уменьшаем верхний отступ */
+.quiz-toggle-wrapper {
+    padding: 6px 0 !important;     /* было 8px 0 */
+    margin-top: 4px !important;    /* небольшой отступ сверху */
+}
+
+/* 6. Блок действий (Редактировать/Скрыть) — компактнее */
+.card-actions {
+    margin-top: 8px !important;    /* было 18px */
+    padding-top: 8px !important;   /* было 12px */
+}
+
+/* 7. Source (ISTQB Glossary) — уменьшаем отступ снизу */
+.card .source {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+}
+
+/* ============================================================
+   КНОПКИ ДЕЙСТВИЙ — ТОЛЬКО В РАСКРЫТОМ РЕЖИМЕ
+   ============================================================ */
+
+/* По умолчанию (свёрнутая карточка) — скрываем */
+.card-actions {
+    display: none !important;
+}
+
+/* Показываем только когда карточка раскрыта */
+.card.expanded .card-actions {
+    display: flex !important;
+    margin-top: 12px !important;
+    padding-top: 10px !important;
+    border-top: 1px dashed #e6eef9;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Плавное появление */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Уменьшаем отступ у "Показать полностью", раз над ней ничего нет */
+.card .expand-btn-wrapper .expand-btn {
+    padding: 10px 0 !important;
+}
+
+.card .expand-btn-wrapper .expand-btn {
+    padding: 10px 0 !important;
+    font-weight: 700 !important;
+    color: #1d3b5c !important;
+    background: #f6faff !important;
+    border-radius: 0 0 20px 20px !important;
+    transition: background 0.2s !important;
+}
+
+.card .expand-btn-wrapper .expand-btn:hover {
+    background: #e1ebf9 !important;
 }
