@@ -6282,6 +6282,77 @@ const TERMS_DATA = [
     }
 ];
 
+// ============================================================
+//  МИГРАЦИЯ: помечаем существующие темы/подтемы как "старые"
+//  (старые — только скрывать, новые — скрывать + удалять)
+// ============================================================
+(function migrateCanDeleteFlags() {
+    // --- Темы ---
+    if (!localStorage.getItem('myThemeCanDeleteMigration_v1')) {
+        const themes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+        themes.forEach(t => {
+            if (t.canDelete === undefined) t.canDelete = false; // старые — нельзя удалять
+        });
+        localStorage.setItem('myCustomThemes', JSON.stringify(themes));
+        window.customThemes = themes;
+        localStorage.setItem('myThemeCanDeleteMigration_v1', 'done');
+        console.log('🔄 Миграция тем: помечены как "только скрывать"');
+    }
+
+    // --- Подтемы ---
+    if (!localStorage.getItem('mySectionCanDeleteMigration_v1')) {
+        const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+        const extra = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+        const themes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+
+        // Подтемы из стандартных тем (myExtraSections)
+        Object.entries(extra).forEach(([tid, secs]) => {
+            meta[tid] = meta[tid] || {};
+            (secs || []).forEach(s => {
+                if (!meta[tid][s]) meta[tid][s] = { canDelete: false, hidden: false };
+            });
+        });
+
+        // Подтемы из кастомных тем (theme.sections)
+        themes.forEach(t => {
+            meta[t.id] = meta[t.id] || {};
+            (t.sections || []).forEach(s => {
+                if (!meta[t.id][s]) meta[t.id][s] = { canDelete: false, hidden: false };
+            });
+        });
+
+        localStorage.setItem('mySectionMeta', JSON.stringify(meta));
+        localStorage.setItem('mySectionCanDeleteMigration_v1', 'done');
+        console.log('🔄 Миграция подтем: помечены как "только скрывать"');
+    }
+})();
+
+// ============================================================
+//  ХРАНИЛИЩЕ ИЗМЕНЕНИЙ И СКРЫТЫХ КАРТОЧЕК
+// ============================================================
+window.cardOverrides = JSON.parse(localStorage.getItem('myCardOverrides')) || {};
+window.hiddenCardIds = JSON.parse(localStorage.getItem('myHiddenCards')) || [];
+window.customCards  = window.customCards  || JSON.parse(localStorage.getItem('myCustomCards'))  || [];
+window.customThemes = window.customThemes || JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+
+function saveOverrides()  { localStorage.setItem('myCardOverrides', JSON.stringify(window.cardOverrides)); }
+function saveHiddenIds()  { localStorage.setItem('myHiddenCards',   JSON.stringify(window.hiddenCardIds)); }
+
+// Объединяем базовую карточку с её пользовательскими изменениями
+function getEffectiveCard(item) {
+    if (item.id >= 10000) return item; // пользовательская карточка — как есть
+    const override = window.cardOverrides[item.id];
+    if (!override) return item;
+    return Object.assign({}, item, override, { _isOverridden: true });
+}
+
+// Все термины для рендера: базовые (с overrides) + кастомные, минус скрытые
+function getAllTermsForRender() {
+    const base = TERMS_DATA.map(getEffectiveCard);
+    const all  = [...base, ...window.customCards];
+    return all.filter(function (c) { return window.hiddenCardIds.indexOf(c.id) === -1; });
+}
+
 
 // ================================================================
 //  СУПЕР-РАСШИРЕННЫЙ СЛОВАРЬ СИНОНИМОВ
@@ -7277,9 +7348,13 @@ function removeDuplicates(data) {
 
 function getTermsForCurrentFilter() {
     if (typeof TERMS_DATA === 'undefined') return [];
-    const uniqueData = removeDuplicates(TERMS_DATA);
-    if (currentFilter === 'all') return uniqueData;
-    return uniqueData.filter(item => item.category === currentFilter);
+    // Объединяем: базовые (с overrides) + кастомные, минус скрытые
+    const base   = TERMS_DATA.map(getEffectiveCard);
+    const all    = [...base, ...window.customCards]
+                    .filter(function (c) { return window.hiddenCardIds.indexOf(c.id) === -1; });
+    const unique = removeDuplicates(all);
+    if (currentFilter === 'all') return unique;
+    return unique.filter(function (item) { return item.category === currentFilter; });
 }
 
 function isCurrentFilterComplete() {
@@ -7418,7 +7493,11 @@ function renderCards(data) {
         cardsGrid.innerHTML = '<p style="text-align:center; padding:40px; color:#888;">Нет данных для отображения</p>';
         return;
     }
-    const uniqueData = removeDuplicates(data);
+    // Применяем overrides и убираем скрытые
+    const mergedData = data.map(getEffectiveCard)
+                          .filter(function (c) { return window.hiddenCardIds.indexOf(c.id) === -1; 
+    });
+    const uniqueData = removeDuplicates(mergedData);
     cardsGrid.innerHTML = '';
     
     uniqueData.forEach(item => {
@@ -7433,6 +7512,9 @@ function renderCards(data) {
         }*/
 
         const metaHtml = item.meta ? item.meta.map(m => `<span class="meta">${escapeHtml(m)}</span>`).join('') : '';
+        const sectionBadge = item.section
+            ? `<span class="meta" style="background:#e1ebf9;color:#1d3b5c;">📁 ${escapeHtml(item.section)}</span>`
+            : '';
 
         let academicText = '';
         if (Array.isArray(item.academic)) {
@@ -7483,12 +7565,25 @@ function renderCards(data) {
                     <div class="quiz-result" id="quizResult_${item.id}"></div>
                     <div class="quiz-hint-content" id="quizHintContent_${item.id}" style="display: none;"></div>
                 </div>
-                <div class="meta-tags" style="display: none;">${metaHtml}</div>
+                <div class="meta-tags" style="display: none;">${sectionBadge}${metaHtml}</div>
             </div>
 
             <!-- Кнопка "Тест" внизу -->
             <div class="quiz-toggle-wrapper">
                 <button class="quiz-toggle-btn" id="quizToggle_${item.id}">Проверь себя</button>
+            </div>
+
+            <div class="card-actions">
+                <button class="edit-card-btn ${item._isOverridden ? 'modified' : ''}"
+                        data-edit-id="${item.id}"
+                        title="${item._isOverridden ? 'Изменена (можно вернуть)' : 'Редактировать'}">
+                    ${item._isOverridden ? 'Изменить' : 'Редактировать'}
+                </button>
+                <button class="delete-card-btn"
+                        data-delete-id="${item.id}"
+                        title="Удалить / Скрыть">
+                    ${item.id >= 10000 ? 'Удалить' : 'Скрыть'}
+                </button>
             </div>
 
             <div class="expand-btn-wrapper">
@@ -7498,6 +7593,24 @@ function renderCards(data) {
         `;
 
         cardsGrid.appendChild(card);
+        
+        // ===== Кнопки редактирования и удаления для ВСЕХ карточек =====
+        const editBtnEl = card.querySelector('.edit-card-btn');
+        if (editBtnEl) {
+            editBtnEl.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                window.editAnyCard(parseInt(this.dataset.editId));
+            });
+        }
+        const deleteBtnEl = card.querySelector('.delete-card-btn');
+        if (deleteBtnEl) {
+            deleteBtnEl.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                window.deleteAnyCard(parseInt(this.dataset.deleteId));
+            });
+        }
 
         // ===== ЛОГИКА ОЗВУЧКИ =====
         if ('speechSynthesis' in window) {
@@ -8207,6 +8320,7 @@ function renderCards(data) {
         card.addEventListener('touchstart', function(e) {
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const touch = e.touches[0];
             startX = touch.clientX;
@@ -8217,6 +8331,7 @@ function renderCards(data) {
 
         card.addEventListener('touchmove', function(e) {
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const touch = e.touches[0];
             const diffX = touch.clientX - startX;
@@ -8230,7 +8345,6 @@ function renderCards(data) {
                 e.preventDefault();
             }
         }, { passive: false });
-
         card.addEventListener('touchend', function(e) {
             if (!isDragging) return;
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
@@ -8238,6 +8352,12 @@ function renderCards(data) {
                 const isRight = currentX > 0;
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
+                
+                // ===== ДОБАВЛЕНО: Запись свайпа в статистику =====
+                saveResult(item.term, item.category, isRight ? 100 : 0);
+                updateDashboard();
+                // =================================================
+
                 refreshSummary();
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
@@ -8256,12 +8376,14 @@ function renderCards(data) {
             isDragging = false;
         }, { passive: true });
 
+
         // Pointer-события (для мыши)
         card.addEventListener('pointerdown', function(e) {
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.pointerType === 'touch') return;
             if (e.button !== 0) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             isDragging = false;
             startX = e.clientX;
@@ -8275,6 +8397,7 @@ function renderCards(data) {
             if (e.pointerType === 'touch') return;
             if (!this.hasPointerCapture(e.pointerId)) return;
             if (e.target.closest('.expand-btn')) return;
+            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const diffX = e.clientX - startX;
             const diffY = e.clientY - startY;
@@ -8291,6 +8414,7 @@ function renderCards(data) {
         card.addEventListener('pointerup', function(e) {
             if (e.pointerType === 'touch') return;
             this.releasePointerCapture(e.pointerId);
+            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             if (!isDragging) {
                 this.style.transition = '';
@@ -8303,6 +8427,12 @@ function renderCards(data) {
                 const isRight = currentX > 0;
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
+                
+                // ===== ДОБАВЛЕНО: Запись свайпа в статистику =====
+                saveResult(item.term, item.category, isRight ? 100 : 0);
+                updateDashboard();
+                // =================================================
+
                 refreshSummary();
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
@@ -8433,7 +8563,33 @@ setupDropdown('dropdownToggleSql', 'dropdownMenuSql');
 setupDropdown('dropdownTogglePython', 'dropdownMenuPython');
 setupDropdown('voiceToggle', 'voiceMenu');
 
-document.querySelectorAll('.filter-btn:not(.dropdown-toggle)').forEach(btn => {
+// ============================================================
+//  DROPDOWN: РАБОТА С КАРТОЧКАМИ
+// ============================================================
+(function setupCardManageDropdown() {
+    const toggle = document.getElementById('cardManageToggle');
+    const menu = document.getElementById('cardManageMenu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if (el !== this) el.classList.remove('open'); });
+        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if (el !== menu) el.classList.remove('open'); });
+        this.classList.toggle('open');
+        menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function() {
+            // Закрываем меню при выборе пункта
+            toggle.classList.remove('open');
+            menu.classList.remove('open');
+        });
+    });
+})();
+
+
+document.querySelectorAll('.filter-btn:not(.dropdown-toggle):not(.custom-theme-btn)').forEach(btn => {
     btn.addEventListener('click', function(e) {
         e.stopPropagation();
         const filter = this.dataset.filter;
@@ -8593,11 +8749,14 @@ function initApp(data) {
     setTimeout(() => updateAllVisibleCardsButtons(), 300);
 }
 
-// Предполагается, что TERMS_DATA уже определён глобально
+// Инициализация: базовые + пользовательские карточки
+window.customCards = JSON.parse(localStorage.getItem('myCustomCards')) || [];
+window.customThemes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+
 if (typeof TERMS_DATA !== 'undefined' && TERMS_DATA.length > 0) {
-    initApp(TERMS_DATA);
+    initApp(getAllTermsForRender());
 } else {
-    console.warn('⚠️ TERMS_DATA не найден. Проверьте, что массив определён до этого скрипта.');
+    console.warn('⚠️ TERMS_DATA не найден.');
 }
 
 
@@ -8739,17 +8898,23 @@ function updateDashboard() {
         </div>
         <div style="font-size:12px; color:#777;">
           Сложные термины:
-          ${Object.keys(data.terms).sort(function(a,b) {
-              var avgA = data.terms[a].sum / data.terms[a].count;
-              var avgB = data.terms[b].sum / data.terms[b].count;
-              return avgA - avgB;
-            }).slice(0,3).map(function(term) {
-              var avgT = Math.round(data.terms[term].sum / data.terms[term].count);
-              return `<span style="background:#eee; padding:2px 8px; border-radius:10px; margin:2px;">${term} (${avgT}%)</span>`;
-            }).join(' ') || '—'
+          ${Object.keys(data.terms)
+            .filter(function(term) {
+                var count = data.terms[term].count;
+                var avg = data.terms[term].sum / count;
+                return count > 2 && avg < 50; // Фильтр: >2 попыток и средний балл < 50%
+            })
+            .sort(function(a,b) {
+                var avgA = data.terms[a].sum / data.terms[a].count;
+                var avgB = data.terms[b].sum / data.terms[b].count;
+                return avgA - avgB;
+            })
+            .slice(0,3).map(function(term) {
+                var avgT = Math.round(data.terms[term].sum / data.terms[term].count);
+                return `<span style="background:#eee; padding:2px 8px; border-radius:10px; margin:2px;">${term} (${avgT}%)</span>`;
+            }).join(' ') || '<span style="color:#aaa;">Пока нет данных (нужно >2 попыток с низким баллом)</span>'
           }
         </div>
-      </div>
     `;
   });
 
@@ -8931,7 +9096,7 @@ updateDashboard();
 // ================================================================
 //  ДРОПДАУНЫ: НЕ ВЫЛЕТАЮТ ЗА ПРАВЫЙ КРАЙ
 // ================================================================
-document.addEventListener('click', function(e) {
+/*ument.addEventListener('click', function(e) {
     // ДОБАВЛЕНА ЭТА СТРОКА: отключаем JS-позиционирование на мобильных
     if (window.innerWidth <= 768) return; 
 
@@ -8956,7 +9121,7 @@ document.addEventListener('click', function(e) {
             menu.style.right = '0';
         }
     }, 20);
-});
+});*/
 
 // ================================================================
 //  СВОРАЧИВАНИЕ DASHBOARD
@@ -8994,4 +9159,1423 @@ document.addEventListener('click', function(e) {
     } else {
         setup();
     }
+})();
+
+// ============================================================
+//  ПОЛЬЗОВАТЕЛЬСКИЕ КАРТОЧКИ И ТЕМЫ (безопасная версия)
+// ============================================================
+window.customCards  = window.customCards  || JSON.parse(localStorage.getItem('myCustomCards'))  || [];
+window.customThemes = window.customThemes || JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+let editingCardId = null;
+
+function saveCustomCards()  { localStorage.setItem('myCustomCards',  JSON.stringify(window.customCards)); }
+function saveCustomThemes() { localStorage.setItem('myCustomThemes', JSON.stringify(window.customThemes)); }
+function getAllTerms()      { return [...TERMS_DATA, ...window.customCards]; }
+window.getAllTerms = getAllTerms;
+
+// --- Безопасный помощник: находит элемент, ставит слушатель, пишет в консоль если нет ---
+function safeAdd(id, event, handler) {
+    const el = document.getElementById(id);
+    if (!el) {
+        console.warn('⚠️ Элемент не найден: #' + id);
+        return null;
+    }
+    el.addEventListener(event, handler);
+    return el;
+}
+
+// ---------- ОТКРЫТИЕ ----------
+safeAdd('addCardBtn', 'click', function () {
+    editingCardId = null;
+    const title = document.getElementById('cardModalTitle');
+    if (title) title.textContent = 'Новая карточка';
+    clearCardForm();
+    const modal = document.getElementById('cardModal');
+    if (modal) modal.style.display = 'flex';
+});
+
+safeAdd('addThemeBtn', 'click', function () {
+    const name = document.getElementById('themeName');
+    const color = document.getElementById('themeColor');
+    if (name) name.value = '';
+    if (color) color.value = 'purple';
+    const modal = document.getElementById('themeModal');
+    if (modal) modal.style.display = 'flex';
+});
+
+// ---------- ЗАКРЫТИЕ ----------
+function closeCardModal() {
+    const m = document.getElementById('cardModal');
+    if (m) m.style.display = 'none';
+    editingCardId = null;
+}
+function closeThemeModal() {
+    const m = document.getElementById('themeModal');
+    if (m) m.style.display = 'none';
+}
+window.closeCardModal = closeCardModal;
+window.closeThemeModal = closeThemeModal;
+
+safeAdd('cardModalClose',  'click', closeCardModal);
+safeAdd('cardModalCancel', 'click', closeCardModal);
+safeAdd('themeModalClose',  'click', closeThemeModal);
+safeAdd('themeModalCancel', 'click', closeThemeModal);
+
+// ---------- ОЧИСТКА ФОРМЫ ----------
+function clearCardForm() {
+    ['fieldTerm','fieldTag','fieldSimple','fieldExample','fieldAcademic','fieldSource','fieldMeta'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    const cat = document.getElementById('fieldCategory');
+    if (cat) cat.value = 'theory';
+    const tc = document.getElementById('fieldTagColor');
+    if (tc) tc.value = 'blue';
+    ['fieldSimple','fieldExample','fieldAcademic'].forEach(function (id) {
+        const p = document.getElementById('preview_' + id);
+        if (p) { p.innerHTML = ''; p.style.display = 'none'; }
+    });
+        // Сброс секции
+    const sec = document.getElementById('fieldSection');
+    if (sec) sec.innerHTML = '<option value="">— Без секции —</option>';
+}
+
+// ---------- СОХРАНЕНИЕ КАРТОЧКИ ----------
+safeAdd('cardModalSave', 'click', function () {
+    const termEl = document.getElementById('fieldTerm');
+    const tagEl  = document.getElementById('fieldTag');
+    const term = termEl ? termEl.value.trim() : '';
+    const tag  = tagEl  ? tagEl.value.trim()  : '';
+    if (!term || !tag) {
+        alert('Заполните обязательные поля: Термин и Тег');
+        return;
+    }
+    const metaEl = document.getElementById('fieldMeta');
+    const metaRaw = metaEl ? metaEl.value.trim() : '';
+    const meta = metaRaw ? metaRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean) : [];
+
+    const cardData = {
+        term: term,
+        category:    (document.getElementById('fieldCategory')   || {}).value || 'theory',
+        tag: tag,
+        tagColor:    (document.getElementById('fieldTagColor')   || {}).value || 'blue',
+        simple:      (document.getElementById('fieldSimple')     || {}).value || '',
+        example:     (document.getElementById('fieldExample')    || {}).value || '',
+        academic:    (document.getElementById('fieldAcademic')   || {}).value || '',
+        source:      (document.getElementById('fieldSource')     || {}).value || 'Пользовательская карточка',
+        section:     (document.getElementById('fieldSection')    || {}).value || '',
+        meta: meta
+    };
+    // trim
+    ['simple','example','academic','source'].forEach(function (k) { cardData[k] = cardData[k].trim(); });
+
+    if (editingCardId !== null) {
+        if (editingCardId >= 10000) {
+            // Редактируем пользовательскую карточку
+            const idx = window.customCards.findIndex(function (c) { return c.id === editingCardId; });
+            if (idx !== -1) window.customCards[idx] = Object.assign({}, window.customCards[idx], cardData);
+            saveCustomCards();
+        } else {
+            // Редактируем базовую — сохраняем override
+            window.cardOverrides[editingCardId] = Object.assign({}, window.cardOverrides[editingCardId] || {}, cardData);
+            saveOverrides();
+        }
+    } else {
+        const newId = 10000 + (Date.now() % 100000);
+        window.customCards.push(Object.assign({ id: newId }, cardData));
+        saveCustomCards();
+    }
+
+    closeCardModal();
+    if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
+    if (typeof filterAndSearch === 'function') filterAndSearch();
+    refreshCustomThemesUI();
+    alert('Карточка сохранена!');
+});
+
+// ---------- СОЗДАНИЕ ТЕМЫ ----------
+safeAdd('themeModalSave', 'click', function () {
+    const nameEl = document.getElementById('themeName');
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) { alert('Введите название темы'); return; }
+    const colorEl = document.getElementById('themeColor');
+    const color = colorEl ? colorEl.value : 'purple';
+    const sectionsEl = document.getElementById('themeSections');
+    const sectionsRaw = sectionsEl ? sectionsEl.value.trim() : '';
+    const sections = sectionsRaw
+        ? sectionsRaw.split(',').map(function (s) { return s.trim(); }).filter(Boolean)
+        : [];
+    const id = 'custom_' + Date.now().toString(36);
+    window.customThemes.push({ id: id, label: name, color: color, sections: sections, canDelete: true });
+    saveCustomThemes();
+    if (sectionsEl) sectionsEl.value = '';
+    closeThemeModal();
+    refreshCustomThemesUI();
+    alert('Тема «' + name + '» создана!');
+});
+
+// ---------- ОБНОВЛЕНИЕ UI ТЕМ ----------
+// ---------- ОБНОВЛЕНИЕ UI ТЕМ ----------
+function refreshCustomThemesUI() {
+    // === 1. Опции в форме карточки ===
+    const select = document.getElementById('fieldCategory');
+    if (select) {
+        select.querySelectorAll('optgroup[data-custom-themes]').forEach(el => el.remove());
+        if (window.customThemes.length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.setAttribute('data-custom-themes', 'true');
+            optgroup.label = 'Мои темы';
+            window.customThemes.forEach(theme => {
+                const opt = document.createElement('option');
+                opt.value = theme.id;
+                opt.textContent = theme.label;
+                optgroup.appendChild(opt);
+            });
+            select.appendChild(optgroup);
+        }
+    }
+
+    // === 2. Кнопки тем в панели фильтров ===
+    const filterGroup = document.getElementById('filterGroup');
+    if (!filterGroup) return;
+
+    // Удаляем старые кнопки тем и обёртки
+    filterGroup.querySelectorAll('.custom-theme-wrapper').forEach(el => el.remove());
+    filterGroup.querySelectorAll('.section-filter-btn').forEach(el => el.remove());
+    filterGroup.querySelectorAll('.section-dropdown-wrapper').forEach(el => el.remove());
+
+    const anchor = filterGroup.querySelector('.dropdown');
+    const colors = { blue:'#c5d8ef', green:'#b8d9c8', purple:'#d4c5e6', orange:'#f0d5b8', teal:'#b8d9d9', red:'#f0c5c5' };
+
+    // Создаём кнопки тем
+    window.customThemes.forEach(theme => {
+        // Собираем подтемы темы
+        const extraSections = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+        const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+        const sectionsSet = new Set();
+        (theme.sections || []).forEach(s => sectionsSet.add(s));
+        (extraSections[theme.id] || []).forEach(s => sectionsSet.add(s));
+        // Отфильтровываем скрытые
+        const sections = Array.from(sectionsSet).filter(s => !(meta[theme.id] && meta[theme.id][s] && meta[theme.id][s].hidden));
+
+        // Обёртка вокруг кнопки темы — для позиционирования меню
+        const wrapper = document.createElement('span');
+        wrapper.className = 'custom-theme-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline-block';
+
+        // Основная кнопка темы
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn custom-theme-btn';
+        btn.setAttribute('data-filter', theme.id);
+        btn.setAttribute('data-custom-theme', theme.id);
+
+        // Содержимое кнопки: название + стрелка (если есть подтемы)
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'theme-label';
+        labelSpan.textContent = theme.label;
+        btn.appendChild(labelSpan);
+
+        if (sections.length > 0) {
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.innerHTML = '▼';
+            arrow.style.marginLeft = '6px';
+            arrow.style.fontSize = '0.55rem';
+            arrow.style.display = 'inline-block';
+            arrow.style.transition = 'transform 0.2s';
+            btn.appendChild(arrow);
+            btn.classList.add('has-sections');
+        }
+
+        // ============ МЕНЮ ПОДТЕМ ============
+        let menu = null;
+
+        if (sections.length > 0) {
+            menu = document.createElement('div');
+            menu.className = 'dropdown-menu theme-sections-menu';
+            menu.style.position = 'absolute';
+            menu.style.top = 'calc(100% + 4px)';
+            menu.style.left = '0';
+            menu.style.minWidth = '180px';
+            menu.style.zIndex = '300';
+            menu.style.display = 'none';
+            menu.style.background = 'white';
+            menu.style.borderRadius = '16px';
+            menu.style.boxShadow = '0 12px 40px rgba(0, 20, 40, 0.12)';
+            menu.style.border = '1px solid #e4ecf6';
+            menu.style.padding = '8px 0';
+            menu.style.maxHeight = '260px';
+            menu.style.overflowY = 'auto';
+            menu.style.animation = 'dropdownFade 0.2s ease';
+
+            // Просто список подтем
+            sections.forEach(sec => {
+                const item = document.createElement('button');
+                item.className = 'dropdown-item';
+                item.textContent = sec;
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    filterBySection(theme.id, sec);
+                    menu.style.display = 'none';
+                    // Закрываем все другие меню
+                    document.querySelectorAll('.theme-sections-menu').forEach(m => m.style.display = 'none');
+                    document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
+
+                    // Подсветим выбранную
+                    menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+                menu.appendChild(item);
+            });
+        }
+
+        // ============ ОБРАБОТЧИК КЛИКА ПО КНОПКЕ ТЕМЫ ============
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+
+            // Если есть подтемы — открываем/закрываем меню
+            if (menu) {
+                const isOpen = menu.style.display === 'block';
+                // Закрываем все другие меню
+                document.querySelectorAll('.theme-sections-menu').forEach(m => m.style.display = 'none');
+                document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
+
+                if (!isOpen) {
+                    menu.style.display = 'block';
+                    const arrow = btn.querySelector('.arrow');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    menu.style.display = 'none';
+                    const arrow = btn.querySelector('.arrow');
+                    if (arrow) arrow.style.transform = '';
+                }
+                return;
+            }
+
+            // Если подтем нет — просто фильтруем
+            document.querySelectorAll('.filter-btn.active, .dropdown-item.active').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = theme.id;
+            filterAndSearch();
+            if (typeof closeAllDropdowns === 'function') closeAllDropdowns();
+        });
+
+        wrapper.appendChild(btn);
+        if (menu) wrapper.appendChild(menu);
+
+        if (anchor) filterGroup.insertBefore(wrapper, anchor);
+        else filterGroup.appendChild(wrapper);
+    });
+}
+window.refreshCustomThemesUI = refreshCustomThemesUI;
+
+// ---------- РЕДАКТИРОВАНИЕ / УДАЛЕНИЕ ----------
+window.editCustomCard = function (id) {
+    const card = window.customCards.find(function (c) { return c.id === id; });
+    if (!card) return;
+    editingCardId = id;
+    const title = document.getElementById('cardModalTitle');
+    if (title) title.textContent = 'Редактировать карточку';
+    const setVal = function (elId, val) { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+    setVal('fieldTerm', card.term);
+    setVal('fieldCategory', card.category || 'theory');
+    populateSectionsForTheme(card.category || '', card.section || '');
+    setVal('fieldTag', card.tag);
+    setVal('fieldTagColor', card.tagColor || 'blue');
+    setVal('fieldSimple', card.simple);
+    setVal('fieldExample', card.example);
+    setVal('fieldAcademic', card.academic);
+    setVal('fieldSource', card.source);
+    setVal('fieldMeta', (card.meta || []).join(', '));
+    const modal = document.getElementById('cardModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+window.deleteCustomCard = function (id) {
+    if (!confirm('Удалить эту карточку?')) return;
+    window.customCards = window.customCards.filter(function (c) { return c.id !== id; });
+    saveCustomCards();
+    if (typeof renderCards === 'function') renderCards(getAllTerms());
+    if (typeof filterAndSearch === 'function') filterAndSearch();
+};
+
+// ---------- ЭКСПОРТ / ИМПОРТ ----------
+safeAdd('exportBtn', 'click', function () {
+    const data = JSON.stringify({ themes: window.customThemes, cards: window.customCards }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'my-qa-data.json';
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+safeAdd('importBtn', 'click', function () {
+    const f = document.getElementById('importFile');
+    if (f) f.click();
+});
+
+safeAdd('importFile', 'change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+        try {
+            const imported = JSON.parse(ev.target.result);
+            if (imported.themes) window.customThemes = window.customThemes.concat(imported.themes);
+            if (imported.cards) {
+                imported.cards.forEach(function (c) {
+                    c.id = 10000 + Math.floor(Math.random() * 90000);
+                });
+                window.customCards = window.customCards.concat(imported.cards);
+            }
+            saveCustomThemes();
+            saveCustomCards();
+            refreshCustomThemesUI();
+            if (typeof renderCards === 'function') renderCards(getAllTerms());
+            if (typeof filterAndSearch === 'function') filterAndSearch();
+            alert('Импорт завершён!');
+        } catch (err) {
+            alert('Ошибка импорта: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+});
+
+// ============================================================
+//  СЕКЦИИ ВНУТРИ ТЕМ
+// ============================================================
+function populateSectionsForTheme(themeId, selectedSection) {
+    const sel = document.getElementById('fieldSection');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Без секции —</option>';
+    if (!themeId) return;
+    const theme = window.customThemes.find(function (t) { return t.id === themeId; });
+    if (!theme || !theme.sections || theme.sections.length === 0) return;
+    theme.sections.forEach(function (sec) {
+        const opt = document.createElement('option');
+        opt.value = sec;
+        opt.textContent = sec;
+        if (sec === selectedSection) opt.selected = true;
+        sel.appendChild(opt);
+    });
+}
+
+// Следим за выбором темы в форме
+document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'fieldCategory') {
+        populateSectionsForTheme(e.target.value, '');
+    }
+});
+
+// ---------- ВИЗУАЛЬНЫЙ РЕДАКТОР ----------
+document.querySelectorAll('.editor-toolbar').forEach(function (toolbar) {
+    const targetId = toolbar.dataset.target;
+    const textarea = document.getElementById(targetId);
+    const preview  = document.getElementById('preview_' + targetId);
+    if (!textarea) {
+        console.warn('⚠️ Тулбар: не найдена textarea #' + targetId);
+        return;
+    }
+    textarea.addEventListener('blur', function () {
+        textarea._selStart = textarea.selectionStart;
+        textarea._selEnd   = textarea.selectionEnd;
+    });
+    textarea.addEventListener('input', function () {
+        if (preview && preview.style.display !== 'none') preview.innerHTML = textarea.value;
+    });
+
+    toolbar.querySelectorAll('button').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation(); // ← важно: чтобы клик по кнопке не открывал модалку заново
+            const cmd   = btn.dataset.cmd;
+            const value = btn.dataset.value;
+            textarea.focus();
+            const start = (textarea._selStart != null) ? textarea._selStart : textarea.selectionStart;
+            const end   = (textarea._selEnd   != null) ? textarea._selEnd   : textarea.selectionEnd;
+            const selected = textarea.value.slice(start, end);
+            const before   = textarea.value.slice(0, start);
+            const after    = textarea.value.slice(end);
+
+            let result = '';
+            let cursorOffset = 0;
+            switch (cmd) {
+                case 'bold':      result = '<strong>' + (selected || 'текст') + '</strong>'; cursorOffset = result.length; break;
+                case 'italic':    result = '<em>'     + (selected || 'текст') + '</em>';     cursorOffset = result.length; break;
+                case 'underline': result = '<u>'      + (selected || 'текст') + '</u>';      cursorOffset = result.length; break;
+                case 'small':     result = '<span class="text-sm">' + (selected || 'текст') + '</span>'; cursorOffset = result.length; break;
+                case 'big':       result = '<span class="text-lg">' + (selected || 'текст') + '</span>'; cursorOffset = result.length; break;
+                case 'color':
+                case 'mark':      result = '<span class="' + value + '">' + (selected || 'текст') + '</span>'; cursorOffset = result.length; break;
+                case 'bg':        result = '<div class="' + value + '">'  + (selected || 'Текст') + '</div>';   cursorOffset = result.length; break;
+                case 'ul':        result = '<ul>\n  <li>' + (selected || 'Первый пункт') + '</li>\n  <li>Второй пункт</li>\n</ul>'; cursorOffset = result.length; break;
+                case 'ol':        result = '<ol>\n  <li>' + (selected || 'Первый пункт') + '</li>\n  <li>Второй пункт</li>\n</ol>'; cursorOffset = result.length; break;
+                case 'br':        result = '<br>'; cursorOffset = 4; break;
+                case 'preview':
+                    if (!preview) return;
+                    if (preview.style.display === 'none') {
+                        preview.innerHTML = textarea.value || '<em style="color:#999">Пусто</em>';
+                        preview.style.display = 'block';
+                    } else {
+                        preview.style.display = 'none';
+                    }
+                    return;
+                default: return;
+            }
+            textarea.value = before + result + after;
+            const newPos = before.length + cursorOffset;
+            textarea.setSelectionRange(newPos, newPos);
+            textarea.focus();
+            if (preview && preview.style.display !== 'none') preview.innerHTML = textarea.value;
+        });
+    });
+});
+
+
+// ---------- ПЕРВИЧНАЯ ОТРИСОВКА ТЕМ ----------
+setTimeout(function () {
+    if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
+}, 300);
+
+// ============================================================
+//  РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ЛЮБЫХ КАРТОЧЕК
+// ============================================================
+window.editAnyCard = function (id) {
+    const isCustom = id >= 10000;
+    let card;
+    if (isCustom) {
+        card = window.customCards.find(function (c) { return c.id === id; });
+    } else {
+        // Берём базовую карточку, применяя к ней override (если есть)
+        const base = TERMS_DATA.find(function (c) { return c.id === id; });
+        if (!base) return;
+        const override = window.cardOverrides[id];
+        card = override ? Object.assign({}, base, override) : Object.assign({}, base);
+    }
+    if (!card) return;
+    editingCardId = id;
+
+    const title = document.getElementById('cardModalTitle');
+    if (title) title.textContent = isCustom ? 'Редактировать карточку' : 'Редактировать карточку';
+
+    const setVal = function (elId, val) { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+    setVal('fieldTerm', card.term);
+    setVal('fieldCategory', card.category || 'theory');
+    setVal('fieldTag', card.tag);
+    setVal('fieldTagColor', card.tagColor || 'blue');
+    setVal('fieldSimple', card.simple);
+    setVal('fieldExample', card.example);
+    setVal('fieldAcademic', card.academic);
+    setVal('fieldSource', card.source);
+    setVal('fieldMeta', (card.meta || []).join(', '));
+
+    // Подгружаем секции и восстанавливаем выбранную
+    populateSectionsForTheme(card.category || '', card.section || '');
+
+    const modal = document.getElementById('cardModal');
+    if (modal) modal.style.display = 'flex';
+};
+
+// ============================================================
+//  УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЬСКОЙ ТЕМЫ
+// ============================================================
+window.deleteCustomTheme = function (themeId) {
+    const theme = window.customThemes.find(function (t) { return t.id === themeId; });
+    if (!theme) return;
+
+    if (!confirm('Удалить тему «' + theme.label + '»?\n\nКарточки этой темы останутся, но перейдут в раздел «Теория».')) {
+        return;
+    }
+
+    // 1. Удаляем тему
+    window.customThemes = window.customThemes.filter(function (t) { return t.id !== themeId; });
+    saveCustomThemes();
+
+    // 2. Переносим её карточки в "Теория"
+    window.customCards.forEach(function (c) {
+        if (c.category === themeId) {
+            c.category = 'theory';
+            c.section = '';
+        }
+    });
+    saveCustomCards();
+
+    // 3. Если тема была активным фильтром — сбрасываем на "Все"
+    if (currentFilter === themeId) {
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-btn, .dropdown-item').forEach(function (b) { b.classList.remove('active'); });
+        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allBtn) allBtn.classList.add('active');
+    }
+
+    // 4. Обновляем UI
+    if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
+    if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
+    if (typeof filterAndSearch === 'function') filterAndSearch();
+
+    if (typeof showToast === 'function') {
+        showToast('🗑 Тема «' + theme.label + '» удалена');
+    }
+};
+
+window.deleteAnyCard = function (id) {
+    const isCustom = id >= 10000;
+    if (isCustom) {
+        if (!confirm('Удалить эту карточку навсегда?')) return;
+        window.customCards = window.customCards.filter(function (c) { return c.id !== id; });
+        saveCustomCards();
+    } else {
+        if (!confirm('Скрыть эту базовую карточку? Она перестанет отображаться, но останется в справочнике (можно вернуть кнопкой «Сбросить» вверху).')) return;
+        if (window.hiddenCardIds.indexOf(id) === -1) {
+            window.hiddenCardIds.push(id);
+            saveHiddenIds();
+        }
+        // Если у карточки были изменения — оставляем, они применятся при возврате
+    }
+    if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
+    if (typeof filterAndSearch === 'function') filterAndSearch();
+};
+
+// ============================================================
+//  ФИЛЬТР ПО СЕКЦИЯМ (работает и для кастомных, и для стандартных тем)
+// ============================================================
+function showSectionFilters(theme) {
+    // Заглушка: подтемы теперь внутри самой кнопки темы.
+    // Удаляем старые отдельные кнопки, если они остались
+    const filterGroup = document.getElementById('filterGroup');
+    if (filterGroup) {
+        filterGroup.querySelectorAll('.section-filter-btn').forEach(el => el.remove());
+        filterGroup.querySelectorAll('.section-dropdown-wrapper').forEach(el => el.remove());
+    }
+}
+
+// Обёртка для стандартных тем
+window.showSectionFiltersForStandard = function(themeId) {
+    if (typeof showSectionFilters === 'function') {
+        showSectionFilters({ id: themeId, sections: [] });
+    }
+};
+
+// Обёртка для стандартных тем
+function showSectionFiltersForStandard(themeId) {
+    showSectionFilters({ id: themeId, sections: [] });
+}
+
+function filterBySection(themeId, section) {
+    const allCards = document.querySelectorAll('.card');
+    allCards.forEach(function (card) {
+        const id = parseInt(card.dataset.id);
+        const item = getAllTermsForRender().find(function (c) { return c.id === id; });
+        if (!item) { card.classList.add('hidden'); return; }
+        if (item.category === themeId && item.section === section) {
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    });
+    updateVisibleCount();
+    refreshSummary();
+}
+
+// ============================================================
+//  УПРАВЛЕНИЕ ТЕМАМИ v3 — БЕЗ КЛОНИРОВАНИЯ, ЧЕРЕЗ ДЕЛЕГИРОВАНИЕ
+// ============================================================
+(function ThemeManagerV3() {
+    console.log('🚀 ThemeManagerV3: запуск...');
+
+    // ---------- СОЗДАЁМ КНОПКИ В МЕНЮ ----------
+    function ensureMenuButtons() {
+        const menu = document.getElementById('cardManageMenu');
+        if (!menu) return;
+
+        if (!document.getElementById('manageThemesBtn')) {
+            const btn = document.createElement('button');
+            btn.className = 'dropdown-item';
+            btn.id = 'manageThemesBtn';
+            btn.textContent = '⚙️ Управление темами';
+            const resetBtn = document.getElementById('resetAllOverridesBtn');
+            if (resetBtn) menu.insertBefore(btn, resetBtn);
+            else menu.appendChild(btn);
+            console.log('✅ Кнопка "Управление темами" создана');
+        }
+
+        if (!document.getElementById('resetAllOverridesBtn')) {
+            const btn = document.createElement('button');
+            btn.className = 'dropdown-item';
+            btn.id = 'resetAllOverridesBtn';
+            btn.textContent = 'Сбросить правки';
+            const divider = menu.querySelector('.dropdown-divider');
+            if (divider) menu.insertBefore(btn, divider);
+            else menu.appendChild(btn);
+            console.log('✅ Кнопка "Сбросить правки" создана');
+        }
+    }
+
+    // ---------- СОЗДАЁМ МОДАЛКУ ----------
+    function ensureModal() {
+    let modal = document.getElementById('themeManageModal');
+    
+    // Если её нет — создаём
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'themeManageModal';
+        modal.className = 'card-modal';
+        modal.style.display = 'none';
+        modal.innerHTML = `
+            <div class="card-modal-content" style="max-width:520px;">
+                <div class="card-modal-header">
+                    <h3>Управление темами</h3>
+                    <button class="card-modal-close" id="themeManageModalClose">✕</button>
+                </div>
+                <div class="card-modal-body" id="themeManageList" style="max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;"></div>
+                <div class="card-modal-footer" style="justify-content: space-between;">
+                    <button class="btn-cancel" id="restoreHiddenThemesBtn" style="font-size: 0.8rem;">Вернуть все скрытые</button>
+                    <button class="btn-save" id="themeManageModalCloseBtn">Готово</button>
+                </div>
+            </div>
+        `;
+        console.log('✅ Модалка управления темами создана');
+    }
+    
+    // ⚡ ВСЕГДА перемещаем в body (даже если уже существует)
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+        console.log('🔀 Модалка перемещена в <body>');
+        }
+    }
+
+    // ---------- ХРАНИЛИЩА ----------
+    const getRenames = () => JSON.parse(localStorage.getItem('myThemeRenames')) || {};
+    const getHidden  = () => JSON.parse(localStorage.getItem('myHiddenThemes'))  || [];
+    const setRenames = (o) => localStorage.setItem('myThemeRenames', JSON.stringify(o));
+    const setHidden  = (a) => localStorage.setItem('myHiddenThemes',  JSON.stringify(a));
+
+    // ---------- СОБИРАЕМ ВСЕ ТЕМЫ ----------
+    function collectAllThemes() {
+        const renames = getRenames();
+        const hidden  = getHidden();
+        const filterGroup = document.getElementById('filterGroup');
+        const mainThemes = [];
+        const dropdowns  = [];
+        if (!filterGroup) return { mainThemes, dropdowns };
+
+        // Собираем ID всех кастомных тем в Set — для быстрой проверки
+        const customIds = new Set((window.customThemes || []).map(t => t.id));
+
+        // ═══ 1. ВЕРХНИЕ КНОПКИ (обычные фильтры, включая кастомные) ═══
+        filterGroup.querySelectorAll(':scope > .filter-btn[data-filter]:not([data-filter="all"]):not(.dropdown-toggle)').forEach(btn => {
+            const id = btn.dataset.filter;
+            if (!id) return;
+            // ⚡ Проверяем: если это кастомная тема — ищем её объект в customThemes
+            const isCustom = customIds.has(id);
+            const customTheme = isCustom ? window.customThemes.find(t => t.id === id) : null;
+
+            mainThemes.push({
+                id: id,
+                label: renames[id] || (btn.querySelector('.theme-label')?.textContent || btn.textContent.trim()),
+                isCustom: isCustom,
+                color: customTheme ? (customTheme.color || '#888') : '#ccc',
+                isHidden: hidden.includes(id)
+            });
+        });
+
+        // ═══ 2. КАСТОМНЫЕ ТЕМЫ, которых нет в DOM (например, скрытые) ═══
+        if (window.customThemes && window.customThemes.length) {
+            window.customThemes.forEach(t => {
+                if (mainThemes.find(m => m.id === t.id)) return;
+                mainThemes.push({
+                    id: t.id,
+                    label: renames[t.id] || t.label,
+                    isCustom: true,   // ✅ ВСЕГДА true
+                    color: t.color || '#888',
+                    isHidden: hidden.includes(t.id)
+                });
+            });
+        }
+
+        // ═══ 3. ДРОПДАУНЫ ═══
+        filterGroup.querySelectorAll('.dropdown').forEach(drop => {
+            const toggle = drop.querySelector('.dropdown-toggle');
+            if (!toggle || !toggle.id) return;
+            const subitems = [];
+            drop.querySelectorAll('.dropdown-item[data-filter]').forEach(item => {
+                const subId = item.dataset.filter;
+                if (!subId) return;
+                subitems.push({
+                    id: subId,
+                    label: renames[subId] || item.textContent.trim(),
+                    isHidden: hidden.includes(subId)
+                });
+            });
+            dropdowns.push({
+                id: toggle.id,
+                label: renames[toggle.id] || toggle.textContent.replace('▼', '').trim(),
+                isHidden: hidden.includes(toggle.id),
+                subitems: subitems
+            });
+        });
+
+        return { mainThemes, dropdowns };
+    }
+
+    // ---------- СКРЫТИЕ / ПЕРЕИМЕНОВАНИЕ ----------
+    function applyHiddenToDOM(id, hide) {
+        const display = hide ? 'none' : '';
+        if (id.startsWith('dropdownToggle')) {
+            const toggle = document.getElementById(id);
+            if (toggle) {
+                toggle.style.display = display;
+                const parent = toggle.closest('.dropdown');
+                if (parent) parent.style.display = display;
+            }
+        } else {
+            document.querySelectorAll(`.filter-btn[data-filter="${id}"], .dropdown-item[data-filter="${id}"]`).forEach(el => {
+                el.style.display = display;
+            });
+        }
+    }
+
+    function applyRenameToDOM(id, newLabel) {
+        if (id.startsWith('dropdownToggle')) {
+            const toggle = document.getElementById(id);
+            if (toggle) {
+                const arrow = toggle.querySelector('.arrow');
+                const arrowHtml = arrow ? arrow.outerHTML : '<span class="arrow">▼</span>';
+                toggle.innerHTML = newLabel + ' ' + arrowHtml;
+            }
+        } else {
+            document.querySelectorAll(`.filter-btn[data-filter="${id}"]`).forEach(btn => {
+                const labelSpan = btn.querySelector('.theme-label');
+                if (labelSpan) labelSpan.textContent = newLabel;
+                else {
+                    const textNodes = Array.from(btn.childNodes).filter(n => n.nodeType === 3);
+                    if (textNodes.length) textNodes[0].textContent = newLabel;
+                }
+            });
+            document.querySelectorAll(`.dropdown-item[data-filter="${id}"]`).forEach(item => {
+                item.textContent = newLabel;
+            });
+        }
+    }
+
+    function findCurrentLabel(id) {
+        const renames = getRenames();
+        if (renames[id]) return renames[id];
+        if (id.startsWith('dropdownToggle')) {
+            const toggle = document.getElementById(id);
+            return toggle ? toggle.textContent.replace('▼', '').trim() : id;
+        }
+        const el = document.querySelector(`.filter-btn[data-filter="${id}"] .theme-label, .filter-btn[data-filter="${id}"], .dropdown-item[data-filter="${id}"]`);
+        return el ? el.textContent.trim() : id;
+    }
+
+    // ---------- ОТРИСОВКА СПИСКА ----------
+    function renderList() {
+    const listContainer = document.getElementById('themeManageList');
+    if (!listContainer) return;
+    const { mainThemes, dropdowns } = collectAllThemes();
+    listContainer.innerHTML = '';
+
+    if (mainThemes.length === 0 && dropdowns.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center;color:#888;">Нет тем для управления</p>';
+        return;
+    }
+
+    // -------- Подтемы темы --------
+    function getSectionsForTheme(themeId) {
+        const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+        const extra = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+        const themes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+
+        const set = new Set();
+        (extra[themeId] || []).forEach(s => set.add(s));
+        const ct = themes.find(t => t.id === themeId);
+        if (ct && ct.sections) ct.sections.forEach(s => set.add(s));
+
+        return Array.from(set).map(name => {
+            const m = (meta[themeId] && meta[themeId][name]) || {};
+            return {
+                name: name,
+                canDelete: m.canDelete === true,
+                hidden: m.hidden === true
+            };
+        });
+    }
+
+    // -------- Строка ТЕМЫ --------
+    function makeRow(theme, opts = {}) {
+        const item = document.createElement('div');
+        item.className = 'theme-manage-item';
+        if (opts.isSub) { item.style.marginLeft = '24px'; item.style.background = '#fafcff'; item.style.borderStyle = 'dashed'; }
+        if (opts.isGroup) { item.style.background = '#eef3f9'; item.style.fontWeight = 'bold'; }
+        const prefix = opts.isSub ? '└ ' : (opts.isGroup ? '📁 ' : '');
+        const colorDot = (!opts.isSub && !opts.isGroup)
+            ? `<span class="color-dot" style="background:${theme.color || '#ccc'};"></span>` : '';
+
+        let actions = '';
+        if (theme.isHidden) {
+            // Скрытая — Вернуть
+            actions = `<button class="btn-restore" data-action="restore" data-id="${theme.id}">↩ Вернуть</button>`;
+        } else {
+            // Переименование
+            actions += `<button class="btn-rename" data-action="rename" data-id="${theme.id}" title="Переименовать">✎</button>`;
+            
+            // Скрыть — ВСЕГДА
+            actions += `<button class="btn-hide" data-action="hide" data-id="${theme.id}" title="Скрыть (можно вернуть)">👁</button>`;
+            
+            // Удалить — только для кастомных
+            if (theme.isCustom) {
+                actions += `<button class="btn-delete" data-action="delete" data-id="${theme.id}" title="Удалить навсегда">🗑</button>`;
+            }
+        }
+
+        item.innerHTML = `
+            <div class="theme-info">${colorDot}<span>${prefix}${theme.label}</span></div>
+            <div class="theme-actions">${actions}</div>
+        `;
+        return item;
+    }
+
+    // -------- Строка ПОДТЕМЫ --------
+    function makeSectionRow(themeId, section) {
+        const item = document.createElement('div');
+        item.className = 'theme-manage-item';
+        item.style.marginLeft = '40px';
+        item.style.background = '#fafcff';
+        item.style.borderStyle = 'dashed';
+        item.style.paddingTop = '6px';
+        item.style.paddingBottom = '6px';
+
+        let actions = '';
+        if (section.hidden) {
+            actions = `<button class="btn-restore" data-action="restore-section" data-theme-id="${themeId}" data-section="${section.name}">↩ Вернуть</button>`;
+        } else {
+            // Скрыть подтему — всегда
+            actions += `<button class="btn-hide" data-action="hide-section" data-theme-id="${themeId}" data-section="${section.name}" title="Скрыть">👁</button>`;
+            
+            // Удалить — только для новых
+            if (section.canDelete) {
+                actions += `<button class="btn-delete" data-action="delete-section" data-theme-id="${themeId}" data-section="${section.name}" title="Удалить навсегда">🗑</button>`;
+            }
+        }
+
+        item.innerHTML = `
+            <div class="theme-info" style="font-size:0.85rem;">
+                <span>└ ${section.name}</span>
+            </div>
+            <div class="theme-actions">${actions}</div>
+        `;
+        return item;
+    }
+
+    // -------- Основные темы --------
+    if (mainThemes.length) {
+        const h = document.createElement('div');
+        h.innerHTML = '<strong style="font-size:0.75rem;color:#6a8aaa;text-transform:uppercase;letter-spacing:0.5px;">Основные темы</strong>';
+        h.style.marginTop = '4px'; h.style.marginBottom = '6px';
+        listContainer.appendChild(h);
+
+        mainThemes.forEach(t => {
+            listContainer.appendChild(makeRow(t));
+            // Подтемы этой темы
+            getSectionsForTheme(t.id).forEach(sec => {
+                listContainer.appendChild(makeSectionRow(t.id, sec));
+            });
+        });
+    }
+
+    // -------- Группы-дропдауны --------
+    if (dropdowns.length) {
+        const h = document.createElement('div');
+        h.innerHTML = '<strong style="font-size:0.75rem;color:#6a8aaa;text-transform:uppercase;letter-spacing:0.5px;">Группы и подтемы</strong>';
+        h.style.marginTop = '16px'; h.style.marginBottom = '6px';
+        listContainer.appendChild(h);
+
+        dropdowns.forEach(drop => {
+            listContainer.appendChild(makeRow({
+                id: drop.id, label: drop.label, isHidden: drop.isHidden,
+                isCustom: false, color: '#ccc', canDelete: false
+            }, { isGroup: true }));
+            drop.subitems.forEach(sub => {
+                listContainer.appendChild(makeRow({
+                    id: sub.id, label: sub.label, isHidden: sub.isHidden,
+                    isCustom: false, color: '#ccc', canDelete: false
+                }, { isSub: true }));
+            });
+        });
+    }
+}
+
+
+    // ---------- ДЕЙСТВИЯ ----------
+    function openModal() {
+    // 1. Убеждаемся, что модалка есть и лежит в body
+    ensureModal();
+    const modal = document.getElementById('themeManageModal');
+    if (!modal) { console.error('❌ Модалка не найдена'); return; }
+    
+    // 2. Ещё раз проверим parentElement (защита от глюков)
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+    
+    // 3. Заполняем список
+    renderList();
+    
+    // 4. Показываем
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('position', 'fixed', 'important');
+    modal.style.setProperty('top', '0', 'important');
+    modal.style.setProperty('left', '0', 'important');
+    modal.style.setProperty('width', '100vw', 'important');
+    modal.style.setProperty('height', '100vh', 'important');
+    modal.style.setProperty('z-index', '999999', 'important');
+    modal.style.setProperty('background', 'rgba(0,0,0,0.5)', 'important');
+    modal.style.setProperty('visibility', 'visible', 'important');
+    modal.style.setProperty('opacity', '1', 'important');
+    
+    // 5. Диагностика
+    setTimeout(() => {
+        const rect = modal.getBoundingClientRect();
+        console.log('📂 Модалка открыта. Размеры:', rect.width, 'x', rect.height, '| parent:', modal.parentElement.tagName);
+        if (rect.width === 0) {
+            console.warn('⚠️ Всё ещё 0x0! Скрытый предок:', modal.parentElement);
+        }
+        }, 50);
+    }
+
+    function closeModal() {
+    const modal = document.getElementById('themeManageModal');
+    if (modal) {
+        modal.style.setProperty('display', 'none', 'important');
+    }
+    }
+
+    function resetAllOverrides() {
+        if (!confirm('Сбросить ВСЕ изменения?\n\n• Изменения базовых карточек\n• Скрытые карточки\n• Скрытые темы\n• Переименования тем\n\nВаши собственные карточки и темы НЕ удалятся.')) return;
+        try {
+            localStorage.removeItem('myCardOverrides');
+            localStorage.removeItem('myHiddenCards');
+            localStorage.removeItem('myHiddenThemes');
+            localStorage.removeItem('myThemeRenames');
+            console.log('🧹 Все правки удалены');
+        } catch (err) { console.error(err); }
+        if (typeof showToast === 'function') showToast('✅ Все правки сброшены. Перезагрузка...');
+        setTimeout(() => window.location.reload(), 700);
+    }
+
+    function restoreAllHidden() {
+        if (!confirm('Вернуть ВСЕ скрытые темы?')) return;
+        setHidden([]);
+        document.querySelectorAll('.filter-btn[data-filter], .dropdown-toggle').forEach(el => {
+            el.style.display = '';
+            if (el.classList.contains('dropdown-toggle')) {
+                const parent = el.closest('.dropdown');
+                if (parent) parent.style.display = '';
+            }
+        });
+        renderList();
+    }
+
+    function handleRowAction(btn, e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+        const themeId = btn.dataset.themeId;
+        const sectionName = btn.dataset.section;
+        const renames = getRenames();
+        const hidden = getHidden();
+
+        // ========== ПЕРЕИМЕНОВАНИЕ ТЕМЫ ==========
+        if (action === 'rename') {
+            const current = findCurrentLabel(id);
+            const newName = prompt('Новое название:', current);
+            if (newName && newName.trim() && newName.trim() !== current) {
+                renames[id] = newName.trim();
+                setRenames(renames);
+                applyRenameToDOM(id, newName.trim());
+                renderList();
+            }
+            return;
+        }
+
+        // ========== СКРЫТЬ ТЕМУ ==========
+        if (action === 'hide') {
+            if (confirm(`Скрыть "${findCurrentLabel(id)}"?\n\nЕё можно вернуть кнопкой "↩ Вернуть".`)) {
+                if (!hidden.includes(id)) hidden.push(id);
+                setHidden(hidden);
+                applyHiddenToDOM(id, true);
+                if (typeof currentFilter !== 'undefined' && currentFilter === id) {
+                    document.querySelector('.filter-btn[data-filter="all"]')?.click();
+                }
+                renderList();
+                if (typeof showToast === 'function') showToast('👁 Тема скрыта');
+            }
+            return;
+        }
+
+        // ========== УДАЛИТЬ ТЕМУ НАВСЕГДА ==========
+        if (action === 'delete') {
+            if (confirm(`Удалить тему "${findCurrentLabel(id)}" НАВСЕГДА?\n\nКарточки перейдут в "Теория". Отменить нельзя.`)) {
+                window.customThemes = (window.customThemes || []).filter(t => t.id !== id);
+                if (typeof saveCustomThemes === 'function') saveCustomThemes();
+                else localStorage.setItem('myCustomThemes', JSON.stringify(window.customThemes));
+
+                (window.customCards || []).forEach(c => {
+                    if (c.category === id) { c.category = 'theory'; c.section = ''; }
+                });
+                if (typeof saveCustomCards === 'function') saveCustomCards();
+                else localStorage.setItem('myCustomCards', JSON.stringify(window.customCards));
+
+                delete renames[id];
+                setRenames(renames);
+                setHidden(hidden.filter(h => h !== id));
+
+                // Убираем подтемы темы
+                const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+                delete meta[id];
+                localStorage.setItem('mySectionMeta', JSON.stringify(meta));
+
+                document.querySelectorAll(`.custom-theme-btn[data-filter="${id}"]`).forEach(el => el.remove());
+
+                if (typeof currentFilter !== 'undefined' && currentFilter === id) {
+                    document.querySelector('.filter-btn[data-filter="all"]')?.click();
+                }
+                renderList();
+                if (typeof showToast === 'function') showToast('🗑 Тема удалена');
+            }
+            return;
+        }
+
+        // ========== ВЕРНУТЬ ТЕМУ ==========
+        if (action === 'restore') {
+            setHidden(hidden.filter(h => h !== id));
+            applyHiddenToDOM(id, false);
+            renderList();
+            if (typeof showToast === 'function') showToast('↩ Тема возвращена');
+            return;
+        }
+
+        // ========== ПОДТЕМЫ ==========
+        const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+        meta[themeId] = meta[themeId] || {};
+        meta[themeId][sectionName] = meta[themeId][sectionName] || { canDelete: false, hidden: false };
+
+        // --- Скрыть подтему ---
+        if (action === 'hide-section') {
+            if (confirm(`Скрыть подтему "${sectionName}"?`)) {
+                meta[themeId][sectionName].hidden = true;
+                localStorage.setItem('mySectionMeta', JSON.stringify(meta));
+                renderList();
+                if (typeof showToast === 'function') showToast('👁 Подтема скрыта');
+            }
+            return;
+        }
+
+        // --- Удалить подтему навсегда ---
+        if (action === 'delete-section') {
+            if (confirm(`Удалить подтему "${sectionName}" НАВСЕГДА? Отменить нельзя.`)) {
+                // Из myExtraSections
+                const extra = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+                if (extra[themeId]) {
+                    extra[themeId] = extra[themeId].filter(s => s !== sectionName);
+                    localStorage.setItem('myExtraSections', JSON.stringify(extra));
+                }
+
+                // Из theme.sections
+                const themes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+                const t = themes.find(x => x.id === themeId);
+                if (t && t.sections) {
+                    t.sections = t.sections.filter(s => s !== sectionName);
+                    localStorage.setItem('myCustomThemes', JSON.stringify(themes));
+                    window.customThemes = themes;
+                }
+
+                // Из метаданных
+                delete meta[themeId][sectionName];
+                localStorage.setItem('mySectionMeta', JSON.stringify(meta));
+
+                renderList();
+                if (typeof showToast === 'function') showToast('🗑 Подтема удалена');
+            }
+            return;
+        }
+
+        // --- Вернуть подтему ---
+        if (action === 'restore-section') {
+            meta[themeId][sectionName].hidden = false;
+            localStorage.setItem('mySectionMeta', JSON.stringify(meta));
+            renderList();
+            if (typeof showToast === 'function') showToast('↩ Подтема возвращена');
+            return;
+        }
+    }
+
+    function applyHiddenOnLoad() {
+        const hidden = getHidden();
+        hidden.forEach(id => applyHiddenToDOM(id, true));
+    }
+
+    // ============================================================
+    //  ⚡ ГЛАВНОЕ: ГЛОБАЛЬНЫЙ ОБРАБОТЧИК ЧЕРЕЗ CAPTURE
+    //  Перехватывает клики ДО старых addEventListener
+    // ============================================================
+    document.addEventListener('click', function(e) {
+        // 1. Управление темами
+        if (e.target.closest('#manageThemesBtn')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+            openModal();
+            return;
+        }
+
+        // 2. Сброс правок
+        if (e.target.closest('#resetAllOverridesBtn')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+            resetAllOverrides();
+            return;
+        }
+
+        // 3. Закрытие модалки управления темами
+        if (e.target.closest('#themeManageModalClose, #themeManageModalCloseBtn')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeModal();
+            return;
+        }
+
+        // 4. Клик по фону модалки
+        if (e.target.id === 'themeManageModal') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeModal();
+            return;
+        }
+
+        // 5. Восстановить все скрытые
+        if (e.target.closest('#restoreHiddenThemesBtn')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            restoreAllHidden();
+            return;
+        }
+
+        // 6. Кнопки ✎ и 🗑 в списке
+        const rowBtn = e.target.closest('.theme-manage-item button[data-action]');
+        if (rowBtn && e.target.closest('#themeManageModal')) {
+            e.stopImmediatePropagation();
+            handleRowAction(rowBtn, e);
+            return;
+        }
+    }, true); // ⚠️ capture: true — ОБЯЗАТЕЛЬНО
+
+    // ---------- ЗАПУСК ----------
+    function init() {
+        ensureMenuButtons();
+        ensureModal();
+        applyHiddenOnLoad();
+        console.log('✅ ThemeManagerV3 готов к работе');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Экспорт для отладки
+    window.themeManagerDebug = {
+        openModal, closeModal, renderList, resetAllOverrides,
+        getRenames, getHidden, collectAllThemes
+    };
+})();
+
+// ============================================================
+//  СОЗДАНИЕ ПОДТЕМ (полная рабочая версия)
+// ============================================================
+(function setupSubThemes() {
+    console.log('🚀 setupSubThemes: запуск...');
+
+    const getSectionMeta = () => JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+    const setSectionMeta = (m) => localStorage.setItem('mySectionMeta', JSON.stringify(m));
+
+    // ---------- Заполнить список тем в модалке ----------
+    function fillParentList() {
+        const sel = document.getElementById('subThemeParent');
+        if (!sel) return;
+        sel.innerHTML = '';
+
+        // Кастомные темы
+        (window.customThemes || []).forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = '📁 ' + t.label;
+            sel.appendChild(opt);
+        });
+
+        // Стандартные темы
+        const filterGroup = document.getElementById('filterGroup');
+        if (filterGroup) {
+            filterGroup.querySelectorAll(':scope > .filter-btn[data-filter]:not([data-filter="all"]):not(.dropdown-toggle)').forEach(btn => {
+                const id = btn.dataset.filter;
+                if (!id) return;
+                if ((window.customThemes || []).find(t => t.id === id)) return;
+                const label = btn.querySelector('.theme-label')?.textContent || btn.textContent.trim();
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = '📄 ' + label;
+                sel.appendChild(opt);
+            });
+
+            // Дропдауны
+            filterGroup.querySelectorAll('.dropdown').forEach(drop => {
+                const toggle = drop.querySelector('.dropdown-toggle');
+                if (!toggle || !toggle.id) return;
+                const label = toggle.textContent.replace('▼', '').trim();
+                const opt = document.createElement('option');
+                opt.value = toggle.id;
+                opt.textContent = '📚 ' + label;
+                sel.appendChild(opt);
+            });
+        }
+
+        if (sel.options.length === 0) {
+            const opt = document.createElement('option');
+            opt.value = '';
+            opt.textContent = '— Нет доступных тем —';
+            sel.appendChild(opt);
+        }
+    }
+
+    // ---------- Открыть / закрыть модалку ----------
+    function openSubThemeModal() {
+        fillParentList();
+        const namesEl = document.getElementById('subThemeNames');
+        if (namesEl) namesEl.value = '';
+        const modal = document.getElementById('subThemeModal');
+        if (modal) modal.style.display = 'flex';
+        console.log('📂 Модалка подтемы открыта');
+    }
+
+    function closeSubThemeModal() {
+        const modal = document.getElementById('subThemeModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    // ---------- Сохранить подтемы ----------
+    function saveSubThemes() {
+        const parentId = document.getElementById('subThemeParent')?.value;
+        const namesRaw = document.getElementById('subThemeNames')?.value.trim();
+        if (!parentId) { alert('Выберите родительскую тему'); return; }
+        if (!namesRaw) { alert('Введите хотя бы одну подтему'); return; }
+
+        const names = namesRaw.split(',').map(s => s.trim()).filter(Boolean);
+        if (names.length === 0) { alert('Введите хотя бы одну подтему'); return; }
+
+        // Метаданные — новые подтемы можно удалять
+        const meta = getSectionMeta();
+        meta[parentId] = meta[parentId] || {};
+        names.forEach(n => {
+            meta[parentId][n] = { canDelete: true, hidden: false };
+        });
+        setSectionMeta(meta);
+
+        // Если кастомная тема — добавляем в её sections
+        const customTheme = (window.customThemes || []).find(t => t.id === parentId);
+        if (customTheme) {
+            customTheme.sections = customTheme.sections || [];
+            names.forEach(n => {
+                if (!customTheme.sections.includes(n)) customTheme.sections.push(n);
+            });
+            if (typeof saveCustomThemes === 'function') saveCustomThemes();
+        } else {
+            // Стандартная — во внешний объект
+            const extraSections = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+            extraSections[parentId] = extraSections[parentId] || [];
+            names.forEach(n => {
+                if (!extraSections[parentId].includes(n)) extraSections[parentId].push(n);
+            });
+            localStorage.setItem('myExtraSections', JSON.stringify(extraSections));
+        }
+
+        closeSubThemeModal();
+        if (typeof showToast === 'function') showToast(`✅ Создано подтем: ${names.length}`);
+
+        // Перерисовываем UI
+        if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
+    }
+
+    // ---------- Глобальный обработчик кликов ----------
+    document.addEventListener('click', function(e) {
+        // Открыть модалку
+        if (e.target.closest('#addSubThemeBtn')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+            openSubThemeModal();
+            return;
+        }
+
+        // Закрыть
+        if (e.target.closest('#subThemeModalClose, #subThemeModalCancel')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeSubThemeModal();
+            return;
+        }
+
+        // Клик по фону
+        if (e.target.id === 'subThemeModal') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeSubThemeModal();
+            return;
+        }
+
+        // Сохранить
+        if (e.target.closest('#subThemeModalSave')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            saveSubThemes();
+            return;
+        }
+    }, true);
+
+    console.log('✅ setupSubThemes готов к работе');
+})();   // ← ОБЯЗАТЕЛЬНО закрываем IIFE
+
+// ============================================================
+//  АВТО-ОБНОВЛЕНИЕ ПАНЕЛИ ПРИ ИЗМЕНЕНИИ ТЕМ/ПОДТЕМ
+// ============================================================
+(function autoRefreshOnThemeChange() {
+    // Оборачиваем localStorage.setItem
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key, value) {
+        originalSetItem(key, value);
+        
+        // Если изменили темы, подтемы или настройки — обновляем UI
+        const watched = ['myCustomThemes', 'myHiddenThemes', 'myThemeRenames', 'myExtraSections', 'mySectionMeta'];
+        if (watched.includes(key)) {
+            setTimeout(() => {
+                if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
+                if (typeof renderCards === 'function' && typeof getAllTermsForRender === 'function') {
+                    renderCards(getAllTermsForRender());
+                }
+                if (typeof filterAndSearch === 'function') filterAndSearch();
+            }, 10);
+        }
+    };
+    
+    console.log('✅ Авто-обновление панели тем включено');
 })();
