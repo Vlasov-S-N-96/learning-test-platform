@@ -8932,6 +8932,9 @@ updateDashboard();
 //  ДРОПДАУНЫ: НЕ ВЫЛЕТАЮТ ЗА ПРАВЫЙ КРАЙ
 // ================================================================
 document.addEventListener('click', function(e) {
+    // ДОБАВЛЕНА ЭТА СТРОКА: отключаем JS-позиционирование на мобильных
+    if (window.innerWidth <= 768) return; 
+
     const toggle = e.target.closest('.dropdown-toggle');
     if (!toggle) return;
 
@@ -8940,19 +8943,15 @@ document.addEventListener('click', function(e) {
     const menu = parent.querySelector('.dropdown-menu');
     if (!menu) return;
 
-    // Ждём раскрытия, потом проверяем и сдвигаем
     setTimeout(function() {
-        // Сбрасываем
         menu.style.left = '0';
         menu.style.right = 'auto';
         menu.style.transform = 'none';
 
-        // Проверяем, не вылезает ли за правый край окна
         const rect = menu.getBoundingClientRect();
         const overflowRight = rect.right - (window.innerWidth - 10);
 
         if (overflowRight > 0) {
-            // Прижимаем к правому краю toggle-кнопки
             menu.style.left = 'auto';
             menu.style.right = '0';
         }
