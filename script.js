@@ -9361,8 +9361,8 @@ function refreshCustomThemesUI() {
         // Обёртка вокруг кнопки темы — для позиционирования меню
         const wrapper = document.createElement('span');
         wrapper.className = 'custom-theme-wrapper';
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'inline-block';
+        const wrapper = document.createElement('span');
+        wrapper.className = 'custom-theme-wrapper';
 
         // Основная кнопка темы
         const btn = document.createElement('button');
@@ -9394,9 +9394,8 @@ function refreshCustomThemesUI() {
         if (sections.length > 0) {
             menu = document.createElement('div');
             menu.className = 'dropdown-menu theme-sections-menu';
-            menu.style.position = 'absolute';
-            menu.style.top = 'calc(100% + 4px)';
-            menu.style.left = '0';
+            const menu = document.createElement('div');
+            menu.className = 'dropdown-menu theme-sections-menu';
             menu.style.minWidth = '180px';
             menu.style.zIndex = '300';
             menu.style.display = 'none';
