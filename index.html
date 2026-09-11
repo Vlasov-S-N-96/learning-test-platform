@@ -877,11 +877,27 @@
 
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ТЕРМИНАМИ ===== -->
         <div class="controls">
+
             <div class="search-wrap">
                 <input type="text" id="searchInput" placeholder="Поиск терминов..." />
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
             </div>
             <button class="reset-btn" id="resetFiltersBtn" title="Сбросить фильтры">Сбросить</button>
+            <div class="dropdown card-manage-dropdown">
+                <button class="filter-btn dropdown-toggle" id="cardManageToggle">
+                    Работа с карточками <span class="arrow">▼</span>
+                </button>
+                <div class="dropdown-menu" id="cardManageMenu">
+                    <button class="dropdown-item" id="addThemeBtn">📁 Создать тему</button>
+                    <button class="dropdown-item" id="addCardBtn">➕ Добавить карточку</button>
+                    <button class="dropdown-item" id="manageThemesBtn">⚙️ Управление темами</button>
+                    <button class="dropdown-item" id="resetAllOverridesBtn">Сбросить правки</button>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" id="exportBtn">📤 Экспорт данных</button>
+                    <button class="dropdown-item" id="importBtn">📥 Импорт данных</button>
+                </div>
+                <input type="file" id="importFile" accept=".json" style="display:none;">
+            </div>
 
             <div class="filter-group" id="filterGroup">
                 <button class="filter-btn active" data-filter="all">Все</button>
@@ -996,25 +1012,245 @@
             <button class="btn-reset-section" onclick="resetCurrentFilterStatsAndRefresh();">
                 Сбросить и продолжить
             </button>
+        </div><!-- /swipeSummary -->
+    </div><!-- /container -->
+
+    <!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА -->
+    <div id="cardModal" class="card-modal" style="display:none;">
+        <div class="card-modal-content">
+            <div class="card-modal-header">
+                <h3 id="cardModalTitle">Новая карточка</h3>
+                <button class="card-modal-close" id="cardModalClose">✕</button>
+            </div>
+            <div class="card-modal-body">
+                <label>Термин *<input type="text" id="fieldTerm" placeholder="Например: Регрессия"></label>
+                <label>Категория *
+                    <select id="fieldCategory">
+                        <option value="theory">Теория</option>
+                        <option value="formal">Формализация</option>
+                        <option value="scenario">Сценарии</option>
+                        <option value="methods">Методы</option>
+                        <option value="levels">Уровни</option>
+                        <option value="functional">Функциональное</option>
+                        <option value="nonfunctional">Нефункциональное</option>
+                        <option value="testdesign">Тест-дизайн</option>
+                        <option value="documentation">Документация</option>
+                        <option value="api">API</option>
+                        <option value="web">Веб-приложения</option>
+                        <option value="scrum">Scrum</option>
+                        <option value="kanban">Kanban</option>
+                        <option value="requirements">Требования</option>
+                    </select>
+                </label>
+                <label>Секция (для своих тем)
+                    <select id="fieldSection">
+                        <option value="">— Без секции —</option>
+                    </select>
+                </label>
+                <label>Тег (короткий) *<input type="text" id="fieldTag" placeholder="Например: Процесс"></label>
+                <label>Цвет тега
+                    <select id="fieldTagColor">
+                        <option value="blue">Синий</option>
+                        <option value="green">Зелёный</option>
+                        <option value="purple">Фиолетовый</option>
+                        <option value="orange">Оранжевый</option>
+                        <option value="teal">Бирюзовый</option>
+                        <option value="red">Красный</option>
+                    </select>
+                </label>
+
+                <label>Простое определение
+                    <div class="editor-toolbar" data-target="fieldSimple">
+                        <button type="button" data-cmd="bold" title="Жирный"><b>B</b></button>
+                        <button type="button" data-cmd="italic" title="Курсив"><i>I</i></button>
+                        <button type="button" data-cmd="small" title="Мелкий">A<sub>−</sub></button>
+                        <button type="button" data-cmd="big" title="Крупный">A<sup>+</sup></button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="color" data-value="text-red" style="color:#c62828">A</button>
+                        <button type="button" data-cmd="color" data-value="text-green" style="color:#2e7d32">A</button>
+                        <button type="button" data-cmd="color" data-value="text-blue" style="color:#1565c0">A</button>
+                        <button type="button" data-cmd="color" data-value="text-orange" style="color:#e65100">A</button>
+                        <button type="button" data-cmd="color" data-value="text-purple" style="color:#6a1b9a">A</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="mark" data-value="mark-yellow" style="background:#fff59d">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-green" style="background:#a5d6a7">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-blue" style="background:#90caf9">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-red" style="background:#ef9a9a">M</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="bg" data-value="bg-yellow" style="background:#fff8e1">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-green" style="background:#e8f5e9">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-blue" style="background:#e3f2fd">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-red" style="background:#ffebee">▢</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="preview" title="Предпросмотр">👁</button>
+                    </div>
+                    <textarea id="fieldSimple" rows="3" placeholder="Понятными словами..."></textarea>
+                    <div class="editor-preview" id="preview_fieldSimple" style="display:none;"></div>
+                </label>
+
+                <label>Пример
+                    <div class="editor-toolbar" data-target="fieldExample">
+                        <button type="button" data-cmd="bold" title="Жирный"><b>B</b></button>
+                        <button type="button" data-cmd="italic" title="Курсив"><i>I</i></button>
+                        <button type="button" data-cmd="small" title="Мелкий">A<sub>−</sub></button>
+                        <button type="button" data-cmd="big" title="Крупный">A<sup>+</sup></button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="color" data-value="text-red" style="color:#c62828">A</button>
+                        <button type="button" data-cmd="color" data-value="text-green" style="color:#2e7d32">A</button>
+                        <button type="button" data-cmd="color" data-value="text-blue" style="color:#1565c0">A</button>
+                        <button type="button" data-cmd="color" data-value="text-orange" style="color:#e65100">A</button>
+                        <button type="button" data-cmd="color" data-value="text-purple" style="color:#6a1b9a">A</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="mark" data-value="mark-yellow" style="background:#fff59d">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-green" style="background:#a5d6a7">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-blue" style="background:#90caf9">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-red" style="background:#ef9a9a">M</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="bg" data-value="bg-yellow" style="background:#fff8e1">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-green" style="background:#e8f5e9">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-blue" style="background:#e3f2fd">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-red" style="background:#ffebee">▢</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="ul" title="Маркированный список">• —</button>
+                        <button type="button" data-cmd="ol" title="Нумерованный список">1. —</button>
+                        <button type="button" data-cmd="br" title="Перенос строки">↵</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="preview" title="Предпросмотр">👁</button>
+                    </div>
+                    <textarea id="fieldExample" rows="4" placeholder="Можно использовать HTML: <ul><li>...</li></ul>"></textarea>
+                    <div class="editor-preview" id="preview_fieldExample" style="display:none;"></div>
+                </label>
+
+                <label>Академическое определение
+                    <div class="editor-toolbar" data-target="fieldAcademic">
+                        <button type="button" data-cmd="bold" title="Жирный"><b>B</b></button>
+                        <button type="button" data-cmd="italic" title="Курсив"><i>I</i></button>
+                        <button type="button" data-cmd="small" title="Мелкий">A<sub>−</sub></button>
+                        <button type="button" data-cmd="big" title="Крупный">A<sup>+</sup></button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="color" data-value="text-red" style="color:#c62828">A</button>
+                        <button type="button" data-cmd="color" data-value="text-green" style="color:#2e7d32">A</button>
+                        <button type="button" data-cmd="color" data-value="text-blue" style="color:#1565c0">A</button>
+                        <button type="button" data-cmd="color" data-value="text-orange" style="color:#e65100">A</button>
+                        <button type="button" data-cmd="color" data-value="text-purple" style="color:#6a1b9a">A</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="mark" data-value="mark-yellow" style="background:#fff59d">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-green" style="background:#a5d6a7">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-blue" style="background:#90caf9">M</button>
+                        <button type="button" data-cmd="mark" data-value="mark-red" style="background:#ef9a9a">M</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="bg" data-value="bg-yellow" style="background:#fff8e1">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-green" style="background:#e8f5e9">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-blue" style="background:#e3f2fd">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-red" style="background:#ffebee">▢</button>
+                        <button type="button" data-cmd="bg" data-value="bg-purple" style="background:#f3e5f5">▢</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="ul" title="Маркированный список">• —</button>
+                        <button type="button" data-cmd="ol" title="Нумерованный список">1. —</button>
+                        <button type="button" data-cmd="br" title="Перенос строки">↵</button>
+                        <span class="sep"></span>
+                        <button type="button" data-cmd="preview" title="Предпросмотр">👁</button>
+                    </div>
+                    <textarea id="fieldAcademic" rows="4" placeholder="Формальное определение..."></textarea>
+                    <div class="editor-preview" id="preview_fieldAcademic" style="display:none;"></div>
+                </label>
+
+                <label>Источник<input type="text" id="fieldSource" placeholder="Например: ISTQB Glossary"></label>
+                <label>Мета-теги (через запятую)<input type="text" id="fieldMeta" placeholder="Процесс, Качество, Проверка"></label>
+            </div>
+            <div class="card-modal-footer">
+                <button class="btn-cancel" id="cardModalCancel">Отмена</button>
+                <button class="btn-save" id="cardModalSave">Сохранить</button>
+            </div>
         </div>
     </div>
 
+    <!-- МОДАЛЬНОЕ ОКНО: ТЕМА -->
+    <div id="themeModal" class="card-modal" style="display:none;">
+        <div class="card-modal-content" style="max-width:400px;">
+            <div class="card-modal-header">
+                <h3>Новая тема</h3>
+                <button class="card-modal-close" id="themeModalClose">✕</button>
+            </div>
+            <div class="card-modal-body">
+                <label>Название темы *
+                    <input type="text" id="themeName" placeholder="Например: Шотдаун">
+                </label>
+                <label>Цвет
+                    <select id="themeColor">
+                        <option value="blue">Синий</option>
+                        <option value="green">Зелёный</option>
+                        <option value="purple">Фиолетовый</option>
+                        <option value="orange">Оранжевый</option>
+                        <option value="teal">Бирюзовый</option>
+                        <option value="red">Красный</option>
+                    </select>
+                </label>
+                   <label>Разделы (подтемы) — через запятую
+                    <textarea id="themeSections" rows="2" placeholder="Например: JOIN, Подзапросы, Индексы"></textarea>
+                </label>
+            </div>
+            <div class="card-modal-footer">
+                <button class="btn-cancel" id="themeModalCancel">Отмена</button>
+                <button class="btn-save" id="themeModalSave">Создать</button>
+            </div>
+        </div>
+    </div>
+    <!-- МОДАЛЬНОЕ ОКНО: УПРАВЛЕНИЕ ТЕМАМИ -->
+    <div id="themeManageModal" class="card-modal" style="display:none;">
+        <div class="card-modal-content" style="max-width:520px;">
+            <div class="card-modal-header">
+                <h3>Управление темами</h3>
+                <button class="card-modal-close" id="themeManageModalClose">✕</button>
+            </div>
+            <div class="card-modal-body" id="themeManageList" style="max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- JS заполнит этот список -->
+            </div>
+            <div class="card-modal-footer" style="justify-content: space-between;">
+                <button class="btn-cancel" id="restoreHiddenThemesBtn" style="font-size: 0.8rem;">Вернуть все скрытые</button>
+                <button class="btn-save" id="themeManageModalCloseBtn">Готово</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- МОДАЛЬНОЕ ОКНО: ПОДТЕМА -->
+    <div id="subThemeModal" class="card-modal" style="display:none;">
+        <div class="card-modal-content" style="max-width:400px;">
+            <div class="card-modal-header">
+                <h3>Новая подтема</h3>
+                <button class="card-modal-close" id="subThemeModalClose">✕</button>
+            </div>
+            <div class="card-modal-body">
+                <label>Родительская тема *
+                    <select id="subThemeParent"></select>
+                </label>
+                <label>Названия подтем (через запятую) *
+                    <textarea id="subThemeNames" rows="3" placeholder="Например: JOIN, Подзапросы, Оконные функции"></textarea>
+                </label>
+            </div>
+            <div class="card-modal-footer">
+                <button class="btn-cancel" id="subThemeModalCancel">Отмена</button>
+                <button class="btn-save" id="subThemeModalSave">Создать</button>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
     <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('✅ SW зарегистрирован:', reg))
-            .catch(err => console.log('❌ Ошибка регистрации SW:', err));
-        });
-    }
-    </script>
-    <script>
-    window.OpenNagishConfig = {
-        lang: 'ru',
-        position: 'top-right'
-    };
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('✅ SW зарегистрирован:', reg))
+                .catch(err => console.log('❌ Ошибка регистрации SW:', err));
+            });
+        }
     </script>
     <script src="./open-nagish.min.js" defer></script>
+    <script>
+        window.OpenNagishConfig = {
+            lang: 'ru',
+            position: 'top-right'
+    };
+    </script>
 </body>
 </html>
