@@ -892,6 +892,7 @@
                     <button class="dropdown-item" id="addCardBtn">➕ Добавить карточку</button>
                     <button class="dropdown-item" id="manageThemesBtn">⚙️ Управление темами</button>
                     <button class="dropdown-item" id="resetAllOverridesBtn">Сбросить правки</button>
+                    <button class="dropdown-item" id="clearOrphanBtn" style="color: #e65100;">🗑 Очистить хранилище</button>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" id="exportBtn">📤 Экспорт данных</button>
                     <button class="dropdown-item" id="importBtn">📥 Импорт данных</button>
@@ -900,7 +901,49 @@
             </div>
 
             <div class="filter-group" id="filterGroup">
+                <button class="filter-btn" data-filter="orphan" id="orphanFilterBtn" style="display:none;">Хранилище</button>
                 <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="theory">Теория</button>
+                 <!-- ===== ДРОПДАУН: СХЕМА ТЕСТИРОВАНИЯ ===== -->
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleSchema">
+                        Схема тестирования <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuSchema">
+                        <button class="dropdown-item" data-filter="formal">Формализация</button>
+                        <button class="dropdown-item" data-filter="scenario">Сценарии</button>
+                        <button class="dropdown-item" data-filter="methods">Методы</button>
+                        <button class="dropdown-item" data-filter="levels">Уровни</button>
+                        <button class="dropdown-item" data-filter="functional">Функциональное</button>
+                        <button class="dropdown-item" data-filter="nonfunctional">Нефункциональное</button>
+                    </div>
+                </div>
+                
+                <!-- ===== ОСТАЛЬНЫЕ КНОПКИ ===== -->
+                <button class="filter-btn" data-filter="documentation">Тест. документация</button>
+                <button class="filter-btn" data-filter="api">API</button>
+                <button class="filter-btn" data-filter="web">Веб-приложения</button>
+                <button class="filter-btn" data-filter="testdesign">Тест-дизайн</button>
+                <button class="filter-btn" data-filter="kanban">Kanban</button>
+                <button class="filter-btn" data-filter="scrum">Scrum</button>
+                <button class="filter-btn" data-filter="requirements">Требования</button>
+
+                                <!-- ===== ДРОПДАУН: СОБЕСЕДОВАНИЕ ===== -->
+                <div class="dropdown">
+                    <button class="filter-btn dropdown-toggle" id="dropdownToggleInterview">
+                        Собеседование <span class="arrow">▼</span>
+                    </button>
+                    <div class="dropdown-menu" id="dropdownMenuInterview">
+                        <button class="dropdown-item" data-filter="interview">Теория тестирования</button>
+                        <button class="dropdown-item" data-filter="interview_testdesign">Тест-дизайн</button>
+                        <button class="dropdown-item" data-filter="interview_documentation">Тестовая документация</button>
+                        <button class="dropdown-item" data-filter="interview_web">Тестирование веб-приложений</button>
+                        <button class="dropdown-item" data-filter="interview_api">Тестирование API</button>
+                        <button class="dropdown-item" data-filter="interview_data">Работа с данными</button>
+                        <button class="dropdown-item" data-filter="interview_mobile">Тестирование мобильных приложений</button>
+                        <button class="dropdown-item" data-filter="interview_cases">Ситуационные кейсы</button>
+                    </div>
+                </div>
 
                 <div class="dropdown">
                     <button class="filter-btn dropdown-toggle" id="dropdownToggleSql">
@@ -941,50 +984,6 @@
                         <button class="dropdown-item" data-filter="python_interview">Вопросы для собеседования</button>
                     </div>
                 </div>
-
-                <button class="filter-btn" data-filter="theory">Теория</button>
-
-                <!-- ===== ДРОПДАУН: СОБЕСЕДОВАНИЕ ===== -->
-                <div class="dropdown">
-                    <button class="filter-btn dropdown-toggle" id="dropdownToggleInterview">
-                        Собеседование <span class="arrow">▼</span>
-                    </button>
-                    <div class="dropdown-menu" id="dropdownMenuInterview">
-                        <button class="dropdown-item" data-filter="interview">Теория тестирования</button>
-                        <button class="dropdown-item" data-filter="interview_testdesign">Тест-дизайн</button>
-                        <button class="dropdown-item" data-filter="interview_documentation">Тестовая документация</button>
-                        <button class="dropdown-item" data-filter="interview_web">Тестирование веб-приложений</button>
-                        <button class="dropdown-item" data-filter="interview_api">Тестирование API</button>
-                        <button class="dropdown-item" data-filter="interview_data">Работа с данными</button>
-                        <button class="dropdown-item" data-filter="interview_mobile">Тестирование мобильных приложений</button>
-                        <button class="dropdown-item" data-filter="interview_cases">Ситуационные кейсы</button>
-                    </div>
-                </div>
-
-                 <!-- ===== ДРОПДАУН: СХЕМА ТЕСТИРОВАНИЯ ===== -->
-                <div class="dropdown">
-                    <button class="filter-btn dropdown-toggle" id="dropdownToggleSchema">
-                        Схема тестирования <span class="arrow">▼</span>
-                    </button>
-                    <div class="dropdown-menu" id="dropdownMenuSchema">
-                        <button class="dropdown-item" data-filter="formal">Формализация</button>
-                        <button class="dropdown-item" data-filter="scenario">Сценарии</button>
-                        <button class="dropdown-item" data-filter="methods">Методы</button>
-                        <button class="dropdown-item" data-filter="levels">Уровни</button>
-                        <button class="dropdown-item" data-filter="functional">Функциональное</button>
-                        <button class="dropdown-item" data-filter="nonfunctional">Нефункциональное</button>
-                    </div>
-                </div>
-
-                
-                <!-- ===== ОСТАЛЬНЫЕ КНОПКИ ===== -->
-                <button class="filter-btn" data-filter="documentation">Тест. документация</button>
-                <button class="filter-btn" data-filter="api">API</button>
-                <button class="filter-btn" data-filter="web">Веб-приложения</button>
-                <button class="filter-btn" data-filter="testdesign">Тест-дизайн</button>
-                <button class="filter-btn" data-filter="kanban">Kanban</button>
-                <button class="filter-btn" data-filter="scrum">Scrum</button>
-                <button class="filter-btn" data-filter="requirements">Требования</button>
 
             </div>
             <div class="dropdown voice-dropdown">
@@ -1028,38 +1027,78 @@
             <div class="card-modal-body">
                 <label>Термин *<input type="text" id="fieldTerm" placeholder="Например: Регрессия"></label>
                 <label>Категория *
-                    <select id="fieldCategory">
-                        <option value="theory">Теория</option>
-                        <option value="formal">Формализация</option>
-                        <option value="scenario">Сценарии</option>
-                        <option value="methods">Методы</option>
-                        <option value="levels">Уровни</option>
-                        <option value="functional">Функциональное</option>
-                        <option value="nonfunctional">Нефункциональное</option>
-                        <option value="testdesign">Тест-дизайн</option>
-                        <option value="documentation">Документация</option>
-                        <option value="api">API</option>
-                        <option value="web">Веб-приложения</option>
-                        <option value="scrum">Scrum</option>
-                        <option value="kanban">Kanban</option>
-                        <option value="requirements">Требования</option>
-                    </select>
+                    <div class="cat-dropdown" id="categoryDropdown">
+                        <button type="button" class="cat-toggle" id="categoryToggle">
+                            <span class="cat-label">Теория</span>
+                            <span class="cat-arrow">▼</span>
+                        </button>
+                        <div class="cat-menu" id="categoryMenu">
+                            <button type="button" class="cat-option" data-value="theory">Теория</button>
+                            <button type="button" class="cat-option" data-value="formal">Формализация</button>
+                            <button type="button" class="cat-option" data-value="scenario">Сценарии</button>
+                            <button type="button" class="cat-option" data-value="methods">Методы</button>
+                            <button type="button" class="cat-option" data-value="levels">Уровни</button>
+                            <button type="button" class="cat-option" data-value="functional">Функциональное</button>
+                            <button type="button" class="cat-option" data-value="nonfunctional">Нефункциональное</button>
+                            <button type="button" class="cat-option" data-value="testdesign">Тест-дизайн</button>
+                            <button type="button" class="cat-option" data-value="documentation">Документация</button>
+                            <button type="button" class="cat-option" data-value="api">API</button>
+                            <button type="button" class="cat-option" data-value="web">Веб-приложения</button>
+                            <button type="button" class="cat-option" data-value="scrum">Scrum</button>
+                            <button type="button" class="cat-option" data-value="kanban">Kanban</button>
+                            <button type="button" class="cat-option" data-value="requirements">Требования</button>
+                            <button type="button" class="cat-option" data-value="orphan">Хранилище</button>
+                            <div class="cat-divider"></div>
+                            <div class="cat-custom" id="categoryCustom"></div>
+                        </div>
+                        <input type="hidden" id="fieldCategory" value="theory">
+                    </div>
                 </label>
                 <label>Секция (для своих тем)
-                    <select id="fieldSection">
-                        <option value="">— Без секции —</option>
-                    </select>
+                    <div class="cat-dropdown" id="sectionDropdown">
+                        <button type="button" class="cat-toggle" id="sectionToggle">
+                            <span class="cat-label">— Без секции —</span>
+                            <span class="cat-arrow">▼</span>
+                        </button>
+                        <div class="cat-menu" id="sectionMenu">
+                            <button type="button" class="cat-option" data-value="">— Без секции —</button>
+                            <!-- сюда JS добавит подтемы выбранной категории -->
+                        </div>
+                        <input type="hidden" id="fieldSection" value="">
+                    </div>
                 </label>
                 <label>Тег (короткий) *<input type="text" id="fieldTag" placeholder="Например: Процесс"></label>
                 <label>Цвет тега
-                    <select id="fieldTagColor">
-                        <option value="blue">Синий</option>
-                        <option value="green">Зелёный</option>
-                        <option value="purple">Фиолетовый</option>
-                        <option value="orange">Оранжевый</option>
-                        <option value="teal">Бирюзовый</option>
-                        <option value="red">Красный</option>
-                    </select>
+                    <div class="cat-dropdown" id="colorDropdown">
+                        <button type="button" class="cat-toggle" id="colorToggle">
+                            <span class="cat-label">
+                                <span class="color-dot" style="background: #c5d8ef; display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle;"></span>
+                                Синий
+                            </span>
+                            <span class="cat-arrow">▼</span>
+                        </button>
+                        <div class="cat-menu" id="colorMenu">
+                            <button type="button" class="cat-option" data-value="blue">
+                                <span class="color-dot" style="background:#c5d8ef;"></span> Синий
+                            </button>
+                            <button type="button" class="cat-option" data-value="green">
+                                <span class="color-dot" style="background:#b8d9c8;"></span> Зелёный
+                            </button>
+                            <button type="button" class="cat-option" data-value="purple">
+                                <span class="color-dot" style="background:#d4c5e6;"></span> Фиолетовый
+                            </button>
+                            <button type="button" class="cat-option" data-value="orange">
+                                <span class="color-dot" style="background:#f0d5b8;"></span> Оранжевый
+                            </button>
+                            <button type="button" class="cat-option" data-value="teal">
+                                <span class="color-dot" style="background:#b8d9d9;"></span> Бирюзовый
+                            </button>
+                            <button type="button" class="cat-option" data-value="red">
+                                <span class="color-dot" style="background:#f0c5c5;"></span> Красный
+                            </button>
+                        </div>
+                        <input type="hidden" id="fieldTagColor" value="blue">
+                    </div>
                 </label>
 
                 <label>Простое определение
@@ -1180,16 +1219,36 @@
                     <input type="text" id="themeName" placeholder="Например: Шотдаун">
                 </label>
                 <label>Цвет
-                    <select id="themeColor">
-                        <option value="blue">Синий</option>
-                        <option value="green">Зелёный</option>
-                        <option value="purple">Фиолетовый</option>
-                        <option value="orange">Оранжевый</option>
-                        <option value="teal">Бирюзовый</option>
-                        <option value="red">Красный</option>
-                    </select>
+                    <div class="color-dropdown" id="themeColorDropdown">
+                        <button type="button" class="cat-toggle" id="themeColorToggle">
+                            <span class="color-dot" style="background: #f0d5b8;"></span>
+                            <span class="cat-label">Оранжевый</span>
+                            <span class="cat-arrow">▼</span>
+                        </button>
+                        <div class="cat-menu" id="themeColorMenu">
+                            <button type="button" class="cat-option color-option" data-value="blue" data-color="#c5d8ef">
+                                <span class="color-dot" style="background: #c5d8ef;"></span>Синий
+                            </button>
+                            <button type="button" class="cat-option color-option" data-value="green" data-color="#b8d9c8">
+                                <span class="color-dot" style="background: #b8d9c8;"></span>Зелёный
+                            </button>
+                            <button type="button" class="cat-option color-option" data-value="purple" data-color="#d4c5e6">
+                                <span class="color-dot" style="background: #d4c5e6;"></span>Фиолетовый
+                            </button>
+                            <button type="button" class="cat-option color-option selected" data-value="orange" data-color="#f0d5b8">
+                                <span class="color-dot" style="background: #f0d5b8;"></span>Оранжевый
+                            </button>
+                            <button type="button" class="cat-option color-option" data-value="teal" data-color="#b8d9d9">
+                                <span class="color-dot" style="background: #b8d9d9;"></span>Бирюзовый
+                            </button>
+                            <button type="button" class="cat-option color-option" data-value="red" data-color="#f0c5c5">
+                                <span class="color-dot" style="background: #f0c5c5;"></span>Красный
+                            </button>
+                        </div>
+                        <input type="hidden" id="themeColor" value="orange">
+                    </div>
                 </label>
-                   <label>Разделы (подтемы) — через запятую
+                <label>Разделы (подтемы) — через запятую
                     <textarea id="themeSections" rows="2" placeholder="Например: JOIN, Подзапросы, Индексы"></textarea>
                 </label>
             </div>
@@ -1255,5 +1314,10 @@
             position: 'top-right'
     };
     </script>
+    <button id="scrollTopBtn" class="scroll-top-btn" title="Наверх / Вниз" aria-label="Прокрутить">
+            <svg id="scrollIcon" viewBox="0 0 24 24" width="22" height="22">
+            <polyline points="18 15 12 9 6 15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+    </button>
 </body>
 </html>
