@@ -7122,6 +7122,7 @@ let globalTestMode = false;
 const FILTER_LABELS = {
     'all': 'Все разделы',
     'theory': 'Теория',
+    'orphan': 'Хранилище', 
     'interview': 'Собеседование',
     'interview_testdesign': 'Тест-дизайн',
     'interview_documentation': 'Тестовая документация',
@@ -7568,7 +7569,7 @@ function renderCards(data) {
                 <div class="meta-tags" style="display: none;">${sectionBadge}${metaHtml}</div>
             </div>
 
-            <!-- Кнопка "Тест" внизу -->
+            <!-- Кнопка "Проверь себя" внизу -->
             <div class="quiz-toggle-wrapper">
                 <button class="quiz-toggle-btn" id="quizToggle_${item.id}">Проверь себя</button>
             </div>
@@ -8027,7 +8028,7 @@ function renderCards(data) {
             simpleDef.style.display = 'none';
             academicDef.style.display = 'none';
             quizContainer.style.display = 'block';
-            badge.textContent = 'Тест';
+            badge.textContent = 'Проверь себя';
             badge.style.background = '#6a1b9a';
             badge.style.color = 'white';
             metaTags.style.display = 'none';
@@ -8079,7 +8080,7 @@ function renderCards(data) {
             }
             card.classList.remove('quiz-mode');
             // (не удаляем _modeBeforeTest, чтобы можно было использовать повторно, но можно и удалить)
-            quizToggleBtn.textContent = 'Тест'; // или 'Повторить'
+            quizToggleBtn.textContent = 'Проверь себя'; // или 'Повторить'
         }
 
         // ---- Сохраняем функции на карточке ----
@@ -8270,6 +8271,10 @@ function renderCards(data) {
         }
         // ===== КЛИК ПО КАРТОЧКЕ (переключение) =====
         card.addEventListener('click', function(e) {
+            // ⚙️ Шестерёнка и блок кнопок действий — не переключают режим
+            if (e.target.closest('.card-toggle-actions')) return;
+            if (e.target.closest('.card-actions')) return;
+
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.expand-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
@@ -8321,6 +8326,8 @@ function renderCards(data) {
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.target.closest('.expand-btn')) return;
             if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
+            if (e.target.closest('.card-toggle-actions')) return;   // ⚙️
+            if (e.target.closest('.card-actions')) return;          // блок с кнопками
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             const touch = e.touches[0];
             startX = touch.clientX;
@@ -8329,23 +8336,10 @@ function renderCards(data) {
             isDragging = false;
         }, { passive: true });
 
-        card.addEventListener('touchmove', function(e) {
-            if (e.target.closest('.expand-btn')) return;
-            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
-            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
-            const touch = e.touches[0];
-            const diffX = touch.clientX - startX;
-            const diffY = touch.clientY - startY;
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-                isDragging = true;
-                currentX = diffX;
-                this.style.transition = 'none';
-                this.style.transform = `translateX(${diffX}px) rotate(${diffX / 20}deg)`;
-                this.style.opacity = 1 - (Math.abs(diffX) / 500);
-                e.preventDefault();
-            }
-        }, { passive: false });
+        
         card.addEventListener('touchend', function(e) {
+            if (e.target.closest('.card-toggle-actions')) return;
+            if (e.target.closest('.card-actions')) return;
             if (!isDragging) return;
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
             if (Math.abs(currentX) > 100) {
@@ -8379,6 +8373,8 @@ function renderCards(data) {
 
         // Pointer-события (для мыши)
         card.addEventListener('pointerdown', function(e) {
+            if (e.target.closest('.card-toggle-actions')) return;   // ⚙️
+            if (e.target.closest('.card-actions')) return;
             if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
             if (e.pointerType === 'touch') return;
             if (e.button !== 0) return;
@@ -8396,6 +8392,8 @@ function renderCards(data) {
         card.addEventListener('pointermove', function(e) {
             if (e.pointerType === 'touch') return;
             if (!this.hasPointerCapture(e.pointerId)) return;
+            if (e.target.closest('.card-toggle-actions')) return;   // ⚙️
+            if (e.target.closest('.card-actions')) return;
             if (e.target.closest('.expand-btn')) return;
             if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
@@ -8414,6 +8412,8 @@ function renderCards(data) {
         card.addEventListener('pointerup', function(e) {
             if (e.pointerType === 'touch') return;
             this.releasePointerCapture(e.pointerId);
+            if (e.target.closest('.card-toggle-actions')) return;   // ⚙️
+            if (e.target.closest('.card-actions')) return;
             if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             if (!isDragging) {
@@ -8481,9 +8481,9 @@ if (testBtn) {
         e.preventDefault();
         toggleAllTests();
     };
-    console.log('✅ Кнопка "Тест" найдена, обработчик привязан');
+    console.log('✅ Кнопка "Проверь себя" найдена, обработчик привязан');
 } else {
-    console.warn('⚠️ Кнопка #toggleAllTestBtn не найдена. Добавьте в HTML: <button id="toggleAllTestBtn">Тест</button>');
+    console.warn('⚠️ Кнопка #toggleAllTestBtn не найдена. Добавьте в HTML: <button id="toggleAllTestBtn">Проверь себя</button>');
 }
 
 // ================================================================
@@ -8521,22 +8521,61 @@ function updateVisibleCount() {
 //  ДРОПДАУНЫ
 // ================================================================
 
+// ============================================================
+//  ЕДИНАЯ ФУНКЦИЯ ЗАКРЫТИЯ ВСЕХ МЕНЮ И СБРОСА СТРЕЛОК
+// ============================================================
+function closeAllMenus() {
+    // Обычные дропдауны
+    document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+    document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+
+    // Меню подтем кастомных тем
+    document.querySelectorAll('.theme-sections-menu').forEach(m => {
+        m.style.display = 'none';
+        m.classList.remove('open');
+    });
+    document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
+    document.querySelectorAll('.custom-theme-btn.open').forEach(b => b.classList.remove('open'));
+}
+window.closeAllMenus = closeAllMenus;
+
 function closeAllDropdowns() {
-    document.querySelectorAll('.dropdown-toggle.open').forEach(el => el.classList.remove('open'));
-    document.querySelectorAll('.dropdown-menu.open').forEach(el => el.classList.remove('open'));
+    closeAllMenus();
 }
 
 function setupDropdown(toggleId, menuId) {
     const toggle = document.getElementById(toggleId);
     const menu = document.getElementById(menuId);
     if (!toggle || !menu) return;
+
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if (el !== this) el.classList.remove('open'); });
-        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if (el !== menu) el.classList.remove('open'); });
-        this.classList.toggle('open');
-        menu.classList.toggle('open');
+
+        // ⚡ Запоминаем состояние ДО закрытия
+        const wasOpen = this.classList.contains('open');
+
+        // ⚡ Закрываем ВСЁ (включая этот дропдаун)
+        closeAllMenus();
+
+        // ⚡ Если он был закрыт — открываем только его
+        if (!wasOpen) {
+            this.classList.add('open');
+            menu.classList.add('open');
+
+            // Автопрокрутка на мобильных — после открытия
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    const rect = menu.getBoundingClientRect();
+                    const offset = 80;
+                    window.scrollTo({
+                        top: window.scrollY + rect.top - offset,
+                        behavior: 'smooth'
+                    });
+                }, 150);
+            }
+        }
     });
+
     menu.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -8548,7 +8587,11 @@ function setupDropdown(toggleId, menuId) {
             currentFilter = filter;
             filterAndSearch();
             toggle.innerHTML = `${this.textContent.trim()} <span class="arrow">▼</span>`;
-            closeAllDropdowns();
+
+            // ⚡ Закрываем ИМЕННО этот дропдаун (стрелка сбросится)
+            toggle.classList.remove('open');
+            menu.classList.remove('open');
+
             if (window.innerWidth <= 768) {
                 burgerBtn.classList.remove('active');
                 filterGroup.classList.remove('open');
@@ -8562,7 +8605,6 @@ setupDropdown('dropdownToggleSchema', 'dropdownMenuSchema');
 setupDropdown('dropdownToggleSql', 'dropdownMenuSql');
 setupDropdown('dropdownTogglePython', 'dropdownMenuPython');
 setupDropdown('voiceToggle', 'voiceMenu');
-
 // ============================================================
 //  DROPDOWN: РАБОТА С КАРТОЧКАМИ
 // ============================================================
@@ -8573,15 +8615,18 @@ setupDropdown('voiceToggle', 'voiceMenu');
 
     toggle.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.querySelectorAll('.dropdown-toggle.open').forEach(el => { if (el !== this) el.classList.remove('open'); });
-        document.querySelectorAll('.dropdown-menu.open').forEach(el => { if (el !== menu) el.classList.remove('open'); });
-        this.classList.toggle('open');
-        menu.classList.toggle('open');
+
+        const wasOpen = this.classList.contains('open');
+        closeAllMenus();
+
+        if (!wasOpen) {
+            this.classList.add('open');
+            menu.classList.add('open');
+        }
     });
 
     menu.querySelectorAll('.dropdown-item').forEach(item => {
         item.addEventListener('click', function() {
-            // Закрываем меню при выборе пункта
             toggle.classList.remove('open');
             menu.classList.remove('open');
         });
@@ -8680,16 +8725,26 @@ if (resetCurrentSectionBtn) {
 // ===== БУРГЕР-МЕНЮ =====
 const burgerBtn = document.getElementById('burgerBtn');
 const filterGroup = document.getElementById('filterGroup');
+
+// 🔹 Единая функция синхронизации состояния бургер-меню и кнопки "Наверх"
+function syncBurgerState() {
+    const isOpen = burgerBtn.classList.contains('active');
+    document.body.classList.toggle('burger-open', isOpen);
+}
+
 burgerBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     this.classList.toggle('active');
     filterGroup.classList.toggle('open');
+    syncBurgerState();            // ⚡ скрываем/показываем кнопку
 });
+
 document.addEventListener('click', function(e) {
     if (window.innerWidth <= 768) {
         if (!e.target.closest('.burger-btn') && !e.target.closest('.filter-group') && !e.target.closest('.dropdown')) {
             burgerBtn.classList.remove('active');
             filterGroup.classList.remove('open');
+            syncBurgerState();    // ⚡
         }
     } else {
         if (!e.target.closest('.dropdown')) closeAllDropdowns();
@@ -9196,9 +9251,13 @@ safeAdd('addCardBtn', 'click', function () {
 
 safeAdd('addThemeBtn', 'click', function () {
     const name = document.getElementById('themeName');
-    const color = document.getElementById('themeColor');
     if (name) name.value = '';
-    if (color) color.value = 'purple';
+    
+    // Сброс дропдауна цвета
+    if (typeof window.setThemeColorValue === 'function') {
+        window.setThemeColorValue('orange');
+    }
+    
     const modal = document.getElementById('themeModal');
     if (modal) modal.style.display = 'flex';
 });
@@ -9227,17 +9286,36 @@ function clearCardForm() {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    const cat = document.getElementById('fieldCategory');
-    if (cat) cat.value = 'theory';
-    const tc = document.getElementById('fieldTagColor');
-    if (tc) tc.value = 'blue';
+
+    // ⚡ Сброс кастомных дропдаунов через их публичные API
+    if (typeof window.setCategoryValue === 'function') {
+        window.setCategoryValue('theory');
+    } else {
+        const cat = document.getElementById('fieldCategory');
+        if (cat) cat.value = 'theory';
+    }
+
+    if (typeof window.setColorValue === 'function') {
+        window.setColorValue('blue');
+    } else {
+        const tc = document.getElementById('fieldTagColor');
+        if (tc) tc.value = 'blue';
+    }
+
+    // Секцию сбрасываем с задержкой — чтобы успел обновиться список подтем
+    setTimeout(() => {
+        if (typeof window.setSectionValue === 'function') {
+            window.setSectionValue('');
+        } else {
+            const sec = document.getElementById('fieldSection');
+            if (sec) sec.value = '';
+        }
+    }, 80);
+
     ['fieldSimple','fieldExample','fieldAcademic'].forEach(function (id) {
         const p = document.getElementById('preview_' + id);
         if (p) { p.innerHTML = ''; p.style.display = 'none'; }
     });
-        // Сброс секции
-    const sec = document.getElementById('fieldSection');
-    if (sec) sec.innerHTML = '<option value="">— Без секции —</option>';
 }
 
 // ---------- СОХРАНЕНИЕ КАРТОЧКИ ----------
@@ -9361,8 +9439,8 @@ function refreshCustomThemesUI() {
         // Обёртка вокруг кнопки темы — для позиционирования меню
         const wrapper = document.createElement('span');
         wrapper.className = 'custom-theme-wrapper';
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'inline-block';
+        //wrapper.style.position = 'relative';
+        //wrapper.style.display = 'inline-block';
 
         // Основная кнопка темы
         const btn = document.createElement('button');
@@ -9443,10 +9521,12 @@ function refreshCustomThemesUI() {
 
                 if (!isOpen) {
                     menu.style.display = 'block';
+                    btn.classList.add('open'); 
                     const arrow = btn.querySelector('.arrow');
                     if (arrow) arrow.style.transform = 'rotate(180deg)';
                 } else {
                     menu.style.display = 'none';
+                    btn.classList.remove('open');
                     const arrow = btn.querySelector('.arrow');
                     if (arrow) arrow.style.transform = '';
                 }
@@ -9479,7 +9559,12 @@ window.editCustomCard = function (id) {
     if (title) title.textContent = 'Редактировать карточку';
     const setVal = function (elId, val) { const el = document.getElementById(elId); if (el) el.value = val || ''; };
     setVal('fieldTerm', card.term);
-    setVal('fieldCategory', card.category || 'theory');
+    if (typeof window.setCategoryValue === 'function') {
+        window.setCategoryValue(card.category || 'theory');}
+    else {
+    const el = document.getElementById('fieldCategory');
+    if (el) el.value = card.category || 'theory';
+    }
     populateSectionsForTheme(card.category || '', card.section || '');
     setVal('fieldTag', card.tag);
     setVal('fieldTagColor', card.tagColor || 'blue');
@@ -9502,14 +9587,58 @@ window.deleteCustomCard = function (id) {
 
 // ---------- ЭКСПОРТ / ИМПОРТ ----------
 safeAdd('exportBtn', 'click', function () {
-    const data = JSON.stringify({ themes: window.customThemes, cards: window.customCards }, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
+    const exportData = {
+        _version: 3,
+        _exported: new Date().toISOString(),
+
+        // === БАЗОВЫЕ КАРТОЧКИ (только для справки, при импорте игнорируются) ===
+        baseCards: typeof TERMS_DATA !== 'undefined' ? TERMS_DATA : [],
+        baseCardsCount: typeof TERMS_DATA !== 'undefined' ? TERMS_DATA.length : 0,
+
+        // === ОСНОВНОЕ ===
+        themes: window.customThemes || [],
+        cards: window.customCards || [],
+
+        // === ПОДТЕМЫ СТАНДАРТНЫХ ТЕМ ===
+        extraSections: JSON.parse(localStorage.getItem('myExtraSections') || '{}'),
+        sectionMeta: JSON.parse(localStorage.getItem('mySectionMeta') || '{}'),
+
+        // === ПРАВКИ И СКРЫТИЯ ===
+        cardOverrides: JSON.parse(localStorage.getItem('myCardOverrides') || '{}'),
+        hiddenCards: JSON.parse(localStorage.getItem('myHiddenCards') || '[]'),
+        hiddenThemes: JSON.parse(localStorage.getItem('myHiddenThemes') || '[]'),
+        themeRenames: JSON.parse(localStorage.getItem('myThemeRenames') || '{}'),
+
+        // === СТАТИСТИКА И ОБУЧЕНИЕ ===
+        learnedCards: JSON.parse(localStorage.getItem('myLearnedCards') || '{}'),
+        qaStats: JSON.parse(localStorage.getItem('qa_stats') || '{"results":[]}'),
+
+        // === НАСТРОЙКИ ===
+        dashboardCollapsed: localStorage.getItem('dashboardCollapsed') || 'true'
+    };
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'my-qa-data.json';
+    a.download = `qa-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+
+    const size = (json.length / 1024).toFixed(2);
+    if (typeof showToast === 'function') {
+        showToast(`📤 Экспортировано (${size} KB)`);
+    }
+    console.log('✅ Экспорт завершён. Размер:', size, 'KB');
+    console.log('📊 Что вошло в файл:', {
+        baseCards: exportData.baseCardsCount,
+        themes: exportData.themes.length,
+        customCards: exportData.cards.length,
+        extraSections: Object.keys(exportData.extraSections).length,
+        learnedCards: Object.keys(exportData.learnedCards).length,
+        qaStats: exportData.qaStats.results.length
+    });
 });
 
 safeAdd('importBtn', 'click', function () {
@@ -9523,21 +9652,120 @@ safeAdd('importFile', 'change', function (e) {
     const reader = new FileReader();
     reader.onload = function (ev) {
         try {
-            const imported = JSON.parse(ev.target.result);
-            if (imported.themes) window.customThemes = window.customThemes.concat(imported.themes);
-            if (imported.cards) {
-                imported.cards.forEach(function (c) {
+            const data = JSON.parse(ev.target.result);
+
+            // ⚡ ПРОВЕРКА ВЕРСИИ
+            if (data._version === 3 || data.baseCards) {
+                console.log('📦 Файл версии 3, содержит базовые карточки');
+                console.log('   Базовых в файле:', data.baseCardsCount || (data.baseCards || []).length);
+                console.log('   ⚠️ Игнорируем baseCards — они уже встроены в приложение');
+                
+                // ⚡ НЕ ИМПОРТИРУЕМ baseCards
+                // (в localStorage их нет и не должно быть)
+            }
+
+            if (!confirm(
+                `Импортировать файл?\n\n` +
+                `📁 Тем: ${(data.themes || []).length}\n` +
+                `📝 Кастомных карточек: ${(data.cards || []).length}\n` +
+                `📂 Подтем (стандартных): ${Object.keys(data.extraSections || {}).length}\n` +
+                `👁 Скрытых карточек: ${(data.hiddenCards || []).length}\n` +
+                `✅ Изученных: ${Object.keys(data.learnedCards || {}).length}\n` +
+                `📊 Записей статистики: ${(data.qaStats?.results || []).length}\n\n` +
+                (data.baseCards ? `(Базовых карточек в файле: ${data.baseCards.length} — пропустим)\n\n` : '') +
+                `Данные добавятся к текущим.`
+            )) return;
+
+            // === ОСНОВНОЕ (без baseCards!) ===
+            if (data.themes && data.themes.length) {
+                window.customThemes = (window.customThemes || []).concat(data.themes);
+                saveCustomThemes();
+            }
+
+            if (data.cards && data.cards.length) {
+                data.cards.forEach(function (c) {
                     c.id = 10000 + Math.floor(Math.random() * 90000);
                 });
-                window.customCards = window.customCards.concat(imported.cards);
+                window.customCards = (window.customCards || []).concat(data.cards);
+                saveCustomCards();
             }
-            saveCustomThemes();
-            saveCustomCards();
-            refreshCustomThemesUI();
-            if (typeof renderCards === 'function') renderCards(getAllTerms());
-            if (typeof filterAndSearch === 'function') filterAndSearch();
-            alert('Импорт завершён!');
+
+            // === ПОДТЕМЫ СТАНДАРТНЫХ ТЕМ ===
+            if (data.extraSections) {
+                const current = JSON.parse(localStorage.getItem('myExtraSections') || '{}');
+                Object.keys(data.extraSections).forEach(themeId => {
+                    current[themeId] = current[themeId] || [];
+                    data.extraSections[themeId].forEach(sec => {
+                        if (!current[themeId].includes(sec)) current[themeId].push(sec);
+                    });
+                });
+                localStorage.setItem('myExtraSections', JSON.stringify(current));
+            }
+
+            if (data.sectionMeta) {
+                const current = JSON.parse(localStorage.getItem('mySectionMeta') || '{}');
+                Object.keys(data.sectionMeta).forEach(themeId => {
+                    current[themeId] = Object.assign({}, current[themeId] || {}, data.sectionMeta[themeId]);
+                });
+                localStorage.setItem('mySectionMeta', JSON.stringify(current));
+            }
+
+            // === ПРАВКИ БАЗОВЫХ ===
+            if (data.cardOverrides) {
+                const current = JSON.parse(localStorage.getItem('myCardOverrides') || '{}');
+                Object.assign(current, data.cardOverrides);
+                localStorage.setItem('myCardOverrides', JSON.stringify(current));
+                window.cardOverrides = current;
+            }
+
+            // === СКРЫТИЯ ===
+            if (data.hiddenCards) {
+                const current = JSON.parse(localStorage.getItem('myHiddenCards') || '[]');
+                data.hiddenCards.forEach(id => {
+                    if (!current.includes(id)) current.push(id);
+                });
+                localStorage.setItem('myHiddenCards', JSON.stringify(current));
+                window.hiddenCardIds = current;
+            }
+
+            if (data.hiddenThemes) {
+                const current = JSON.parse(localStorage.getItem('myHiddenThemes') || '[]');
+                data.hiddenThemes.forEach(id => {
+                    if (!current.includes(id)) current.push(id);
+                });
+                localStorage.setItem('myHiddenThemes', JSON.stringify(current));
+            }
+
+            // === ПЕРЕИМЕНОВАНИЯ ===
+            if (data.themeRenames) {
+                const current = JSON.parse(localStorage.getItem('myThemeRenames') || '{}');
+                Object.assign(current, data.themeRenames);
+                localStorage.setItem('myThemeRenames', JSON.stringify(current));
+            }
+
+            // === СТАТИСТИКА ===
+            if (data.learnedCards) {
+                const current = JSON.parse(localStorage.getItem('myLearnedCards') || '{}');
+                Object.assign(current, data.learnedCards);
+                localStorage.setItem('myLearnedCards', JSON.stringify(current));
+            }
+
+            if (data.qaStats && data.qaStats.results) {
+                const current = JSON.parse(localStorage.getItem('qa_stats') || '{"results":[]}');
+                current.results = (current.results || []).concat(data.qaStats.results);
+                localStorage.setItem('qa_stats', JSON.stringify(current));
+            }
+
+            // === НАСТРОЙКИ ===
+            if (data.dashboardCollapsed !== undefined) {
+                localStorage.setItem('dashboardCollapsed', String(data.dashboardCollapsed));
+            }
+
+            alert('✅ Импорт завершён! Страница перезагрузится.');
+            setTimeout(() => location.reload(), 800);
+
         } catch (err) {
+            console.error('Ошибка импорта:', err);
             alert('Ошибка импорта: ' + err.message);
         }
     };
@@ -9549,25 +9777,22 @@ safeAdd('importFile', 'change', function (e) {
 //  СЕКЦИИ ВНУТРИ ТЕМ
 // ============================================================
 function populateSectionsForTheme(themeId, selectedSection) {
-    const sel = document.getElementById('fieldSection');
-    if (!sel) return;
-    sel.innerHTML = '<option value="">— Без секции —</option>';
-    if (!themeId) return;
-    const theme = window.customThemes.find(function (t) { return t.id === themeId; });
-    if (!theme || !theme.sections || theme.sections.length === 0) return;
-    theme.sections.forEach(function (sec) {
-        const opt = document.createElement('option');
-        opt.value = sec;
-        opt.textContent = sec;
-        if (sec === selectedSection) opt.selected = true;
-        sel.appendChild(opt);
-    });
+    // Делегируем работу кастомному дропдауну секций
+    if (typeof window.setSectionValue === 'function') {
+        setTimeout(() => window.setSectionValue(selectedSection || ''), 80);
+    }
 }
 
 // Следим за выбором темы в форме
+// Смена категории → обновляем список подтем
 document.addEventListener('change', function (e) {
     if (e.target && e.target.id === 'fieldCategory') {
-        populateSectionsForTheme(e.target.value, '');
+        if (typeof window.refreshSectionDropdown === 'function') {
+            window.refreshSectionDropdown();
+        }
+        if (typeof window.setSectionValue === 'function') {
+            window.setSectionValue('');
+        }
     }
 });
 
@@ -9650,7 +9875,6 @@ window.editAnyCard = function (id) {
     if (isCustom) {
         card = window.customCards.find(function (c) { return c.id === id; });
     } else {
-        // Берём базовую карточку, применяя к ней override (если есть)
         const base = TERMS_DATA.find(function (c) { return c.id === id; });
         if (!base) return;
         const override = window.cardOverrides[id];
@@ -9660,21 +9884,30 @@ window.editAnyCard = function (id) {
     editingCardId = id;
 
     const title = document.getElementById('cardModalTitle');
-    if (title) title.textContent = isCustom ? 'Редактировать карточку' : 'Редактировать карточку';
+    if (title) title.textContent = 'Редактировать карточку';
 
     const setVal = function (elId, val) { const el = document.getElementById(elId); if (el) el.value = val || ''; };
     setVal('fieldTerm', card.term);
-    setVal('fieldCategory', card.category || 'theory');
     setVal('fieldTag', card.tag);
-    setVal('fieldTagColor', card.tagColor || 'blue');
     setVal('fieldSimple', card.simple);
     setVal('fieldExample', card.example);
     setVal('fieldAcademic', card.academic);
     setVal('fieldSource', card.source);
     setVal('fieldMeta', (card.meta || []).join(', '));
 
-    // Подгружаем секции и восстанавливаем выбранную
-    populateSectionsForTheme(card.category || '', card.section || '');
+    // ⚡ Синхронизируем кастомные дропдауны с данными карточки
+    if (typeof window.setCategoryValue === 'function') {
+        window.setCategoryValue(card.category || 'theory');
+    }
+    if (typeof window.setColorValue === 'function') {
+        window.setColorValue(card.tagColor || 'blue');
+    }
+    // Секцию ставим с задержкой — список подтем обновится после смены категории
+    setTimeout(() => {
+        if (typeof window.setSectionValue === 'function') {
+            window.setSectionValue(card.section || '');
+        }
+    }, 120);
 
     const modal = document.getElementById('cardModal');
     if (modal) modal.style.display = 'flex';
@@ -9683,59 +9916,57 @@ window.editAnyCard = function (id) {
 // ============================================================
 //  УДАЛЕНИЕ ПОЛЬЗОВАТЕЛЬСКОЙ ТЕМЫ
 // ============================================================
-window.deleteCustomTheme = function (themeId) {
-    const theme = window.customThemes.find(function (t) { return t.id === themeId; });
-    if (!theme) return;
-
-    if (!confirm('Удалить тему «' + theme.label + '»?\n\nКарточки этой темы останутся, но перейдут в раздел «Теория».')) {
-        return;
+window.editCustomCard = function (id) {
+    const card = window.customCards.find(function (c) { return c.id === id; });
+    if (!card) return;
+    editingCardId = id;
+    const title = document.getElementById('cardModalTitle');
+    if (title) title.textContent = 'Редактировать карточку';
+    const setVal = function (elId, val) { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+    setVal('fieldTerm', card.term);
+    if (typeof window.setCategoryValue === 'function') {
+        window.setCategoryValue(card.category || 'theory');}
+    else {
+    const el = document.getElementById('fieldCategory');
+    if (el) el.value = card.category || 'theory';
     }
-
-    // 1. Удаляем тему
-    window.customThemes = window.customThemes.filter(function (t) { return t.id !== themeId; });
-    saveCustomThemes();
-
-    // 2. Переносим её карточки в "Теория"
-    window.customCards.forEach(function (c) {
-        if (c.category === themeId) {
-            c.category = 'theory';
-            c.section = '';
-        }
-    });
-    saveCustomCards();
-
-    // 3. Если тема была активным фильтром — сбрасываем на "Все"
-    if (currentFilter === themeId) {
-        currentFilter = 'all';
-        document.querySelectorAll('.filter-btn, .dropdown-item').forEach(function (b) { b.classList.remove('active'); });
-        const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-        if (allBtn) allBtn.classList.add('active');
-    }
-
-    // 4. Обновляем UI
-    if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
-    if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
-    if (typeof filterAndSearch === 'function') filterAndSearch();
-
-    if (typeof showToast === 'function') {
-        showToast('🗑 Тема «' + theme.label + '» удалена');
-    }
+    populateSectionsForTheme(card.category || '', card.section || '');
+    setVal('fieldTag', card.tag);
+    setVal('fieldTagColor', card.tagColor || 'blue');
+    setVal('fieldSimple', card.simple);
+    setVal('fieldExample', card.example);
+    setVal('fieldAcademic', card.academic);
+    setVal('fieldSource', card.source);
+    setVal('fieldMeta', (card.meta || []).join(', '));
+    const modal = document.getElementById('cardModal');
+    if (modal) modal.style.display = 'flex';
 };
 
 window.deleteAnyCard = function (id) {
     const isCustom = id >= 10000;
-    if (isCustom) {
-        if (!confirm('Удалить эту карточку навсегда?')) return;
-        window.customCards = window.customCards.filter(function (c) { return c.id !== id; });
-        saveCustomCards();
+    const cards = JSON.parse(localStorage.getItem('myCustomCards')) || [];
+    const card = cards.find(c => c.id === id);
+
+    if (isCustom && card) {
+        // ⚡ Кастомная карточка → в Хранилище (orphan), не удаляем
+        if (!confirm('Переместить карточку в "Хранилище"?\n\nЕё можно будет вернуть или удалить окончательно.')) return;
+
+        card.category = 'orphan';
+        card.section = '';
+        localStorage.setItem('myCustomCards', JSON.stringify(cards));
+        window.customCards = cards;
+
+        if (typeof showToast === 'function') showToast('Перемещено в Хранилище');
     } else {
-        if (!confirm('Скрыть эту базовую карточку? Она перестанет отображаться, но останется в справочнике (можно вернуть кнопкой «Сбросить» вверху).')) return;
+        // Базовая — скрываем (как было)
+        if (!confirm('Скрыть эту базовую карточку? Её можно вернуть через "Сбросить правки".')) return;
         if (window.hiddenCardIds.indexOf(id) === -1) {
             window.hiddenCardIds.push(id);
             saveHiddenIds();
         }
-        // Если у карточки были изменения — оставляем, они применятся при возврате
+        if (typeof showToast === 'function') showToast('👁 Карточка скрыта');
     }
+
     if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
     if (typeof filterAndSearch === 'function') filterAndSearch();
 };
@@ -10012,7 +10243,7 @@ function filterBySection(themeId, section) {
         item.className = 'theme-manage-item';
         if (opts.isSub) { item.style.marginLeft = '24px'; item.style.background = '#fafcff'; item.style.borderStyle = 'dashed'; }
         if (opts.isGroup) { item.style.background = '#eef3f9'; item.style.fontWeight = 'bold'; }
-        const prefix = opts.isSub ? '└ ' : (opts.isGroup ? '📁 ' : '');
+        const prefix = opts.isSub ? '' : (opts.isGroup ? '📁 ' : '');
         const colorDot = (!opts.isSub && !opts.isGroup)
             ? `<span class="color-dot" style="background:${theme.color || '#ccc'};"></span>` : '';
 
@@ -10107,6 +10338,30 @@ function filterBySection(themeId, section) {
                 }, { isSub: true }));
             });
         });
+
+        // ─── Раздел "Хранилище" (orphan) ───
+        const orphanCards = (window.customCards || []).filter(c => c.category === 'orphan');
+
+        if (orphanCards.length > 0) {
+            const h = document.createElement('div');
+            h.innerHTML = '<strong style="font-size:0.75rem;color:#6a8aaa;text-transform:uppercase;letter-spacing:0.5px;">Хранилище</strong>';
+            h.style.marginTop = '16px';
+            h.style.marginBottom = '6px';
+            listContainer.appendChild(h);
+
+            const orphanItem = document.createElement('div');
+            orphanItem.className = 'theme-manage-item';
+            orphanItem.style.background = '#fff3e0';
+            orphanItem.innerHTML = `
+                <div class="theme-info">
+                    <span>Хранилище — ${orphanCards.length} карточек</span>
+                </div>
+                <div class="theme-actions">
+                    <button class="btn-delete" data-action="delete-orphan" title="Удалить все бесхозные карточки">🗑 Удалить</button>
+                </div>
+            `;
+            listContainer.appendChild(orphanItem);
+        }
     }
 }
 
@@ -10221,13 +10476,13 @@ function filterBySection(themeId, section) {
 
         // ========== УДАЛИТЬ ТЕМУ НАВСЕГДА ==========
         if (action === 'delete') {
-            if (confirm(`Удалить тему "${findCurrentLabel(id)}" НАВСЕГДА?\n\nКарточки перейдут в "Теория". Отменить нельзя.`)) {
+            if (confirm(`Удалить тему "${findCurrentLabel(id)}" НАВСЕГДА?\n\nКарточки перейдут в раздел "Хранилище". Отменить нельзя.`)) {
                 window.customThemes = (window.customThemes || []).filter(t => t.id !== id);
                 if (typeof saveCustomThemes === 'function') saveCustomThemes();
                 else localStorage.setItem('myCustomThemes', JSON.stringify(window.customThemes));
 
                 (window.customCards || []).forEach(c => {
-                    if (c.category === id) { c.category = 'theory'; c.section = ''; }
+                    if (c.category === id) { c.category = 'orphan'; c.section = ''; }
                 });
                 if (typeof saveCustomCards === 'function') saveCustomCards();
                 else localStorage.setItem('myCustomCards', JSON.stringify(window.customCards));
@@ -10312,6 +10567,18 @@ function filterBySection(themeId, section) {
             localStorage.setItem('mySectionMeta', JSON.stringify(meta));
             renderList();
             if (typeof showToast === 'function') showToast('↩ Подтема возвращена');
+            return;
+        }
+
+        if (action === 'delete-orphan') {
+            if (confirm(`Удалить ВСЕ карточки из раздела "Хранилище" (${(window.customCards || []).filter(c => c.category === 'orphan').length} шт.)?`)) {
+                window.customCards = (window.customCards || []).filter(c => c.category !== 'orphan');
+            if (typeof saveCustomCards === 'function') saveCustomCards();
+            renderList();
+            if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
+            if (typeof filterAndSearch === 'function') filterAndSearch();
+            if (typeof showToast === 'function') showToast('🗑 Карточки удалены');
+            }
             return;
         }
     }
@@ -10578,4 +10845,810 @@ function filterBySection(themeId, section) {
     };
     
     console.log('✅ Авто-обновление панели тем включено');
+})();
+
+// ============================================================
+//  КНОПКА "НАВЕРХ / ВНИЗ"
+// ============================================================
+console.log('🚀 setupScrollBtn: старт');
+
+function updateScrollBtnState() {
+    const btn = document.getElementById('scrollTopBtn');
+    if (!btn) return;
+
+    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const atTop = scrollY < 50;
+
+    if (scrollY > 200) {
+        btn.classList.add('visible');
+    } else {
+        btn.classList.remove('visible');
+    }
+
+    if (atTop) {
+        btn.classList.add('at-top');
+    } else {
+        btn.classList.remove('at-top');
+    }
+}
+
+// Привязка событий (после загрузки DOM)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('scrollTopBtn');
+        if (!btn) {
+            console.warn('❌ Кнопка #scrollTopBtn не найдена');
+            return;
+        }
+
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+            if (scrollY < 50) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        window.addEventListener('scroll', updateScrollBtnState, { passive: true });
+        updateScrollBtnState();
+
+        console.log('✅ Кнопка наверх/вниз привязана');
+    });
+} else {
+    const btn = document.getElementById('scrollTopBtn');
+    if (btn) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+
+            if (scrollY < 50) {
+                window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+
+        window.addEventListener('scroll', updateScrollBtnState, { passive: true });
+        updateScrollBtnState();
+
+        console.log('✅ Кнопка наверх/вниз привязана (sync)');
+    } else {
+        console.warn('❌ Кнопка #scrollTopBtn не найдена (sync)');
+    }
+}
+
+// ============================================================
+//  ЕДИНАЯ ТОЧКА ЗАКРЫТИЯ ВСЕХ МЕНЮ
+// ============================================================
+function closeAllMenus() {
+    // Обычные дропдауны
+    document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+    document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+
+    // Меню подтем кастомных тем
+    document.querySelectorAll('.theme-sections-menu').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
+    document.querySelectorAll('.custom-theme-btn.open').forEach(b => b.classList.remove('open'));
+}
+window.closeAllMenus = closeAllMenus;
+
+// Закрытие по клику ВНЕ любого дропдауна
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.dropdown-toggle') ||
+        e.target.closest('.dropdown-menu') ||
+        e.target.closest('.custom-theme-btn') ||
+        e.target.closest('.theme-sections-menu')) {
+        return;
+    }
+    closeAllMenus();
+});
+
+console.log('✅ closeAllMenus готов');
+
+function refreshCustomThemesUI() {
+    // === 1. Опции в форме карточки ===
+    const select = document.getElementById('fieldCategory');
+    if (select) {
+        select.querySelectorAll('optgroup[data-custom-themes]').forEach(el => el.remove());
+        if (window.customThemes.length > 0) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.setAttribute('data-custom-themes', 'true');
+            optgroup.label = 'Мои темы';
+            window.customThemes.forEach(theme => {
+                const opt = document.createElement('option');
+                opt.value = theme.id;
+                opt.textContent = theme.label;
+                optgroup.appendChild(opt);
+            });
+            select.appendChild(optgroup);
+        }
+    }
+
+    // === 2. Кнопки тем в панели фильтров ===
+    const filterGroup = document.getElementById('filterGroup');
+    if (!filterGroup) return;
+
+    // Удаляем старые кнопки тем
+    filterGroup.querySelectorAll('.custom-theme-wrapper').forEach(el => el.remove());
+    filterGroup.querySelectorAll('.section-filter-btn').forEach(el => el.remove());
+    filterGroup.querySelectorAll('.section-dropdown-wrapper').forEach(el => el.remove());
+
+    const anchor = filterGroup.querySelector('.dropdown');
+    const colors = { blue:'#c5d8ef', green:'#b8d9c8', purple:'#d4c5e6', orange:'#f0d5b8', teal:'#b8d9d9', red:'#f0c5c5' };
+
+    // Создаём кнопки тем
+    window.customThemes.forEach(theme => {
+        // Собираем подтемы темы
+        const extraSections = JSON.parse(localStorage.getItem('myExtraSections')) || {};
+        const meta = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+        const sectionsSet = new Set();
+        (theme.sections || []).forEach(s => sectionsSet.add(s));
+        (extraSections[theme.id] || []).forEach(s => sectionsSet.add(s));
+        // Отфильтровываем скрытые
+        const sections = Array.from(sectionsSet).filter(s => !(meta[theme.id] && meta[theme.id][s] && meta[theme.id][s].hidden));
+
+        // Обёртка вокруг кнопки темы
+        const wrapper = document.createElement('span');
+        wrapper.className = 'custom-theme-wrapper';
+
+        // Основная кнопка темы
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn custom-theme-btn';
+        btn.setAttribute('data-filter', theme.id);
+        btn.setAttribute('data-custom-theme', theme.id);
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'theme-label';
+        labelSpan.textContent = theme.label;
+        btn.appendChild(labelSpan);
+
+        if (sections.length > 0) {
+            const arrow = document.createElement('span');
+            arrow.className = 'arrow';
+            arrow.innerHTML = '▼';
+            btn.appendChild(arrow);
+            btn.classList.add('has-sections');
+        }
+
+        // ============ МЕНЮ ПОДТЕМ ============
+        let menu = null;
+
+        if (sections.length > 0) {
+            menu = document.createElement('div');
+            menu.className = 'dropdown-menu theme-sections-menu';
+            menu.style.display = 'none';
+
+            // Просто список подтем — кнопки с классом dropdown-item
+            sections.forEach(sec => {
+                const item = document.createElement('button');
+                item.className = 'dropdown-item';
+                item.textContent = sec;
+                item.style.textAlign = 'center';
+                item.style.width = '100%';
+                item.style.display = 'block';
+                item.style.padding = '10px 14px';
+                item.style.fontSize = '0.78rem';
+                item.style.background = 'transparent';
+                item.style.border = 'none';
+                item.style.cursor = 'pointer';
+
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    filterBySection(theme.id, sec);
+                    menu.style.display = 'none';
+                    document.querySelectorAll('.theme-sections-menu').forEach(m => m.style.display = 'none');
+                    document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
+
+                    menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                });
+                menu.appendChild(item);
+            });
+        }
+
+        // ============ ОБРАБОТЧИК КЛИКА ПО КНОПКЕ ТЕМЫ ============
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+
+            if (menu) {
+                // ⚡ Запоминаем состояние ДО закрытия
+                const wasOpen = menu.style.display === 'block';
+
+                // Закрываем всё (включая это меню и стрелку)
+                if (typeof closeAllMenus === 'function') closeAllMenus();
+
+                // Если было закрыто — открываем только это
+                if (!wasOpen) {
+                    menu.style.display = 'block';
+                    btn.classList.add('open');
+                    const arrow = btn.querySelector('.arrow');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                }
+                return;
+            }
+
+            // Без подтем — просто фильтруем
+            document.querySelectorAll('.filter-btn.active, .dropdown-item.active').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = theme.id;
+            filterAndSearch();
+            if (typeof closeAllMenus === 'function') closeAllMenus();
+        });
+
+        wrapper.appendChild(btn);
+        if (menu) wrapper.appendChild(menu);
+
+        if (anchor) filterGroup.insertBefore(wrapper, anchor);
+        else filterGroup.appendChild(wrapper);
+    });
+}
+window.refreshCustomThemesUI = refreshCustomThemesUI;
+
+
+// ============================================================
+//  ОЧИСТКА ТОЛЬКО "ХРАНИЛИЩА"
+// ============================================================
+(function setupClearOrphan() {
+    const btn = document.getElementById('clearOrphanBtn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Закрываем меню
+        document.querySelectorAll('.dropdown-menu.open').forEach(m => m.classList.remove('open'));
+        document.querySelectorAll('.dropdown-toggle.open').forEach(t => t.classList.remove('open'));
+
+        const cards = JSON.parse(localStorage.getItem('myCustomCards')) || [];
+        const orphanCards = cards.filter(c => c.category === 'orphan');
+
+        if (orphanCards.length === 0) {
+            alert('В разделе "Хранилище" пусто — нечего удалять');
+            return;
+        }
+
+        if (!confirm(`Удалить ${orphanCards.length} карточку из "Хранилища"?\n\nЭто необратимо.`)) return;
+
+        const cleaned = cards.filter(c => c.category !== 'orphan');
+        localStorage.setItem('myCustomCards', JSON.stringify(cleaned));
+        
+        if (typeof showToast === 'function') {
+            showToast(`🗑 Удалено: ${orphanCards.length} карточек`);
+        } else {
+            alert(`🗑 Удалено: ${orphanCards.length} карточек`);
+        }
+        
+        setTimeout(() => location.reload(), 800);
+    });
+})();
+
+// ============================================================
+//  КНОПКА "ХРАНИЛИЩЕ" — ПОКАЗЫВАТЬ ТОЛЬКО ЕСЛИ ЕСТЬ КАРТОЧКИ
+// ============================================================
+(function setupOrphanBtnVisibility() {
+    console.log('🚀 setupOrphanBtnVisibility: старт');
+
+    function checkOrphan() {
+    const btn = document.getElementById('orphanFilterBtn');
+    if (!btn) return;
+
+    const cards = JSON.parse(localStorage.getItem('myCustomCards') || '[]');
+    const orphanCount = cards.filter(c => c.category === 'orphan').length;
+
+    if (orphanCount > 0) {
+        btn.style.setProperty('display', 'flex', 'important');
+    } else {
+        btn.style.setProperty('display', 'none', 'important');
+    }
+    }
+
+    // Проверяем при загрузке
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkOrphan);
+    } else {
+        checkOrphan();
+    }
+
+    // Следим за изменениями localStorage
+    const originalSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key, value) {
+        originalSetItem(key, value);
+        if (key === 'myCustomCards') {
+            setTimeout(checkOrphan, 100);
+        }
+    };
+
+    // Раз в секунду — на всякий случай
+    setInterval(checkOrphan, 1000);
+
+    console.log('✅ setupOrphanBtnVisibility активен');
+})();
+
+// ============================================================
+//  КНОПКА "⚙" ДЛЯ РАСКРЫТИЯ ДЕЙСТВИЙ НА КАРТОЧКЕ
+// ============================================================
+(function setupCardActionsToggle() {
+    function addToggleButtons() {
+        document.querySelectorAll('.card:not(.actions-toggle-added)').forEach(card => {
+            card.classList.add('actions-toggle-added');
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'card-toggle-actions';
+            toggleBtn.innerHTML = '⚙';
+            toggleBtn.title = 'Действия';
+            toggleBtn.type = 'button';
+
+            // ⚡ Клик (десктоп + синтетический клик на мобильных)
+            toggleBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                card.classList.toggle('actions-open');
+                return false;
+            }, true);
+
+            // ⚡ Touch: обрабатываем сами, preventDefault — чтобы не было синтетического клика
+            let gearTouchMoved = false;
+            let gearStartX = 0, gearStartY = 0;
+
+            toggleBtn.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+                gearTouchMoved = false;
+                const t = e.touches[0];
+                gearStartX = t.clientX;
+                gearStartY = t.clientY;
+            }, { passive: true });
+
+            toggleBtn.addEventListener('touchmove', function(e) {
+                const t = e.touches[0];
+                if (Math.abs(t.clientX - gearStartX) > 10 || Math.abs(t.clientY - gearStartY) > 10) {
+                    gearTouchMoved = true;
+                }
+                e.stopPropagation();
+            }, { passive: true });
+
+            toggleBtn.addEventListener('touchend', function(e) {
+                e.stopPropagation();
+                e.preventDefault();          // ⚡ важно: отменяем синтетический click
+                if (!gearTouchMoved) {
+                    card.classList.toggle('actions-open');
+                }
+            }, { passive: false });          // ⚡ passive: false — иначе preventDefault не сработает
+
+            card.appendChild(toggleBtn);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addToggleButtons);
+    } else {
+        addToggleButtons();
+    }
+
+    const observer = new MutationObserver(() => {
+        setTimeout(addToggleButtons, 100);
+    });
+    const grid = document.getElementById('cardsGrid');
+    if (grid) observer.observe(grid, { childList: true, subtree: false });
+
+    console.log('✅ Кнопка "⚙" на карточках активна');
+})();
+
+// ============================================================
+//  ПЕРЕХВАТ КЛИКА ПО ШЕСТЕРЁНКЕ — ГЛОБАЛЬНО
+// ============================================================
+(function setupGearClickInterceptor() {
+    console.log('🚀 setupGearClickInterceptor: старт');
+
+    // Перехватываем клик по шестерёнке НА УРОВНЕ ДОКУМЕНТА
+    // capture: true → срабатывает раньше всех остальных обработчиков
+    document.addEventListener('click', function(e) {
+        const gear = e.target.closest('.card-toggle-actions');
+        if (!gear) return;
+
+        // ⚡ Блокируем ВСЁ, что могло бы сработать дальше
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        // Находим карточку
+        const card = gear.closest('.card');
+        if (!card) return;
+
+        // Переключаем видимость кнопок действий
+        card.classList.toggle('actions-open');
+        console.log('⚙ Действия:', card.classList.contains('actions-open') ? 'открыты' : 'закрыты');
+
+        return false;
+    }, true);   // ⚡ capture: true — ОБЯЗАТЕЛЬНО
+
+    // То же самое для touch-событий (мобильные)
+    document.addEventListener('touchstart', function(e) {
+        const gear = e.target.closest('.card-toggle-actions');
+        if (!gear) return;
+        e.stopPropagation();
+    }, { capture: true, passive: true });
+
+    console.log('✅ setupGearClickInterceptor активен');
+})();
+
+// ============================================================
+//  КАСТОМНЫЙ ДРОПДАУН КАТЕГОРИИ В МОДАЛКЕ
+// ============================================================
+(function setupCategoryDropdown() {
+    const toggle = document.getElementById('categoryToggle');
+    const menu = document.getElementById('categoryMenu');
+    const hidden = document.getElementById('fieldCategory');
+    const customBlock = document.getElementById('categoryCustom');
+
+    if (!toggle || !menu || !hidden) {
+        console.warn('⚠️ Кастомный дропдаун категории не найден');
+        return;
+    }
+
+    // Собрать все опции
+    function getOptionLabel(value) {
+        const allOpts = menu.querySelectorAll('.cat-option');
+        for (const opt of allOpts) {
+            if (opt.dataset.value === value) return opt.textContent.trim();
+        }
+        // Кастомная тема
+        const theme = (window.customThemes || []).find(t => t.id === value);
+        if (theme) return '📁 ' + theme.label;
+        return value;
+    }
+
+    // Обновить визуальный label в кнопке
+    function updateLabel(value) {
+        const label = toggle.querySelector('.cat-label');
+        if (label) label.textContent = getOptionLabel(value);
+    }
+
+    // Установить значение + подсветить выбранное
+    function setValue(value) {
+    hidden.value = value;
+    updateLabel(value);
+
+    menu.querySelectorAll('.cat-option').forEach(opt => {
+        opt.classList.toggle('selected', opt.dataset.value === value);
+    });
+
+    // ⚡ Обновляем список секций при смене категории
+    if (typeof window.refreshSectionDropdown === 'function') {
+        setTimeout(() => window.refreshSectionDropdown(), 50);
+    }
+    }
+
+    // Обновить список кастомных тем в меню
+    function refreshCustomThemes() {
+        if (!customBlock) return;
+        customBlock.innerHTML = '';
+
+        const themes = window.customThemes || [];
+        if (themes.length === 0) return;
+
+        const title = document.createElement('div');
+        title.className = 'cat-custom-title';
+        title.textContent = 'Мои темы';
+        customBlock.appendChild(title);
+
+        themes.forEach(theme => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'cat-option';
+            btn.dataset.value = theme.id;
+            btn.textContent = theme.label;
+
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                setValue(theme.id);
+                closeMenu();
+            });
+
+            customBlock.appendChild(btn);
+        });
+    }
+
+    // Открыть/закрыть меню
+    function openMenu() {
+        toggle.classList.add('open');
+        menu.classList.add('open');
+    }
+    function closeMenu() {
+        toggle.classList.remove('open');
+        menu.classList.remove('open');
+    }
+    function toggleMenu() {
+        if (menu.classList.contains('open')) closeMenu();
+        else openMenu();
+    }
+
+    // Клик по кнопке
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleMenu();
+    });
+
+    // Клик по стандартной опции
+    menu.querySelectorAll('.cat-option').forEach(opt => {
+        if (opt.closest('.cat-custom')) return; // кастомные обрабатываем отдельно
+        opt.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setValue(this.dataset.value);
+            closeMenu();
+        });
+    });
+
+    // Закрытие по клику вне
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#categoryDropdown')) {
+            closeMenu();
+        }
+    });
+
+    // Закрытие по ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMenu();
+    });
+
+    // Публичный API — чтобы внешние места могли менять значение
+    window.setCategoryValue = function(value) {
+        refreshCustomThemes();
+        setValue(value);
+    };
+
+    // Первичная инициализация
+    refreshCustomThemes();
+    setValue(hidden.value || 'theory');
+
+    console.log('✅ Кастомный дропдаун категории активен');
+})();
+
+// ============================================================
+//  КАСТОМНЫЕ ДРОПДАУНЫ: СЕКЦИЯ + ЦВЕТ ТЕГА
+// ============================================================
+(function setupSectionAndColorDropdowns() {
+
+    // ─── Универсальная функция для дропдауна ───
+    function setupDropdown(toggleId, menuId, hiddenId) {
+        const toggle = document.getElementById(toggleId);
+        const menu = document.getElementById(menuId);
+        const hidden = document.getElementById(hiddenId);
+        if (!toggle || !menu || !hidden) {
+            console.warn(`⚠️ Не найдены элементы для ${toggleId}`);
+            return null;
+        }
+
+        // Клик по кнопке — открыть/закрыть
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            // Закрываем все другие
+            document.querySelectorAll('.cat-toggle.open').forEach(t => {
+                if (t !== toggle) t.classList.remove('open');
+            });
+            document.querySelectorAll('.cat-menu.open').forEach(m => {
+                if (m !== menu) m.classList.remove('open');
+            });
+            toggle.classList.toggle('open');
+            menu.classList.toggle('open');
+        });
+
+        // Закрытие по клику вне
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#' + toggleId.replace('Toggle', 'Dropdown'))) {
+                toggle.classList.remove('open');
+                menu.classList.remove('open');
+            }
+        });
+
+        return { toggle, menu, hidden };
+    }
+
+    // ─── Инициализация дропдауна "Секция" ───
+    const sectionDD = setupDropdown('sectionToggle', 'sectionMenu', 'fieldSection');
+
+    // ─── Инициализация дропдауна "Цвет тега" ───
+    const colorDD = setupDropdown('colorToggle', 'colorMenu', 'fieldTagColor');
+
+    // ─── Клик по опциям цвета ───
+    if (colorDD) {
+        colorDD.menu.querySelectorAll('.cat-option').forEach(opt => {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const value = this.dataset.value;
+                const label = this.textContent.trim();
+
+                colorDD.hidden.value = value;
+
+                // Обновляем лейбл с кружком
+                const dotColor = this.querySelector('.color-dot')?.style.background || '#ccc';
+                const labelEl = colorDD.toggle.querySelector('.cat-label');
+                labelEl.innerHTML = `<span class="color-dot" style="background: ${dotColor}; display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle;"></span> ${label}`;
+
+                // Подсветка выбранного
+                colorDD.menu.querySelectorAll('.cat-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+
+                colorDD.toggle.classList.remove('open');
+                colorDD.menu.classList.remove('open');
+            });
+        });
+    }
+
+    // ─── Функция обновления секций (сейчас не нужна, но пригодится) ───
+    window.refreshSectionDropdown = function() {
+        if (!sectionDD) return;
+        const categoryId = document.getElementById('fieldCategory')?.value || '';
+        const theme = (window.customThemes || []).find(t => t.id === categoryId);
+        const extra = JSON.parse(localStorage.getItem('myExtraSections') || '{}');
+        const sections = [
+            ...(theme?.sections || []),
+            ...(extra[categoryId] || [])
+        ];
+
+        sectionDD.menu.innerHTML = '';
+
+        // Всегда добавляем "— Без секции —"
+        const emptyOpt = document.createElement('button');
+        emptyOpt.type = 'button';
+        emptyOpt.className = 'cat-option';
+        emptyOpt.dataset.value = '';
+        emptyOpt.textContent = '— Без секции —';
+        emptyOpt.addEventListener('click', function(e) {
+            e.stopPropagation();
+            sectionDD.hidden.value = '';
+            sectionDD.toggle.querySelector('.cat-label').textContent = '— Без секции —';
+            sectionDD.toggle.classList.remove('open');
+            sectionDD.menu.classList.remove('open');
+        });
+        sectionDD.menu.appendChild(emptyOpt);
+
+        // Добавляем подтемы
+        sections.forEach(sec => {
+            const opt = document.createElement('button');
+            opt.type = 'button';
+            opt.className = 'cat-option';
+            opt.dataset.value = sec;
+            opt.textContent = sec;
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sectionDD.hidden.value = sec;
+                sectionDD.toggle.querySelector('.cat-label').textContent = sec;
+                sectionDD.toggle.classList.remove('open');
+                sectionDD.menu.classList.remove('open');
+            });
+            sectionDD.menu.appendChild(opt);
+        });
+    };
+
+    // Вызываем при смене категории
+    const catHidden = document.getElementById('fieldCategory');
+    if (catHidden) {
+        const observer = new MutationObserver(() => {
+            if (window.refreshSectionDropdown) window.refreshSectionDropdown();
+        });
+        observer.observe(catHidden, { attributes: true, attributeFilter: ['value'] });
+    }
+
+    // Публичный API — для редактирования карточки
+    window.setSectionValue = function(value) {
+        if (!sectionDD) return;
+        if (window.refreshSectionDropdown) window.refreshSectionDropdown();
+        sectionDD.hidden.value = value || '';
+        const labelEl = sectionDD.toggle.querySelector('.cat-label');
+        labelEl.textContent = value || '— Без секции —';
+    };
+
+    window.setColorValue = function(value) {
+        if (!colorDD) return;
+        colorDD.hidden.value = value || 'blue';
+        const opt = colorDD.menu.querySelector(`.cat-option[data-value="${value}"]`);
+        if (opt) {
+            const dotColor = opt.querySelector('.color-dot')?.style.background || '#ccc';
+            const labelText = opt.textContent.trim();
+            const labelEl = colorDD.toggle.querySelector('.cat-label');
+            labelEl.innerHTML = `<span class="color-dot" style="background: ${dotColor}; display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle;"></span> ${labelText}`;
+            colorDD.menu.querySelectorAll('.cat-option').forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+        }
+    };
+
+    console.log('✅ Дропдауны "Секция" и "Цвет тега" активны');
+})();
+
+// ============================================================
+//  КАСТОМНЫЙ ДРОПДАУН ЦВЕТА
+// ============================================================
+(function setupColorDropdown() {
+    const toggle = document.getElementById('themeColorToggle');
+    const menu = document.getElementById('themeColorMenu');
+    const hidden = document.getElementById('themeColor');
+
+    if (!toggle || !menu || !hidden) {
+        console.warn('⚠️ Кастомный дропдаун цвета не найден');
+        return;
+    }
+
+    // Установить значение
+    function setValue(value, color, label) {
+        hidden.value = value;
+        toggle.querySelector('.cat-label').textContent = label;
+        toggle.querySelector('.color-dot').style.background = color;
+
+        menu.querySelectorAll('.color-option').forEach(opt => {
+            opt.classList.toggle('selected', opt.dataset.value === value);
+        });
+    }
+
+    // Клик по опции
+    menu.querySelectorAll('.color-option').forEach(opt => {
+        opt.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            const value = this.dataset.value;
+            const color = this.dataset.color;
+            const label = this.textContent.trim();
+            setValue(value, color, label);
+            closeMenu();
+        });
+    });
+
+    // Открыть/закрыть
+    function openMenu() {
+        toggle.classList.add('open');
+        menu.classList.add('open');
+    }
+    function closeMenu() {
+        toggle.classList.remove('open');
+        menu.classList.remove('open');
+    }
+
+    toggle.addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (menu.classList.contains('open')) closeMenu();
+        else openMenu();
+    });
+
+    // Клик вне — закрыть
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#themeColorDropdown')) closeMenu();
+    });
+
+    // ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeMenu();
+    });
+
+    // Публичный API — чтобы при открытии модалки сбрасывать/устанавливать значение
+    window.setThemeColorValue = function(value) {
+        const colors = {
+            'blue': '#c5d8ef',
+            'green': '#b8d9c8',
+            'purple': '#d4c5e6',
+            'orange': '#f0d5b8',
+            'teal': '#b8d9d9',
+            'red': '#f0c5c5'
+        };
+        const labels = {
+            'blue': 'Синий',
+            'green': 'Зелёный',
+            'purple': 'Фиолетовый',
+            'orange': 'Оранжевый',
+            'teal': 'Бирюзовый',
+            'red': 'Красный'
+        };
+        setValue(value, colors[value] || '#ccc', labels[value] || value);
+    };
+
+    // Инициализация
+    setValue('orange', '#f0d5b8', 'Оранжевый');
+
+    console.log('✅ Кастомный дропдаун цвета активен');
 })();
