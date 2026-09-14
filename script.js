@@ -8063,7 +8063,7 @@ function renderCards(data) {
             if (mode === 'simple') {
                 simpleDef.style.display = 'block';
                 academicDef.style.display = 'none';
-                badge.textContent = 'Просто';
+                badge.textContent = 'Пример';
                 badge.style.background = '#e6edf6';
                 badge.style.color = '#1a2a3a';
                 metaTags.style.display = 'flex';
@@ -8276,14 +8276,14 @@ function renderCards(data) {
             
             // Блокируем клик по карточке в режиме теста
             if (card.classList.contains('quiz-mode')) {
-                return; // выходим, не переключая между "Просто" и "Определение"
+                return; // выходим, не переключая между "Пример" и "Определение"
             }
 
-            // Переключение между "Просто" и "Определение" (как было)
+            // Переключение между "Пример" и "Определение" (как было)
             if (simpleDef.style.display === 'none' || simpleDef.style.display === '') {
                 simpleDef.style.display = 'block';
                 academicDef.style.display = 'none';
-                badge.textContent = 'Просто';
+                badge.textContent = 'Пример';
                 badge.style.background = '#e6edf6';
                 badge.style.color = '#1a2a3a';
                 if (metaTags) metaTags.style.display = 'flex';
@@ -9361,8 +9361,8 @@ function refreshCustomThemesUI() {
         // Обёртка вокруг кнопки темы — для позиционирования меню
         const wrapper = document.createElement('span');
         wrapper.className = 'custom-theme-wrapper';
-        const wrapper = document.createElement('span');
-        wrapper.className = 'custom-theme-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline-block';
 
         // Основная кнопка темы
         const btn = document.createElement('button');
@@ -9394,8 +9394,9 @@ function refreshCustomThemesUI() {
         if (sections.length > 0) {
             menu = document.createElement('div');
             menu.className = 'dropdown-menu theme-sections-menu';
-            const menu = document.createElement('div');
-            menu.className = 'dropdown-menu theme-sections-menu';
+            menu.style.position = 'absolute';
+            menu.style.top = 'calc(100% + 4px)';
+            menu.style.left = '0';
             menu.style.minWidth = '180px';
             menu.style.zIndex = '300';
             menu.style.display = 'none';
@@ -9408,7 +9409,7 @@ function refreshCustomThemesUI() {
             menu.style.overflowY = 'auto';
             menu.style.animation = 'dropdownFade 0.2s ease';
 
-            // Просто список подтем
+            // список подтем
             sections.forEach(sec => {
                 const item = document.createElement('button');
                 item.className = 'dropdown-item';
