@@ -387,7 +387,7 @@ body {
     padding: 8px 18px;
     border: none;
     background: none;
-    text-align: left;
+    text-align: center;
     font-size: 0.75rem;
     font-weight: 500;
     color: #1a2a3a;
@@ -454,7 +454,7 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     padding-right: 6px;
-    padding-bottom: 80px;    /* подберите под вашу кнопку */
+    padding-bottom: 12px;    /* подберите под вашу кнопку */
     min-height: 0;
 }
 
@@ -760,9 +760,7 @@ body {
     .controls .filter-btn[data-filter="methods"],
     .controls .filter-btn[data-filter="levels"],
     .controls .filter-btn[data-filter="functional"],
-    .controls .filter-btn[data-filter="nonfunctional"] {
-        display: none !important;
-    }
+    .controls .filter-btn[data-filter="nonfunctional"]
 
     /* ===== ЖЕСТКОЕ ПЕРЕОПРЕДЕЛЕНИЕ ДЛЯ ВСЕХ ДРОПДАУНОВ (Схема, SQL, Python) ===== */
     .controls .dropdown {
@@ -3076,32 +3074,6 @@ pre {
     margin-top: auto;
 }
 
-.quiz-toggle-btn {
-    display: block;
-    width: 100%;
-    padding: 8px 0;
-    border-radius: 20px;
-    border: 1px solid #d0ddea;
-    background: white;
-    font-weight: 600;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: 0.2s;
-    color: #2a405a;
-    text-align: center;
-}
-
-.quiz-toggle-btn:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
-}
-
-.quiz-toggle-btn.active {
-    background: #6a1b9a;
-    color: white;
-    border-color: #6a1b9a;
-}
-
 .quiz-container {
     background: #f3e5f5;
     border-radius: 12px;
@@ -3150,12 +3122,59 @@ pre {
     width: 42px;
     cursor: pointer;
     font-size: 1.1rem;
-    transition: background 0.2s;
+    color: #1d3b5c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
 }
 
 .quiz-voice-btn:hover {
-    background: #c5d8ef;
+    background: linear-gradient(135deg, #7b1fa2, #6a1b9a);
+    border-color: #6a1b9a;
+    color: #ffffff;
+    transform: translateY(-2px) rotate(-8deg) scale(1.08);
+    box-shadow:
+        0 6px 18px rgba(106, 27, 154, 0.35),
+        0 0 0 4px rgba(123, 31, 162, 0.12);
 }
+
+.quiz-voice-btn:active {
+    transform: translateY(0) rotate(0) scale(0.94);
+    background: linear-gradient(135deg, #6a1b9a, #4a148c);
+    box-shadow:
+        0 2px 6px rgba(106, 27, 154, 0.4),
+        inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.quiz-voice-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(123, 31, 162, 0.25);
+}
+
+/* Когда идёт запись — пульсация */
+.quiz-voice-btn.listening {
+    background: linear-gradient(135deg, #d32f2f, #c62828);
+    border-color: #c62828;
+    color: #ffffff;
+    animation: mic-recording 1s ease-in-out infinite;
+}
+
+@keyframes mic-recording {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(198, 40, 40, 0.6);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 0 8px rgba(198, 40, 40, 0);
+    }
+}
+
 
 .quiz-action-row {
     display: flex;
@@ -3165,19 +3184,85 @@ pre {
 
 .quiz-check-btn {
     flex: 1;
-    padding: 6px 20px;
-    background: #6a1b9a;
-    color: white;
+    position: relative;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 50%, #4a148c 100%);
+    color: #ffffff;
     border: none;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: inherit;
+    letter-spacing: 0.3px;
     cursor: pointer;
-    transition: background 0.2s;
+    overflow: hidden;
+    box-shadow:
+        0 4px 14px rgba(106, 27, 154, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transition:
+        transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.25s ease,
+        background 0.3s ease;
 }
 
+/* Блик, который «пробегает» по кнопке */
+.quiz-check-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 100%
+    );
+    transition: left 0.55s ease;
+    pointer-events: none;
+}
+
+.quiz-check-btn:hover::before {
+    left: 120%;
+}
+
+/* HOVER — приподнимаем, усиливаем тень, ярче градиент */
 .quiz-check-btn:hover {
-    background: #4a1a6a;
+    background: linear-gradient(135deg, #8e24aa 0%, #7b1fa2 50%, #5e1a87 100%);
+    transform: translateY(-2px);
+    box-shadow:
+        0 8px 22px rgba(106, 27, 154, 0.5),
+        0 0 0 4px rgba(123, 31, 162, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* ACTIVE — вдавливаем */
+.quiz-check-btn:active {
+    transform: translateY(1px) scale(0.98);
+    background: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
+    box-shadow:
+        0 2px 6px rgba(106, 27, 154, 0.4),
+        inset 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Фокус для доступности */
+.quiz-check-btn:focus-visible {
+    outline: none;
+    box-shadow:
+        0 4px 14px rgba(106, 27, 154, 0.35),
+        0 0 0 4px rgba(123, 31, 162, 0.25);
+}
+
+/* Пока идёт проверка — пульсация */
+.quiz-check-btn.loading {
+    pointer-events: none;
+    animation: quiz-check-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes quiz-check-pulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(106, 27, 154, 0.35); }
+    50%      { box-shadow: 0 4px 22px rgba(106, 27, 154, 0.7); }
 }
 
 .quiz-hint-btn {
@@ -3185,13 +3270,38 @@ pre {
     border: 1px solid #d4c5e6;
     border-radius: 20px;
     width: 42px;
+    height: 42px;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+        background 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
 }
 
 .quiz-hint-btn:hover {
-    background: #e1d5f0;
+    background: linear-gradient(135deg, #ffb300, #ff8f00);
+    border-color: #ff8f00;
+    transform: translateY(-2px) scale(1.1);
+    box-shadow:
+        0 6px 18px rgba(255, 143, 0, 0.4),
+        0 0 0 4px rgba(255, 179, 0, 0.15);
+    animation: hint-wiggle 0.5s ease-in-out;
+}
+
+.quiz-hint-btn:active {
+    transform: translateY(0) scale(0.94);
+    background: linear-gradient(135deg, #ff8f00, #e65100);
+}
+
+@keyframes hint-wiggle {
+    0%, 100% { transform: translateY(-2px) scale(1.1) rotate(0deg); }
+    25%      { transform: translateY(-2px) scale(1.1) rotate(-12deg); }
+    75%      { transform: translateY(-2px) scale(1.1) rotate(12deg); }
 }
 
 .quiz-result {
@@ -4316,6 +4426,7 @@ html.pwa-mode #appLoader {
 
 /* Обертка для кастомных тем (чтобы крестики не лезли на текст) */
 .custom-theme-wrapper {
+    position: relative;
     display: inline-flex;
     align-items: stretch;
 }
@@ -4502,7 +4613,7 @@ html.pwa-mode #appLoader {
 }
 
 .theme-sections-menu .dropdown-item {
-    text-align: left;
+    text-align: center;
     padding: 8px 18px;
 }
 
@@ -4548,18 +4659,7 @@ html.pwa-mode #appLoader {
     border-top: 1px dashed #e6eef9;
 }
 
-.card.quiz-mode .quiz-toggle-btn {
-    background: #f0f5fd;
-    color: #1d3b5c;
-    border-color: #c5d8ef;
-    font-weight: 700;
-}
 
-.card.quiz-mode .quiz-toggle-btn:hover {
-    background: #1d3b5c;
-    color: white;
-    border-color: #1d3b5c;
-}
 
 /* ============================================================
    УБИРАЕМ ЛИШНИЕ ОТСТУПЫ В КАРТОЧКЕ
@@ -4611,20 +4711,17 @@ html.pwa-mode #appLoader {
 /* ============================================================
    КНОПКИ ДЕЙСТВИЙ — ТОЛЬКО В РАСКРЫТОМ РЕЖИМЕ
    ============================================================ */
-
-/* По умолчанию (свёрнутая карточка) — скрываем */
+/* ============================================================
+   КНОПКИ ДЕЙСТВИЙ — ВСЕГДА ВИДНЫ
+   ============================================================ */
 .card-actions {
-    display: none !important;
+    display: flex !important;
+    gap: 8px;
+    margin-top: 12px !important;
+    padding-top: 12px !important;
+    border-top: 1px dashed #e6eef9;
 }
 
-/* Показываем только когда карточка раскрыта */
-.card.expanded .card-actions {
-    display: flex !important;
-    margin-top: 12px !important;
-    padding-top: 10px !important;
-    border-top: 1px dashed #e6eef9;
-    animation: fadeIn 0.3s ease;
-}
 
 /* Плавное появление */
 @keyframes fadeIn {
@@ -4648,4 +4745,851 @@ html.pwa-mode #appLoader {
 
 .card .expand-btn-wrapper .expand-btn:hover {
     background: #e1ebf9 !important;
+}
+
+
+@media (max-width: 768px) {
+    .controls .filter-group {
+        position: fixed !important;
+        top: 52px !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+
+        width: 100% !important;
+        max-width: 100% !important;
+
+        /* ⚡ Ключевое: блок вместо flex */
+        display: none !important;
+        /* когда открыт — block */
+        padding: 12px 12px 80px 12px !important;
+        margin: 0 !important;
+        background: #fff !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        border: none !important;
+        border-radius: 0 !important;
+
+        /* ⚡ Скролл */
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch;
+
+        z-index: 1999 !important;
+    }
+
+    .controls .filter-group.open {
+        display: block !important;
+    }
+
+    /* ⚡ Дети — block, не flex-элементы */
+    .controls .filter-group > * {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        flex-shrink: initial !important;
+    }
+
+    /* Кнопки — на всю ширину */
+    .controls .filter-group > .filter-btn {
+        display: flex !important;
+        justify-content: center !important;
+    }
+
+    /* Дропдауны */
+    .controls .filter-group > .dropdown {
+        width: 100% !important;
+    }
+    .controls .filter-group > .dropdown > .dropdown-toggle {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    .controls .filter-group > .dropdown > .dropdown-menu {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* Кастомные темы */
+    .controls .filter-group > .custom-theme-wrapper {
+        width: 100% !important;
+    }
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu {
+        width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin-top: 4px !important;
+        position: static !important;
+    }
+}
+
+
+/* ============================================================
+   КНОПКА "НАВЕРХ / ВНИЗ" — ЕДИНСТВЕННОЕ ПРАВИЛО
+   ============================================================ */
+#scrollTopBtn.scroll-top-btn {
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 130px !important;
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 50% !important;
+    border: none !important;
+    background: #1d3b5c !important;
+    color: white !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 6px 20px rgba(29, 59, 92, 0.4) !important;
+    z-index: 999999 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    /* ⚡ Никаких scale() — размер ВСЕГДА одинаковый */
+    transform: none !important;
+    transition: background 0.2s !important;
+}
+
+#scrollTopBtn.scroll-top-btn:hover {
+    background: #2a5a7a !important;
+}
+
+#scrollTopBtn.scroll-top-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    transition: transform 0.3s ease !important;
+}
+
+#scrollTopBtn.scroll-top-btn.at-top svg {
+    transform: rotate(180deg) !important;
+}
+
+@media (max-width: 768px) {
+    #scrollTopBtn.scroll-top-btn {
+        right: 14px !important;
+        bottom: 100px !important;
+        width: 48px !important;
+        height: 48px !important;
+    }
+}
+
+/* ============================================================
+   КНОПКА ТЕМЫ — ТЕКСТ ПО ЦЕНТРУ, СТРЕЛКА СПРАВА
+   ============================================================ */
+.custom-theme-wrapper {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+.custom-theme-btn {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;   /* ⚡ текст по центру */
+    width: 100% !important;
+    padding: 10px 40px 10px 14px !important;  /* справа место под стрелку */
+    box-sizing: border-box !important;
+}
+
+/* Текст — на всю ширину, по центру */
+.custom-theme-btn .theme-label {
+    flex: 1 !important;
+    text-align: center !important;
+}
+
+/* Стрелка — абсолютно справа */
+.custom-theme-btn .arrow {
+    position: absolute !important;
+    right: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+}
+
+/* Когда стрелка повёрнута — учитываем translateY */
+.custom-theme-btn .arrow[style*="rotate"] {
+    transform: translateY(-50%) rotate(180deg) !important;
+}
+
+/* На всякий случай для мобильных */
+@media (max-width: 768px) {
+    .custom-theme-btn {
+        justify-content: center !important;
+    }
+}
+
+/* ============================================================
+   АКТИВНАЯ ПОДТЕМА — ПРИНУДИТЕЛЬНО ТЁМНЫЙ ФОН
+   ============================================================ */
+.theme-sections-menu .dropdown-item.active {
+    background: #1d3b5c !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Наведение — светло-синий */
+.theme-sections-menu .dropdown-item:hover {
+    background: #e1ebf9 !important;
+    color: #1d3b5c !important;
+}
+
+/* Активная при наведении — остаётся тёмной */
+.theme-sections-menu .dropdown-item.active:hover {
+    background: #2a5a7a !important;
+    color: white !important;
+}
+
+/* Единый стиль для ВСЕХ кнопок со стрелкой */
+.controls .dropdown-toggle,
+.controls .custom-theme-btn {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 10px 40px 10px 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+.controls .dropdown-toggle .arrow,
+.controls .custom-theme-btn .arrow {
+    position: absolute !important;
+    right: 14px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    transition: transform 0.25s ease !important;
+}
+
+.controls .dropdown-toggle.open .arrow,
+.controls .custom-theme-btn .arrow.open {
+    transform: translateY(-50%) rotate(180deg) !important;
+}
+
+/* ============================================================
+   УНИВЕРСАЛЬНЫЕ СТИЛИ: .dropdown И .custom-theme-wrapper
+   Работает ОДИНАКОВО для стандартных и автоматических тем
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+    /* ─── Обёртки ─── */
+    .controls .filter-group > .dropdown,
+    .controls .filter-group > .custom-theme-wrapper {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+    }
+
+    /* ─── Кнопки-переключатели ─── */
+    .controls .filter-group > .dropdown > .dropdown-toggle,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 10px 40px 10px 14px !important;
+        background: white !important;
+        border: 1px solid #d0ddea !important;
+        border-radius: 40px !important;
+        font-weight: 600 !important;
+        font-size: 0.8rem !important;
+        color: #2a405a !important;
+        cursor: pointer !important;
+        white-space: nowrap !important;
+    }
+
+    /* Стрелка справа у обеих */
+    .controls .filter-group > .dropdown > .dropdown-toggle .arrow,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn .arrow {
+        position: absolute !important;
+        right: 14px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        margin: 0 !important;
+        transition: transform 0.25s ease !important;
+    }
+
+    .controls .filter-group > .dropdown > .dropdown-toggle.open .arrow,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn .arrow.rotated,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn.active .arrow {
+        transform: translateY(-50%) rotate(180deg) !important;
+    }
+
+    /* ─── Меню (одинаковые) ─── */
+    .controls .filter-group > .dropdown > .dropdown-menu,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu {
+        position: static !important;
+        display: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        margin: 6px 0 0 0 !important;
+        padding: 6px 0 !important;
+        background: #f6faff !important;
+        border: 1px solid #e4ecf6 !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+        max-height: none !important;
+        overflow: visible !important;
+        animation: none !important;
+        left: auto !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+    }
+
+    .controls .filter-group > .dropdown > .dropdown-menu.open,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu.open {
+        display: block !important;
+    }
+
+    /* Меню подтем — тоже через .open, а не style.display */
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu[style*="display: block"] {
+        display: block !important;
+    }
+
+    /* ─── Пункты меню (одинаковые) ─── */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item {
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+        padding: 12px 14px !important;
+        margin: 0 !important;
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        text-align: center !important;
+        color: #1a2a3a !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        cursor: pointer !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        transition: background 0.15s, color 0.15s !important;
+    }
+
+    /* Hover */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:hover,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:hover {
+        background: #e1ebf9 !important;
+        color: #1d3b5c !important;
+    }
+
+    /* Активный */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item.active,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item.active {
+        background: #1d3b5c !important;
+        color: white !important;
+        font-weight: 600 !important;
+    }
+}
+
+/* ============================================================
+   ЕДИНЫЙ РАЗМЕР ШРИФТА У ВСЕХ КНОПОК НА МОБИЛЬНЫХ
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* Обычные кнопки фильтров */
+    .controls .filter-group > .filter-btn,
+    .controls .filter-group > .dropdown > .dropdown-toggle,
+
+    /* Кастомные темы */
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn,
+
+    /* Кнопки в остальной части панели */
+    .controls > .reset-btn,
+    .controls > .dropdown > .dropdown-toggle {
+        font-size: 0.8rem !important;    /* = 12.8px */
+        font-weight: 600 !important;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif !important;
+        letter-spacing: 0.2px !important;
+    }
+
+    /* ─── То же самое для пунктов меню ─── */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item {
+        font-size: 0.78rem !important;
+        font-weight: 500 !important;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif !important;
+    }
+}
+
+/* ============================================================
+   ЕДИНЫЙ РАЗМЕР СТРЕЛОК
+   ============================================================ */
+.controls .dropdown-toggle .arrow,
+.controls .custom-theme-btn .arrow {
+    font-size: 0.6rem !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 12px !important;
+    height: 12px !important;
+    flex-shrink: 0 !important;
+    margin: 0 !important;
+}
+
+/* На мобильных — тот же размер */
+@media (max-width: 768px) {
+    .controls .dropdown-toggle .arrow,
+    .controls .custom-theme-btn .arrow {
+        font-size: 0.6rem !important;
+        width: 12px !important;
+        height: 12px !important;
+    }
+}
+
+/* Кнопка "Без темы" */
+.filter-btn[data-filter="orphan"] {
+    background: #fff3e0 !important;
+    border-color: #f0d5b8 !important;
+    color: #e65100 !important;
+}
+.filter-btn[data-filter="orphan"]:hover {
+    background: #ffe0b2 !important;
+    border-color: #e65100 !important;
+}
+.filter-btn[data-filter="orphan"].active {
+    background: #e65100 !important;
+    color: white !important;
+    border-color: #e65100 !important;
+}
+
+/* По умолчанию кнопки скрыты */
+.card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, 
+                margin-top 0.3s, padding-top 0.3s;
+}
+
+/* Показаны только если карточка помечена .actions-open */
+.card.actions-open .card-actions {
+    max-height: 60px;
+    opacity: 1;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed #e6eef9;
+}
+
+/* ============================================================
+   ШЕСТЕРЁНКА — В САМОМ ВЕРХУ КАРТОЧКИ
+   ============================================================ */
+.card-toggle-actions {
+    position: absolute !important;
+    top: 2px !important;        /* ⚡ выносим вверх, на границу карточки */
+    right: 3px !important;      /* ⚡ и вправо, за границу */
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    border: 2px solid white !important;   /* белая обводка, чтобы "отделить" от фона */
+    background: white !important;
+    color: #6a8aaa !important;
+    font-size: 14px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0.6 !important;
+    transition: all 0.2s ease !important;
+    z-index: 10 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.card-toggle-actions:hover {
+    opacity: 1 !important;
+    background: #1d3b5c !important;
+    color: white !important;
+    transform: rotate(45deg) scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(29, 59, 92, 0.3) !important;
+}
+
+.card.actions-open .card-toggle-actions {
+    opacity: 1 !important;
+    background: #1d3b5c !important;
+    color: white !important;
+    transform: rotate(45deg) !important;
+}
+
+/* ============================================================
+   КАСТОМНЫЙ ДРОПДАУН КАТЕГОРИИ В МОДАЛКЕ
+   ============================================================ */
+.cat-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.cat-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid #d0ddea;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #2a405a;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: left;
+}
+
+.cat-toggle:hover {
+    border-color: #8aacc9;
+    background: #f6faff;
+}
+
+.cat-toggle.open {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+.cat-toggle .cat-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cat-toggle .cat-arrow {
+    font-size: 0.6rem;
+    color: #8a9fb8;
+    margin-left: 8px;
+    transition: transform 0.25s ease;
+}
+
+.cat-toggle.open .cat-arrow {
+    transform: rotate(180deg);
+}
+
+/* Выпадающий список */
+.cat-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e4ecf6;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 20, 40, 0.15);
+    padding: 6px 0;
+    z-index: 100;
+    max-height: 280px;
+    overflow-y: auto;
+    animation: dropdownFade 0.2s ease;
+}
+
+.cat-menu.open {
+    display: block;
+}
+
+/* Пункты */
+.cat-option {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: #1a2a3a;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cat-option:hover {
+    background: #f0f5fd;
+    color: #0a1929;
+}
+
+.cat-option.selected {
+    background: #1d3b5c;
+    color: white;
+    font-weight: 600;
+}
+
+/* Разделитель перед кастомными темами */
+.cat-divider {
+    height: 1px;
+    background: #e4ecf6;
+    margin: 6px 12px;
+}
+
+.cat-divider:empty {
+    display: none;
+}
+
+/* Кастомные темы */
+.cat-custom:empty {
+    display: none;
+}
+
+.cat-custom-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6a8aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 16px 4px;
+}
+
+/* Кружок цвета внутри пункта */
+.cat-option .color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.08);
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ============================================================
+   КАСТОМНЫЙ ДРОПДАУН ЦВЕТА В МОДАЛКЕ ТЕМЫ
+   ============================================================ */
+.color-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+/* Кнопка-переключатель — как у категории */
+.color-dropdown .cat-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid #d0ddea;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    color: #2a405a;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: left;
+}
+
+.color-dropdown .cat-toggle:hover {
+    border-color: #8aacc9;
+    background: #f6faff;
+}
+
+.color-dropdown .cat-toggle.open {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+.color-dropdown .cat-toggle .cat-label {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Цветной кружок */
+.color-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Опция с цветом — выравнивание по левому краю */
+.color-option {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    text-align: left !important;
+    padding: 10px 16px !important;
+}
+
+.color-option .color-dot {
+    width: 14px;
+    height: 14px;
+}
+
+/* Меню */
+.color-dropdown .cat-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e4ecf6;
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 20, 40, 0.15);
+    padding: 6px 0;
+    z-index: 100;
+    max-height: 280px;
+    overflow-y: auto;
+    animation: dropdownFade 0.2s ease;
+}
+
+.color-dropdown .cat-menu.open {
+    display: block;
+}
+
+/* ============================================================
+   КНОПКА "ПРОВЕРЬ СЕБЯ" / "ВЕРНУТЬСЯ" — ЕДИНЫЙ СТИЛЬ
+   ============================================================ */
+
+.quiz-toggle-wrapper {
+    padding: 8px 0;
+    text-align: center;
+    border-top: 1px dashed #e0e7f0;
+    margin-top: auto;
+}
+
+/* Кнопка — ВСЕГДА синяя с подсветкой */
+.quiz-toggle-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 20px;
+    border: 1px solid #c5d8ef;
+    background: #f0f5fd;        /* светло-синий фон */
+    color: #1d3b5c;              /* тёмно-синий текст */
+    font-weight: 700;
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+/* При наведении — заливка синим */
+.quiz-toggle-btn:hover {
+    background: #1d3b5c;
+    color: white;
+    border-color: #1d3b5c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(29, 59, 92, 0.25);
+}
+
+/* При нажатии — прижимается */
+.quiz-toggle-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(29, 59, 92, 0.2);
+}
+
+/* Активное состояние (например, «Проверь себя» нажата — открыт тест) */
+.quiz-toggle-btn.active {
+    background: #f0f5fd;
+    color: #1d3b5c;
+    border-color: #c5d8ef;
+    font-weight: 700;
+}
+
+
+
+/* Мобильные */
+@media (max-width: 480px) {
+    .quiz-toggle-btn {
+        font-size: 0.75rem;
+        padding: 8px 0;
+    }
+}
+
+/* ============================================================
+   КНОПКА "ПРОВЕРЬ СЕБЯ" / "ВЕРНУТЬСЯ" — ЕДИНЫЙ БЕЛЫЙ СТИЛЬ
+   ============================================================ */
+
+.quiz-toggle-wrapper {
+    padding: 8px 0;
+    text-align: center;
+    border-top: 1px dashed #e0e7f0;
+    margin-top: auto;
+}
+
+.quiz-toggle-btn {
+    display: block;
+    width: 100%;
+    padding: 10px 0;
+    border-radius: 20px;
+    border: 1px solid #d0ddea;
+    background: white;             /* ⚪ БЕЛЫЙ */
+    color: #2a405a;                 /* обычный тёмный текст */
+    font-weight: 600;
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+/* Hover — та же логика, что у обычной кнопки */
+.quiz-toggle-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+    color:#2a405a;
+}
+
+/* Нажатие — прижимается */
+.quiz-toggle-btn:active {
+    transform: scale(0.98);
+}
+
+/* Никаких разных стилей для режима теста */
+.card.quiz-mode .quiz-toggle-btn {
+    background: white;
+    color: #2a405a;
+    border-color: #d0ddea;
+    font-weight: 600;
+}
+
+.card.quiz-mode .quiz-toggle-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+
+.card-toggle-actions {
+    /* ...существующие стили... */
+    touch-action: manipulation;   /* ⚡ отключает двойной тап-зум, ускоряет реакцию */
+    -webkit-tap-highlight-color: transparent;   /* ⚡ убирает подсветку при тапе */
+}
+
+/* ============================================================
+   СКРЫТИЕ КНОПКИ "НАВЕРХ/ВНИЗ" ПРИ ОТКРЫТОМ БУРГЕР-МЕНЮ
+   ============================================================ */
+body.burger-open #scrollTopBtn.scroll-top-btn {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transform: translateY(20px) !important;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s !important;
 }
