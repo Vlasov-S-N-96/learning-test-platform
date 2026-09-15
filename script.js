@@ -6353,6 +6353,18 @@ function getAllTermsForRender() {
     return all.filter(function (c) { return window.hiddenCardIds.indexOf(c.id) === -1; });
 }
 
+// ============================================================
+//  СБРОС НАЗВАНИЙ КАСТОМНЫХ ТЕМ 
+// ============================================================
+window.resetAllThemeLabels = function() {
+    (window.customThemes || []).forEach(theme => {
+        const btn = document.querySelector(`.custom-theme-btn[data-custom-theme="${theme.id}"]`);
+        if (btn) {
+            const labelSpan = btn.querySelector('.theme-label');
+            if (labelSpan) labelSpan.textContent = theme.label;
+        }
+    });
+};
 
 // ================================================================
 //  СУПЕР-РАСШИРЕННЫЙ СЛОВАРЬ СИНОНИМОВ
@@ -7206,7 +7218,7 @@ function loadVoices() {
     menu.innerHTML = '';
     const autoItem = document.createElement('button');
     autoItem.className = 'dropdown-item' + (selectedVoice === null ? ' active' : '');
-    autoItem.textContent = 'Авто (системный голос)';
+    autoItem.textContent = 'Выбор озвучки (автоматически)';
     autoItem.dataset.voice = '';
     autoItem.addEventListener('click', () => selectVoice(null));
     menu.appendChild(autoItem);
@@ -7238,7 +7250,7 @@ function selectVoice(voice) {
 function updateVoiceToggleText() {
     const toggle = document.getElementById('voiceToggle');
     if (!toggle) return;
-    const text = selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'Авто (системный голос)';
+    const text = selectedVoice ? `${selectedVoice.name} (${selectedVoice.lang})` : 'Выбор голоса';
     toggle.innerHTML = `${text} <span class="arrow">▼</span>`;
 }
 
@@ -7247,10 +7259,17 @@ function updateExpandButtonVisibility(card) {
     const content = card.querySelector('.card-content');
     const btnWrapper = card.querySelector('.expand-btn-wrapper');
     if (!content || !btnWrapper) return;
+
+    // В режиме теста — не трогаем, там свои правила
+    if (card.classList.contains('quiz-mode')) return;
+
+    // Раскрытая карточка — кнопка "Свернуть" всегда видна
     if (card.classList.contains('expanded')) {
         btnWrapper.style.display = 'block';
         return;
     }
+
+    // Свёрнутая — показываем "Показать полностью" только если контент не влезает
     const hasScroll = content.scrollHeight > content.clientHeight + 1;
     btnWrapper.style.display = hasScroll ? 'block' : 'none';
 }
@@ -7588,7 +7607,6 @@ function renderCards(data) {
             </div>
 
             <div class="expand-btn-wrapper">
-                <div class="fade"></div>
                 <button class="expand-btn">Показать полностью ▼</button>
             </div>
         `;
@@ -8317,42 +8335,90 @@ function renderCards(data) {
 
         observeCardContent(card);
 
-        // ===== СВАЙПЫ НА КОМПЬЮТЕРЕ И МОБИЛЬНЫХ =====
+        /* ============================================================
+        СВАЙП КАРТОЧКИ (touch)
+        ============================================================ */
         let isDragging = false;
         let startX = 0, startY = 0, currentX = 0;
+        let touchStartedHere = false;       // ⚡ тач начался именно на этой карточке
 
-        // Touch-события
+        // Запрещено свайпать при открытом бургер-меню
+        function isBurgerOpen() {
+            return document.body.classList.contains('burger-open');
+        }
+
+        // Что игнорируем при свайпе (все интерактивные элементы)
+        function isInteractiveTarget(el) {
+            if (!el) return false;
+            return !!(el.closest('.card-toggle-actions') ||
+                    el.closest('.card-actions') ||
+                    el.closest('.speed-controls') ||
+                    el.closest('.speak-btn') ||
+                    el.closest('.speed-btn') ||
+                    el.closest('.expand-btn') ||
+                    el.closest('.edit-card-btn') ||
+                    el.closest('.delete-card-btn') ||
+                    el.closest('.quiz-toggle-wrapper') ||
+                    el.closest('.quiz-input') ||
+                    el.closest('.quiz-check-btn') ||
+                    el.closest('.quiz-hint-btn') ||
+                    el.closest('.quiz-voice-btn') ||
+                    el.closest('.dropdown-menu') ||
+                    el.closest('.cat-menu'));
+        }
+
         card.addEventListener('touchstart', function(e) {
-            if (e.target.closest('.speed-controls') || e.target.closest('.speak-btn') || e.target.closest('.speed-btn')) return;
-            if (e.target.closest('.expand-btn')) return;
-            if (e.target.closest('.edit-card-btn') || e.target.closest('.delete-card-btn')) return;
-            if (e.target.closest('.card-toggle-actions')) return;   // ⚙️
-            if (e.target.closest('.card-actions')) return;          // блок с кнопками
-            if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
+            if (isBurgerOpen()) return;                // ⚡ меню открыто — не свайпаем
+            if (isInteractiveTarget(e.target)) return;
+
+            const t = e.touches[0];
+            startX = t.clientX;
+            startY = t.clientY;
             currentX = 0;
             isDragging = false;
+            touchStartedHere = true;
         }, { passive: true });
 
-        
+        card.addEventListener('touchmove', function(e) {
+            if (!touchStartedHere) return;
+            if (isBurgerOpen()) { touchStartedHere = false; return; }
+
+            const t = e.touches[0];
+            const diffX = t.clientX - startX;
+            const diffY = t.clientY - startY;
+
+            // Горизонтальный свайп: X > 15px и заметно больше Y
+            if (Math.abs(diffX) > 15 && Math.abs(diffX) > Math.abs(diffY) * 1.2) {
+                isDragging = true;
+                currentX = diffX;
+
+                // ⚡ Отменяем вертикальный скролл страницы — но ТОЛЬКО для этого жеста
+                if (e.cancelable) e.preventDefault();
+
+                this.style.transition = 'none';
+                this.style.transform = `translateX(${diffX}px) rotate(${diffX / 20}deg)`;
+                this.style.opacity = 1 - (Math.abs(diffX) / 500);
+            }
+        }, { passive: false });   // passive: false нужен для preventDefault
+
         card.addEventListener('touchend', function(e) {
-            if (e.target.closest('.card-toggle-actions')) return;
-            if (e.target.closest('.card-actions')) return;
+            if (!touchStartedHere) return;
+            touchStartedHere = false;
+
             if (!isDragging) return;
+            isDragging = false;
+
             this.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+
             if (Math.abs(currentX) > 100) {
                 const isRight = currentX > 0;
                 learnedCards[item.id] = { known: isRight, date: new Date().toISOString() };
                 localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
-                
-                // ===== ДОБАВЛЕНО: Запись свайпа в статистику =====
+
                 saveResult(item.term, item.category, isRight ? 100 : 0);
                 updateDashboard();
-                // =================================================
-
                 refreshSummary();
+
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
                 setTimeout(() => {
@@ -8367,7 +8433,14 @@ function renderCards(data) {
                 this.style.opacity = '';
                 setTimeout(() => { this.style.transition = ''; }, 400);
             }
+        }, { passive: true });
+
+        card.addEventListener('touchcancel', function() {
+            touchStartedHere = false;
             isDragging = false;
+            this.style.transition = '';
+            this.style.transform = '';
+            this.style.opacity = '';
         }, { passive: true });
 
 
@@ -8586,6 +8659,7 @@ function setupDropdown(toggleId, menuId) {
             this.classList.add('active');
             currentFilter = filter;
             filterAndSearch();
+            window.resetAllThemeLabels();   
             toggle.innerHTML = `${this.textContent.trim()} <span class="arrow">▼</span>`;
 
             // ⚡ Закрываем ИМЕННО этот дропдаун (стрелка сбросится)
@@ -8644,6 +8718,9 @@ document.querySelectorAll('.filter-btn:not(.dropdown-toggle):not(.custom-theme-b
         this.classList.add('active');
         currentFilter = filter;
         filterAndSearch();
+                currentFilter = filter;
+        filterAndSearch();
+        window.resetAllThemeLabels();     
         closeAllDropdowns();
         if (window.innerWidth <= 768) {
             burgerBtn.classList.remove('active');
@@ -8676,7 +8753,13 @@ if (resetBtn) {
         if (resetTapCount === 2) {
             clearTimeout(resetTapTimer);
             resetTapCount = 0;
-            if (confirm('Сбросить всю статистику изученных карточек?')) {
+            if (confirm('📖 Сбросить весь прогресс изучения?\n\n' +
+                        '• ✅ Знаю → 0\n' +
+                        '• ❌ Не знаю → 0\n' +
+                        '• 📖 Осталось → все карточки\n\n' +
+                        'Статистика ответов (уровень, баллы) НЕ затронется.\n' +
+                        'Ваши карточки и темы останутся.\n\n' +
+                        'Продолжить?')) {
                 learnedCards = {};
                 localStorage.removeItem('myLearnedCards');
                 swipeSummary.style.display = 'none';
@@ -8694,6 +8777,7 @@ if (resetBtn) {
                     filterGroup.classList.remove('open');
                 }
                 renderCards(getTermsForCurrentFilter());
+                window.resetAllThemeLabels(); 
             }
             return;
         }
@@ -9503,6 +9587,9 @@ function refreshCustomThemesUI() {
                     // Подсветим выбранную
                     menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
+
+                    burgerBtn.classList.remove('active');
+                    filterGroup.classList.remove('open');
                 });
                 menu.appendChild(item);
             });
@@ -9539,6 +9626,9 @@ function refreshCustomThemesUI() {
             currentFilter = theme.id;
             filterAndSearch();
             if (typeof closeAllDropdowns === 'function') closeAllDropdowns();
+
+            burgerBtn.classList.remove('active');
+            filterGroup.classList.remove('open');
         });
 
         wrapper.appendChild(btn);
@@ -10010,6 +10100,11 @@ function filterBySection(themeId, section) {
     });
     updateVisibleCount();
     refreshSummary();
+
+    // ⚡ Закрываем бургер + подменю тем
+    if (typeof window.closeBurgerMenu === 'function') window.closeBurgerMenu();
+    document.querySelectorAll('.theme-sections-menu').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.custom-theme-btn .arrow').forEach(a => a.style.transform = '');
 }
 
 // ============================================================
@@ -10285,18 +10380,31 @@ function filterBySection(themeId, section) {
         if (section.hidden) {
             actions = `<button class="btn-restore" data-action="restore-section" data-theme-id="${themeId}" data-section="${section.name}">↩ Вернуть</button>`;
         } else {
-            // Скрыть подтему — всегда
-            actions += `<button class="btn-hide" data-action="hide-section" data-theme-id="${themeId}" data-section="${section.name}" title="Скрыть">👁</button>`;
-            
-            // Удалить — только для новых
-            if (section.canDelete) {
-                actions += `<button class="btn-delete" data-action="delete-section" data-theme-id="${themeId}" data-section="${section.name}" title="Удалить навсегда">🗑</button>`;
-            }
+            // ✎ Переименовать
+            actions += `<button class="btn-rename" 
+                                data-action="rename-section" 
+                                data-theme-id="${themeId}" 
+                                data-section="${section.name}" 
+                                title="Переименовать">✎</button>`;
+
+            // 👁 Скрыть
+            actions += `<button class="btn-hide" 
+                                data-action="hide-section" 
+                                data-theme-id="${themeId}" 
+                                data-section="${section.name}" 
+                                title="Скрыть">👁</button>`;
+
+            // 🗑 Удалить — для ВСЕХ подтем
+            actions += `<button class="btn-delete" 
+                                data-action="delete-section" 
+                                data-theme-id="${themeId}" 
+                                data-section="${section.name}" 
+                                title="Удалить навсегда">🗑</button>`;
         }
 
         item.innerHTML = `
             <div class="theme-info" style="font-size:0.85rem;">
-                <span>└ ${section.name}</span>
+                <span>${section.name}</span>
             </div>
             <div class="theme-actions">${actions}</div>
         `;
@@ -10446,15 +10554,72 @@ function filterBySection(themeId, section) {
         const renames = getRenames();
         const hidden = getHidden();
 
-        // ========== ПЕРЕИМЕНОВАНИЕ ТЕМЫ ==========
-        if (action === 'rename') {
-            const current = findCurrentLabel(id);
-            const newName = prompt('Новое название:', current);
-            if (newName && newName.trim() && newName.trim() !== current) {
-                renames[id] = newName.trim();
-                setRenames(renames);
-                applyRenameToDOM(id, newName.trim());
-                renderList();
+        // ========== ПЕРЕИМЕНОВАНИЕ ПОДТЕМЫ ==========
+        if (action === 'rename-section') {
+            const currentLabel = sectionName;
+            const newName = prompt('Новое название подтемы:', currentLabel);
+            
+            if (!newName || !newName.trim() || newName.trim() === currentLabel) return;
+            const trimmedNew = newName.trim();
+
+            // 1. myExtraSections — если подтема была там
+            const extra = JSON.parse(localStorage.getItem('myExtraSections') || '{}');
+            if (extra[themeId]) {
+                const idx = extra[themeId].indexOf(currentLabel);
+                if (idx !== -1) extra[themeId][idx] = trimmedNew;
+                localStorage.setItem('myExtraSections', JSON.stringify(extra));
+            }
+
+            // 2. theme.sections — если подтема в кастомной теме
+            const themes = JSON.parse(localStorage.getItem('myCustomThemes')) || [];
+            const theme = themes.find(t => t.id === themeId);
+            if (theme && theme.sections) {
+                const idx = theme.sections.indexOf(currentLabel);
+                if (idx !== -1) theme.sections[idx] = trimmedNew;
+                localStorage.setItem('myCustomThemes', JSON.stringify(themes));
+                window.customThemes = themes;
+            }
+
+            // 3. mySectionMeta — переносим настройки под новое имя
+            const meta2 = JSON.parse(localStorage.getItem('mySectionMeta')) || {};
+            if (meta2[themeId] && meta2[themeId][currentLabel]) {
+                meta2[themeId][trimmedNew] = meta2[themeId][currentLabel];
+                delete meta2[themeId][currentLabel];
+                localStorage.setItem('mySectionMeta', JSON.stringify(meta2));
+            }
+
+            // 4. Карточки — обновляем поле section у всех, где оно совпадало
+            let cardsUpdated = 0;
+            // Базовые карточки (override)
+            const overrides = JSON.parse(localStorage.getItem('myCardOverrides') || '{}');
+            Object.keys(overrides).forEach(id => {
+                if (overrides[id].section === currentLabel && overrides[id].category === themeId) {
+                    overrides[id].section = trimmedNew;
+                    cardsUpdated++;
+                }
+            });
+            localStorage.setItem('myCardOverrides', JSON.stringify(overrides));
+            window.cardOverrides = overrides;
+
+            // Кастомные карточки
+            const customCards = JSON.parse(localStorage.getItem('myCustomCards') || '[]');
+            customCards.forEach(c => {
+                if (c.section === currentLabel && c.category === themeId) {
+                    c.section = trimmedNew;
+                    cardsUpdated++;
+                }
+            });
+            localStorage.setItem('myCustomCards', JSON.stringify(customCards));
+            window.customCards = customCards;
+
+            // 5. Обновляем UI
+            if (typeof refreshCustomThemesUI === 'function') refreshCustomThemesUI();
+            if (typeof renderCards === 'function') renderCards(getAllTermsForRender());
+            if (typeof filterAndSearch === 'function') filterAndSearch();
+            renderList();
+
+            if (typeof showToast === 'function') {
+                showToast(`✅ Переименовано: ${currentLabel} → ${trimmedNew}${cardsUpdated ? ` (обновлено карточек: ${cardsUpdated})` : ''}`);
             }
             return;
         }
@@ -10534,7 +10699,7 @@ function filterBySection(themeId, section) {
 
         // --- Удалить подтему навсегда ---
         if (action === 'delete-section') {
-            if (confirm(`Удалить подтему "${sectionName}" НАВСЕГДА? Отменить нельзя.`)) {
+            if (confirm(`🗑 Удалить подтему "${sectionName}" НАВСЕГДА?\n\n` +`• Подтема исчезнет из фильтров\n` +`• Карточки останутся, но потеряют привязку к секции\n` +`• Отменить нельзя\n\n` +`Продолжить?`)) {
                 // Из myExtraSections
                 const extra = JSON.parse(localStorage.getItem('myExtraSections')) || {};
                 if (extra[themeId]) {
@@ -10856,7 +11021,12 @@ function updateScrollBtnState() {
     const btn = document.getElementById('scrollTopBtn');
     if (!btn) return;
 
-    const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    // ⚡ Универсальный способ получить позицию скролла
+    const scrollY = window.scrollY ||
+                    window.pageYOffset ||
+                    document.documentElement.scrollTop ||
+                    document.body.scrollTop ||
+                    0;
     const atTop = scrollY < 50;
 
     if (scrollY > 200) {
@@ -10893,6 +11063,13 @@ if (document.readyState === 'loading') {
         });
 
         window.addEventListener('scroll', updateScrollBtnState, { passive: true });
+        document.body.addEventListener('scroll', updateScrollBtnState, { passive: true });
+        document.documentElement.addEventListener('scroll', updateScrollBtnState, { passive: true });
+
+        // ⚡ Проверяем и на touch-события — иногда scroll не срабатывает
+        window.addEventListener('touchmove', updateScrollBtnState, { passive: true });
+        window.addEventListener('touchend', updateScrollBtnState, { passive: true });
+
         updateScrollBtnState();
 
         console.log('✅ Кнопка наверх/вниз привязана');
@@ -11031,7 +11208,6 @@ function refreshCustomThemesUI() {
                 item.style.display = 'block';
                 item.style.padding = '10px 14px';
                 item.style.fontSize = '0.78rem';
-                item.style.background = 'transparent';
                 item.style.border = 'none';
                 item.style.cursor = 'pointer';
 
@@ -11044,6 +11220,22 @@ function refreshCustomThemesUI() {
 
                     menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
                     this.classList.add('active');
+
+                    // ⚡ Меняем текст на кнопке темы: "Тест" → "Тест · Тест1"
+                    const themeBtn = document.querySelector(`.custom-theme-btn[data-custom-theme="${theme.id}"]`);
+                    if (themeBtn) {
+                        const labelSpan = themeBtn.querySelector('.theme-label');
+                        if (labelSpan) {
+                            labelSpan.textContent = sec;
+                        }
+                    }
+
+                    // ⚡ Закрываем бургер на мобильных
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('burgerBtn')?.classList.remove('active');
+                        document.getElementById('filterGroup')?.classList.remove('open');
+                        document.body.classList.remove('burger-open');
+                    }
                 });
                 menu.appendChild(item);
             });
@@ -11054,13 +11246,9 @@ function refreshCustomThemesUI() {
             e.stopPropagation();
 
             if (menu) {
-                // ⚡ Запоминаем состояние ДО закрытия
+                // Кастомная тема С подтемами — открываем/закрываем подменю, бургер НЕ трогаем
                 const wasOpen = menu.style.display === 'block';
-
-                // Закрываем всё (включая это меню и стрелку)
                 if (typeof closeAllMenus === 'function') closeAllMenus();
-
-                // Если было закрыто — открываем только это
                 if (!wasOpen) {
                     menu.style.display = 'block';
                     btn.classList.add('open');
@@ -11070,12 +11258,15 @@ function refreshCustomThemesUI() {
                 return;
             }
 
-            // Без подтем — просто фильтруем
+            // Кастомная тема БЕЗ подтем — фильтруем + закрываем бургер
             document.querySelectorAll('.filter-btn.active, .dropdown-item.active').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             currentFilter = theme.id;
             filterAndSearch();
             if (typeof closeAllMenus === 'function') closeAllMenus();
+
+            // ⚡ ЗАКРЫВАЕМ БУРГЕР
+            if (typeof window.closeBurgerMenu === 'function') window.closeBurgerMenu();
         });
 
         wrapper.appendChild(btn);
