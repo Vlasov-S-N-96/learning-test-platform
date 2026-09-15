@@ -299,16 +299,17 @@ body {
     box-sizing: border-box;
 }
 
-.controls .filter-btn:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
+.controls .filter-btn.active {
+    background: #0a1f3b;
+    color: white;
+    border-color: #0a1f3b;
+    box-shadow: 0 2px 5px rgba(10, 31, 59, 0.25);
 }
 
-.controls .filter-btn.active {
-    background: white;
-    color: #2a405a;
-    border-color: #d0ddea;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+.controls .filter-btn.active:hover {
+    background: #1d3b5c;      
+    border-color: #1d3b5c;
+    color: white;
 }
 
 .controls .stats {
@@ -405,12 +406,12 @@ body {
 }
 
 .dropdown-item:hover {
-    background: #f0f5fd;
+    background: #d3e5fa;
     color: #0a1929;
 }
 
 .dropdown-item.active {
-    background: #1d3b5c;
+    background: hsl(211, 52%, 24%);
     color: white;
 }
 
@@ -844,11 +845,13 @@ body {
     }
 
     .controls .dropdown-item:hover {
-        background: #e1ebf9;
+        background: #d3e5fa;      
+        color: #133a64;
     }
 
+
     .controls .dropdown-item.active {
-        background: #1d3b5c;
+        background: #8dbff5;
         color: white;
     }
 
@@ -1727,13 +1730,13 @@ pre {
 }
 
 .toggle-schema-btn.active {
-    background: #1d3b5c;
+    background: #0a1f3b;
     color: white;
-    border-color: #1d3b5c;
+    border-color: #0a1f3b;
 }
 
 .toggle-schema-btn.active:hover {
-    background: #2a4a6a;
+    background: #0a1f3b;
 }
 
 /* Скрытие блоков */
