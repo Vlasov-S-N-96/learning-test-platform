@@ -7533,7 +7533,7 @@ function renderCards(data) {
 
         const metaHtml = item.meta ? item.meta.map(m => `<span class="meta">${escapeHtml(m)}</span>`).join('') : '';
         const sectionBadge = item.section
-            ? `<span class="meta" style="background:#e1ebf9;color:#1d3b5c;">📁 ${escapeHtml(item.section)}</span>`
+            ? `<span class="meta" style="background:#e1ebf9;color:#0a1929;escapeHtml(item.section)}</span>`
             : '';
 
         let academicText = '';
@@ -7814,7 +7814,7 @@ function renderCards(data) {
         card.querySelector('.definition').style.display = 'none';
         card.querySelector('.academic-definition').style.display = 'block';
         const badge = card.querySelector('.mode-badge');
-        badge.style.background = '#1d3b5c';
+        badge.style.background = '#0a1929';
         badge.style.color = 'white';
         const metaTags = card.querySelector('.meta-tags');
         if (metaTags) metaTags.style.display = 'none';
@@ -8091,7 +8091,7 @@ function renderCards(data) {
                 academicDef.style.display = 'block';
                 simpleDef.style.display = 'none';
                 badge.textContent = 'Определение';
-                badge.style.background = '#1d3b5c';
+                badge.style.background = '##0a1929';
                 badge.style.color = 'white';
                 metaTags.style.display = 'none';
                 card.classList.add('mode-only-definition');
@@ -8315,7 +8315,7 @@ function renderCards(data) {
                 simpleDef.style.display = 'none';
                 academicDef.style.display = 'block';
                 badge.textContent = 'Определение';
-                badge.style.background = '#1d3b5c';
+                badge.style.background = '#0a1929';
                 badge.style.color = 'white';
                 if (metaTags) metaTags.style.display = 'none';
                 card.classList.add('mode-only-definition');
@@ -8422,11 +8422,9 @@ function renderCards(data) {
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
                 setTimeout(() => {
-                    this.classList.add('hidden');
-                    this.style.transform = '';
-                    this.style.opacity = '';
-                    this.style.transition = '';
+                    this.remove();
                     updateVisibleCount();
+                    refreshSummary();
                 }, 450);
             } else {
                 this.style.transform = '';
@@ -8510,11 +8508,9 @@ function renderCards(data) {
                 this.style.transform = `translateX(${isRight ? 200 : -200}px)`;
                 this.style.opacity = '0';
                 setTimeout(() => {
-                    this.classList.add('hidden');
-                    this.style.transform = '';
-                    this.style.opacity = '';
-                    this.style.transition = '';
+                    this.remove();
                     updateVisibleCount();
+                    refreshSummary();
                 }, 450);
             } else {
                 this.style.transform = '';
