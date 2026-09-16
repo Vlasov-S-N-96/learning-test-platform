@@ -294,21 +294,21 @@ body {
     font-family: inherit;
     cursor: pointer;
     transition: 0.2s;
-    color: #2a405a;
+    color: #0a1929;
     white-space: nowrap;
     box-sizing: border-box;
 }
 
 .controls .filter-btn.active {
-    background: #0a1f3b;
+    background: #0a1929;
     color: white;
-    border-color: #0a1f3b;
+    border-color: #0a1929;
     box-shadow: 0 2px 5px rgba(10, 31, 59, 0.25);
 }
 
 .controls .filter-btn.active:hover {
-    background: #1d3b5c;      
-    border-color: #1d3b5c;
+    background: #0a1929;      
+    border-color: #0a1929;
     color: white;
 }
 
@@ -351,9 +351,19 @@ body {
     box-sizing: border-box;
 }
 
-.dropdown-toggle:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
+@media (hover: hover) {
+    .dropdown-toggle:not(.open):hover {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+        color: #2a405a;
+    }
+}
+
+@media (hover: none) {
+    .dropdown-toggle:not(.open):active {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+    }
 }
 
 .dropdown-toggle .arrow {
@@ -398,7 +408,7 @@ body {
     text-align: center;
     font-size: 0.75rem;
     font-weight: 500;
-    color: #1a2a3a;
+    color: #0a1929;
     cursor: pointer;
     transition: 0.15s;
     font-family: inherit;
@@ -411,7 +421,7 @@ body {
 }
 
 .dropdown-item.active {
-    background: hsl(211, 52%, 24%);
+    background: #0a1929;
     color: white;
 }
 
@@ -492,8 +502,11 @@ body {
     box-sizing: border-box;
 }
 
-.card .expand-btn-wrapper .expand-btn:hover {
-    background: #e1ebf9;
+@media (hover: hover) {
+    .card .expand-btn-wrapper .expand-btn:hover {
+        background: #e1ebf9;
+        color: #2a405a;
+    }
 }
 
 .card.expanded {
@@ -816,7 +829,7 @@ body {
         background: white;
         animation: dropdownFade 0.25s ease;
         display: none;
-        padding: 4px 0;
+        padding: 0px;
         max-height: 50vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
@@ -851,7 +864,7 @@ body {
 
 
     .controls .dropdown-item.active {
-        background: #8dbff5;
+        background: #0a1929;
         color: white;
     }
 
@@ -1154,9 +1167,19 @@ pre {
     box-sizing: border-box;
 }
 
-.reset-btn:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
+@media (hover: hover) {
+    .reset-btn:hover {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+        color: #2a405a;
+    }
+}
+
+@media (hover: none) {
+    .reset-btn:active {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1719,25 +1742,43 @@ pre {
     font-family: inherit;
     cursor: pointer;
     transition: 0.2s;
-    color: #2a405a;
+    color: #0a1929;
     white-space: nowrap;
     box-sizing: border-box;
 }
 
-.toggle-schema-btn:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
+@media (hover: hover) {
+    .toggle-schema-btn:not(.active):hover {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+        color: #2a405a;
+    }
 }
 
+@media (hover: none) {
+    .toggle-schema-btn:not(.active):active {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+    }
+}
+
+
+/* Активная — тёмная */
 .toggle-schema-btn.active {
-    background: #0a1f3b;
+    background: #0a1929;
     color: white;
-    border-color: #0a1f3b;
+    border-color: #0a1929;
 }
 
-.toggle-schema-btn.active:hover {
-    background: #0a1f3b;
+@media (hover: hover) {
+    .toggle-schema-btn.active:hover {
+        background: #0a1929;    
+        border-color: #0a1929;   
+        color: white;
+        box-shadow: 0 2px 10px rgba(10, 31, 59, 0.4);
+    }
 }
+
 
 /* Скрытие блоков */
 #algorithmBlock.hidden,
@@ -1774,7 +1815,7 @@ pre {
 .testing-title {
     font-size: 1.3rem;
     font-weight: 700;
-    color: #0a1f3b;
+    color: #0a1929;
     text-align: center;
     margin-bottom: 20px;
     letter-spacing: 0.5px;
@@ -1800,7 +1841,7 @@ pre {
 .testing-section .section-header {
     font-weight: 700;
     font-size: 0.95rem;
-    color: #0a1f3b;
+    color: #0a1929;
     margin-bottom: 12px;
     padding-bottom: 6px;
     border-bottom: 2px solid #e6edf6;
@@ -1811,7 +1852,7 @@ pre {
 .level-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #1a2a3a;
+    color: #0a1929;
     text-transform: uppercase;
     letter-spacing: 0.3px;
     margin-right: 6px;
@@ -1828,7 +1869,7 @@ pre {
     font-weight: 600;
     border: 1px solid transparent;
     white-space: nowrap;
-    color: #1a2a3a;
+    color: #0a1929;
     margin: 4px 4px;
 }
 
@@ -1850,7 +1891,7 @@ pre {
 .level-divider {
     font-weight: 600;
     font-size: 0.85rem;
-    color: #0a1f3b;
+    color: #0a1929;
     text-align: center;
     margin: 6px 0 8px 0;
     padding: 4px 0;
@@ -2050,15 +2091,18 @@ pre {
     background: #fafcff;
     border: none;
     border-radius: 0 0 20px 20px;
-    color: #1d3b5c;
+    color: #0a1929;
     font-weight: 700;
     font-size: 0.8rem;
     cursor: pointer;
     transition: background 0.2s;
 }
 
-.card .expand-btn-wrapper .expand-btn:hover {
-    background: #f0f5fd;
+@media (hover: hover) {
+    .card .expand-btn-wrapper .expand-btn:hover {
+        background: #e1ebf9;
+        color: #0a1f3b;
+    }
 }
 
 .card.expanded .expand-btn-wrapper {
@@ -2069,6 +2113,18 @@ pre {
     background: transparent;
     border-top: 1px solid #e6eef9;
     padding: 14px 0;
+}
+
+@media (hover: hover) {
+    .card .expand-btn-wrapper .expand-btn:hover {
+        background: #e1ebf9;
+        color: #0a1f3b;
+    }
+
+    /* НОВОЕ ПРАВИЛО: Ховер для развернутой кнопки */
+    .card.expanded .expand-btn-wrapper .expand-btn:hover {
+        background: #e1ebf9; /* Или сделайте его чуть светлее, например #f4f8fd */
+    }
 }
 
 /* ===== СТАТИСТИКА ===== */
@@ -3456,9 +3512,19 @@ pre {
     gap: 6px;
 }
 
-.custom-theme-btn:hover {
-    background: #e1ebf9;
-    border-color: #8aacc9;
+@media (hover: hover) {
+    .custom-theme-btn:not(.active):not(.open):hover {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+        color: #2a405a;
+    }
+}
+
+@media (hover: none) {
+    .custom-theme-btn:not(.active):active {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+    }
 }
 
 .custom-theme-btn.active {
@@ -4803,4 +4869,331 @@ html.pwa-mode #appLoader {
         font-size: 1.25rem;      /* всё ещё читаемо */
         line-height: 1.3;
     }
+}
+
+@media (min-width: 1024px) {
+    .grid-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+
+/* Hover для неактивных кнопок фильтров (Все, Теория, API и т.д.) */
+@media (hover: hover) {
+    .filter-btn:not(.active):hover {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+        color: #2a405a;
+    }
+}
+
+/* Hover для активной кнопки (тёмной) */
+@media (hover: hover) {
+    .filter-btn.active:hover {
+        box-shadow: 0 2px 10px rgba(10, 31, 59, 0.4);
+    }
+}
+
+/* Для тач-устройств */
+@media (hover: none) {
+    .filter-btn:not(.active):active {
+        background: #e1ebf9;
+        border-color: #8aacc9;
+    }
+}
+
+/* Родительский контейнер дропдауна */
+.dropdown-menu {
+    padding: 0; 
+    border-radius: 8px; 
+    overflow: hidden; 
+    background-color: #fff; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+}
+
+/* Элементы списка */
+.dropdown-item {
+    margin: 0; 
+    width: 100%;
+    border: none;
+    border-radius: 0;
+    display: block; 
+    text-align: left;
+    padding: 8px 16px; 
+    background: transparent;
+}
+
+/* Состояние при наведении или активное */
+.dropdown-item:hover, 
+.dropdown-item.active {
+    background-color: #4a4a4a; /* Темно-серый цвет */
+    color: #fff;
+}
+
+.show-more-button {
+    margin-top: 24px; /* Или 1.5rem, 16px - подберите нужный размер */
+}
+
+
+/* --- 1. Убираем белые полосы и скругления у контейнера меню --- */
+.controls .filter-group > .dropdown > .dropdown-menu,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu {
+    padding: 0;
+    overflow: hidden;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+/* --- 2. Стили для всех элементов списка (чтобы убрать отступы) --- */
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item {
+    margin: 0;
+    border-radius: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 16px;
+    text-align: center;
+}
+
+/* --- 3. Активный элемент (темно-серый, а не синий) --- */
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item.active, 
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item.active {
+    background: #0a1929;
+    color: white;
+    font-weight: 600;
+}
+
+/* --- 4. Эффект при наведении (для тех же элементов) --- */
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:hover,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:hover {
+    background: #4a4a4a;
+    color: white;
+}
+
+/* --- 5. Фикс: убираем синий цвет при зажатии и фокусе (на всех устройствах) --- */
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:active,
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:focus,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:active,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:focus {
+    background: #0a1929;
+    color: white;
+    outline: none;
+}
+
+/* ============================================================
+   ЕДИНЫЙ СТИЛЬ: отступ между действиями и "Показать полностью"
+   Работает на ПК, планшете и мобильном
+   ============================================================ */
+
+/* 1. Отступ снизу для блока с кнопками "Редактировать" и "Скрыть" */
+.card .card-actions {
+    margin-bottom: 12px;
+}
+
+/* 2. Отступ сверху для кнопки "Показать полностью" */
+.card .expand-btn-wrapper {
+    margin-top: 4x;
+    padding-top: 4x;
+    border-top: 1px dashed #e6eef9;
+}
+
+/* 3. Сама кнопка "Показать полностью" — делаем её заметнее */
+.card .expand-btn-wrapper .expand-btn {
+    min-height: 42px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: #f6faff;
+    border-radius: 12px;
+    padding: 8px 16px;
+}
+
+/* 4. Если карточка раскрыта — "Свернуть ▲" выглядит так же */
+.card.expanded .expand-btn-wrapper .expand-btn {
+    background: #f6faff;
+    border-radius: 12px;
+}
+
+
+/* ============================================================
+   ФИНАЛЬНЫЙ ФИКС: единый шрифт и цвет в бургер-меню
+   (верхние кнопки + подтемы — одинаковые)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* --- Верхние кнопки --- */
+    .controls .filter-group > .filter-btn,
+    .controls .filter-group > .dropdown > .dropdown-toggle,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn,
+    .controls > .reset-btn {
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;         
+    }
+
+    /* --- Подтемы внутри дропдаунов --- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item {
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+        text-align: center;
+    }
+
+    /* --- Наведение (hover/touch) --- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:hover,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:hover,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:hover {
+        background: #e1ebf9;
+        color: #0a1929;
+    }
+
+    /* --- Активный элемент (выбранная подтема) --- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item.active,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item.active,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item.active,
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:active,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:active,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:active {
+        font-weight: 600;
+        outline: none;
+        box-shadow: none;
+    }
+
+}
+
+/* ============================================================
+   ★★★ ФИНАЛ: ЕДИНЫЙ ШРИФТ + ВОЗВРАЩАЕМ ИСХОДНЫЕ ЦВЕТА ★★★
+   Hover — светло-голубой (#d3e5fa)
+   Active — тёмно-синий (#0a1929)
+   ============================================================ */
+@media (max-width: 768px) {
+
+    /* ---------- 1. ВЕРХНИЕ КНОПКИ ---------- */
+    .controls .filter-group > .filter-btn,
+    .controls .filter-group > .dropdown > .dropdown-toggle,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn,
+    .controls > .reset-btn {
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+        color: #0a1929;
+    }
+
+    /* ---------- 2. ПОДТЕМЫ В ДРОПДАУНАХ ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item {
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+        color: #0a1929;
+        text-align: center;
+    }
+
+    /* ---------- 3. НАВЕДЕНИЕ — возвращаем светло-голубой ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:hover,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:hover,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:hover {
+        background: #d3e5fa;          /* ← изначальный светло-голубой */
+        color: #0a1929;               /* ← тёмный текст */
+    }
+
+    /* ---------- 4. АКТИВНЫЙ — возвращаем тёмно-синий ---------- */
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item.active,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item.active,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item.active,
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:active,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:active,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:active,
+    .controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:focus,
+    .controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:focus,
+    .controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:focus {
+        background: #0a1929;          /* ← изначальный тёмно-синий */
+        color: #ffffff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+        outline: none;
+        box-shadow: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ---------- 5. ВЕРХНЯЯ КНОПКА В АКТИВНОМ СОСТОЯНИИ ---------- */
+    .controls .filter-group > .filter-btn.active,
+    .controls .filter-group > .dropdown > .dropdown-toggle.active,
+    .controls .filter-group > .custom-theme-wrapper > .custom-theme-btn.active {
+        background: #0a1929;
+        color: #ffffff;
+        border-color: #0a1929;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        letter-spacing: 0.2px;
+    }
+}
+
+/* Единый стиль для ВСЕХ dropdown-item на сайте */
+.dropdown-item:hover {
+    background: #d3e5fa;
+    color: #0a1929;
+}
+
+.dropdown-item.active,
+.dropdown-item:active,
+.dropdown-item:focus {
+    background: #0a1929;
+    color: #ffffff;
+    font-weight: 600;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   ★ ФИНАЛ: СВЕТЛО-ГОЛУБОЙ HOVER ВЕЗДЕ ★
+   ============================================================ */
+
+/* 1. Базовое наведение для ВСЕХ dropdown-item на сайте */
+.dropdown-item:hover {
+    background: #d3e5fa;    /* ← светло-голубой */
+    color: #0a1929;
+}
+
+/* 2. То же самое внутри .controls (бургер-меню) */
+.controls .filter-group > .dropdown > .dropdown-menu .dropdown-item:hover,
+.controls .filter-group > .custom-theme-wrapper > .dropdown-menu .dropdown-item:hover,
+.controls .filter-group > .custom-theme-wrapper > .theme-sections-menu .dropdown-item:hover {
+    background: #d3e5fa;
+    color: #0a1929;
+}
+
+/* 3. Меню "Работа с карточками" */
+#cardManageMenu .dropdown-item:hover {
+    background: #d3e5fa;
+    color: #0a1929;
+}
+
+/* 4. Меню выбора голоса */
+.voice-dropdown .dropdown-item:hover,
+#voiceMenu .dropdown-item:hover {
+    background: #d3e5fa;
+    color: #0a1929;
+}
+
+/* 5. Активный элемент — тёмно-синий (чтобы отличался от hover) */
+.dropdown-item.active,
+.dropdown-item:active,
+.dropdown-item:focus {
+    background: #0a1929;
+    color: #ffffff;
+    font-weight: 600;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
 }
