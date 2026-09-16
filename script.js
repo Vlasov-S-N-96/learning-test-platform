@@ -8344,7 +8344,22 @@ function renderCards(data) {
 
         // Запрещено свайпать при открытом бургер-меню
         function isBurgerOpen() {
-            return document.body.classList.contains('burger-open');
+            // Проверяем, реально ли открыто меню, а не только класс на body
+            const filterGroup = document.getElementById('filterGroup');
+            const burgerBtn = document.getElementById('burgerBtn');
+            if (!filterGroup || !burgerBtn) return false;
+
+            const isReallyOpen = 
+                burgerBtn.classList.contains('active') && 
+                filterGroup.classList.contains('open') &&
+                getComputedStyle(filterGroup).display !== 'none';
+
+            // Если меню закрыто, но класс остался — убираем его
+            if (!isReallyOpen && document.body.classList.contains('burger-open')) {
+                document.body.classList.remove('burger-open');
+            }
+
+            return isReallyOpen;
         }
 
         // Что игнорируем при свайпе (все интерактивные элементы)
@@ -8665,6 +8680,7 @@ function setupDropdown(toggleId, menuId) {
             if (window.innerWidth <= 768) {
                 burgerBtn.classList.remove('active');
                 filterGroup.classList.remove('open');
+                document.body.classList.remove('burger-open');
             }
         });
     });
@@ -9017,39 +9033,42 @@ function updateDashboard() {
     var color = catAvg >= 80 ? '#4caf50' : (catAvg >= 50 ? '#ff9800' : '#f44336');
 
     html += `
-      <div style="margin-bottom:12px; padding:10px; background:${catAvg < 50 ? '#fff3e0' : '#f5f5f5'}; border-radius:8px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:14px; font-weight:600;">${catLabel}</span>
-          <div>
-            <span style="font-size:14px; color:${color}; font-weight:bold; margin-right:10px;">${catAvg}% (${data.count} отв.)</span>
-            ${data.count > 0 ? `<button class="btn-reset-topic" onclick="resetCategoryStats('${cat}')" title="Сбросить статистику по теме">
-              <svg viewBox="0 0 24 24"><path d="M12 4V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-              Сбросить
-            </button>` : ''}
-          </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:14px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${catLabel}</span>
+            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; width:230px; flex-shrink:0;">
+                <span style="font-size:14px; color:${color}; font-weight:bold; white-space:nowrap;">${catAvg}% (${data.count} отв.)</span>
+                ${data.count > 0 ? `<button class="btn-reset-topic" onclick="resetCategoryStats('${cat}')" title="Сбросить статистику по теме">
+                <svg viewBox="0 0 24 24"><path d="M12 4V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+                Сбросить
+                </button>` : ''}
+            </div>
         </div>
+
         <div style="height:8px;background:#eee;border-radius:4px;margin:6px 0 10px 0;">
-          <div style="height:100%;width:${catAvg}%;background:${color};border-radius:4px;"></div>
+        <div style="height:100%;width:${catAvg}%;background:${color};border-radius:4px;"></div>
         </div>
-        <div style="font-size:12px; color:#777;">
-          Сложные термины:
-          ${Object.keys(data.terms)
-            .filter(function(term) {
-                var count = data.terms[term].count;
-                var avg = data.terms[term].sum / count;
-                return count > 2 && avg < 50; // Фильтр: >2 попыток и средний балл < 50%
-            })
-            .sort(function(a,b) {
-                var avgA = data.terms[a].sum / data.terms[a].count;
-                var avgB = data.terms[b].sum / data.terms[b].count;
-                return avgA - avgB;
-            })
-            .slice(0,3).map(function(term) {
-                var avgT = Math.round(data.terms[term].sum / data.terms[term].count);
-                return `<span style="background:#eee; padding:2px 8px; border-radius:10px; margin:2px;">${term} (${avgT}%)</span>`;
-            }).join(' ') || '<span style="color:#aaa;">Пока нет данных (нужно >2 попыток с низким баллом)</span>'
-          }
-        </div>
+
+        ${(() => {
+            var weakTermHtml = Object.keys(data.terms)
+                .filter(function(term) {
+                    var count = data.terms[term].count;
+                    var avg = data.terms[term].sum / count;
+                    return count > 2 && avg < 50;
+                })
+                .sort(function(a,b) {
+                    var avgA = data.terms[a].sum / data.terms[a].count;
+                    var avgB = data.terms[b].sum / data.terms[b].count;
+                    return avgA - avgB;
+                })
+                .slice(0,3).map(function(term) {
+                    var avgT = Math.round(data.terms[term].sum / data.terms[term].count);
+                    return `<span style="background:#eee; padding:2px 8px; border-radius:10px; margin:2px;">${term} (${avgT}%)</span>`;
+                }).join(' ');
+
+            return weakTermHtml
+                ? `<div style="font-size:12px; color:#777;">Сложные термины: ${weakTermHtml}</div>`
+                : '';
+        })()}
     `;
   });
 
