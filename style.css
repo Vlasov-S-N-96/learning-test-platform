@@ -5197,3 +5197,50 @@ html.pwa-mode #appLoader {
     box-shadow: none;
     -webkit-tap-highlight-color: transparent;
 }
+
+/* ============================================================
+   СТАТИСТИКА: заголовок темы + правый блок
+   ============================================================ */
+.stat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.stat-cat-label {
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #0a1929;
+}
+
+.stat-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    width: 230px;
+    flex-shrink: 0;
+}
+
+/* На мобильных — название темы на первой строке, статистика на второй */
+@media (max-width: 600px) {
+    .stat-header {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .stat-cat-label {
+        flex: 1 1 100%;      /* название на всю ширину */
+        white-space: normal;  /* разрешаем перенос, если длинное */
+        overflow: visible;
+        text-overflow: clip;
+    }
+    .stat-right {
+        width: 100%;          /* правый блок на всю ширину */
+        justify-content: space-between; /* % слева, кнопка справа */
+    }
+}
