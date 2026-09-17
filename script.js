@@ -9033,9 +9033,9 @@ function updateDashboard() {
     var color = catAvg >= 80 ? '#4caf50' : (catAvg >= 50 ? '#ff9800' : '#f44336');
 
     html += `
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-size:14px; font-weight:600; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${catLabel}</span>
-            <div style="display:flex; align-items:center; justify-content:flex-end; gap:10px; width:230px; flex-shrink:0;">
+        <div class="stat-header">
+            <span class="stat-cat-label">${catLabel}</span>
+            <div class="stat-right">
                 <span style="font-size:14px; color:${color}; font-weight:bold; white-space:nowrap;">${catAvg}% (${data.count} отв.)</span>
                 ${data.count > 0 ? `<button class="btn-reset-topic" onclick="resetCategoryStats('${cat}')" title="Сбросить статистику по теме">
                 <svg viewBox="0 0 24 24"><path d="M12 4V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
