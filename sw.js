@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1.0.1';
+const CACHE_VERSION = 'v1.0.3';
 const CACHE_NAME = `qa-cache-${CACHE_VERSION}`;
 
 // Все файлы, которые должны кешироваться для офлайн‑работы
