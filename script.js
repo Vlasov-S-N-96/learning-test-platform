@@ -9214,25 +9214,25 @@ function handleTestResult(item, card, score) {
   // Сохраняем в статистику
   saveResult(item.term, item.category, score);
 
-  // Если оценка выше порога – показываем уведомление и откладываем скрытие
   if (score >= PASS_THRESHOLD) {
     showToast(`✅ Отлично! «${item.term}» засчитано как изученное (${score}%)`);
     learnedCards[item.id] = { known: true, date: new Date().toISOString() };
     localStorage.setItem('myLearnedCards', JSON.stringify(learnedCards));
 
-    // Плавно скрываем карточку через 2.5 секунды (чтобы пользователь увидел результат)
+    // Плавно скрываем карточку через 1.5 секунды
     setTimeout(() => {
-      if (card) {
-        card.style.transition = 'transform 0.5s ease, opacity 0.5s ease';
-        card.style.transform = 'translateX(200px)';
-        card.style.opacity = '0';
-        setTimeout(() => {
-          card.classList.add('hidden');
-          updateVisibleCount();
-          refreshSummary();
-        }, 500);
-      }
-    }, 5000);
+      if (!card || !card.parentNode) return;
+
+      card.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+      card.style.transform = 'translateX(200px)';
+      card.style.opacity = '0';
+
+      setTimeout(() => {
+        card.remove();
+        updateVisibleCount();
+        refreshSummary();
+      }, 420);
+    }, 1500);
   } else {
     showToast(`❌ Пока рано! Совпадение ${score}%`, 'error');
   }
