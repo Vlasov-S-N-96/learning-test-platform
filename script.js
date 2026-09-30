@@ -11858,3 +11858,5 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 
     console.log('✅ Кастомный дропдаун цвета активен');
 })();
+
+
