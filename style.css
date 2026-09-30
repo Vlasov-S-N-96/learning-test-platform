@@ -15,7 +15,7 @@ html, body {
 body {
     font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
     background: #eef3f9;
-    padding: 30px 20px;
+    padding: 0 20px;
     color: #0a1929;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -25,9 +25,9 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     background: #ffffff;
-    border-radius: 36px;
+    border-radius: 0;
     box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
-    padding: 30px 25px;
+    padding: 1px 25px 30px 25px; 
 }
 
 /* ============================================================
@@ -713,7 +713,7 @@ body {
 @media (max-width: 768px) {
     .container {
         padding: 20px 12px;
-        border-radius: 24px;
+        border-radius: 0 0 24px 24px;
     }
 
     .header h1 {
@@ -915,12 +915,12 @@ body {
 
 @media (max-width: 480px) {
     body {
-        padding: 12px 8px;
+        padding: 0;
     }
 
     .container {
         padding: 14px 10px;
-        border-radius: 18px;
+        border-radius: 0 0 18px 18px;
     }
 
     .header h1 {
@@ -1117,7 +1117,7 @@ pre {
 @media print {
     body {
         background: white;
-        padding: 20px;
+        padding: 0;
     }
 
     .container {
@@ -5234,13 +5234,787 @@ html.pwa-mode #appLoader {
         gap: 6px;
     }
     .stat-cat-label {
-        flex: 1 1 100%;      /* название на всю ширину */
-        white-space: normal;  /* разрешаем перенос, если длинное */
-        overflow: visible;
+        flex: 1 1 100%;      
+        white-space: normal; 
         text-overflow: clip;
     }
     .stat-right {
-        width: 100%;          /* правый блок на всю ширину */
-        justify-content: space-between; /* % слева, кнопка справа */
+        width: 100%;         
+        justify-content: space-between; 
+    }
+}
+
+/* ============================================================
+   ФУТЕР — визуальное продолжение контейнера
+   ============================================================ */
+.app-footer {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #0a1929;
+    color: #ffffff;
+    /* ⚡ нижние углы скруглены, верхние — нет */
+    border-radius: 0 0 36px 36px;
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
+    padding: 28px 25px 22px 25px;
+    box-sizing: border-box;
+}
+
+.app-footer__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+}
+
+.app-footer__copy {
+    font-size: 0.85rem;
+    color: #8a9fb8;
+    font-weight: 500;
+    text-align: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    width: 100%;
+}
+
+/* Кнопка "Скачать APK" */
+.app-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.store-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    color: #0a1929;
+    text-decoration: none;
+    padding: 12px 22px 12px 18px;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.store-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.15);
+}
+
+.store-badge__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.store-badge__small {
+    font-size: 0.72rem;
+    color: #6a8aaa;
+    font-weight: 500;
+    margin-bottom: 2px;
+}
+
+.store-badge__big {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0a1929;
+}
+
+/* ============================================================
+   Адаптив — сохраняем "слитность" контейнера и футера
+   ============================================================ */
+@media (max-width: 768px) {
+    body {
+        padding: 0; /* ⚡ на мобильных убираем боковые отступы body */
+    }
+
+    .container {
+        border-radius: 0 0 0 0; /* ⚡ на мобильных контейнер без скруглений снизу */
+        padding: 68px 12px 20px 12px; /* верхний padding сохраняем под бургер */
+        margin: 0;
+    }
+
+    .app-footer {
+        border-radius: 0; /* ⚡ только нижние углы скруглены */
+        padding: 22px 14px 18px 14px;
+        margin: 0;
+    }
+
+    .store-badge {
+        gap: 12px;
+        padding: 10px 18px 10px 14px;
+    }
+
+    .store-badge svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .store-badge__small {
+        font-size: 0.68rem;
+    }
+
+    .store-badge__big {
+        font-size: 0.92rem;
+    }
+
+    .app-footer__copy {
+        font-size: 0.78rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 60px 10px 16px 10px;
+    }
+
+    .app-footer {
+        border-radius: 0 px;
+        padding: 18px 10px 14px 10px;
+    }
+
+    .store-badge {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .store-badge svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .app-footer__copy {
+        font-size: 0.72rem;
+    }
+}
+
+@media print {
+    .app-footer {
+        display: none;
+    }
+}
+
+/* ============================================================
+   БАЗА — десктоп (>1024px)
+   ============================================================ */
+.store-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    background: #ffffff;
+    color: #0a1929;
+    text-decoration: none;
+    padding: 12px 22px 12px 18px;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.store-badge svg {
+    width: 20px;
+    height: 20px;
+}
+
+.store-badge__small {
+    font-size: 0.75rem;
+    color: #6a8aaa;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.store-badge__big {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0a1929;
+}
+
+/* ============================================================
+   ПЛАНШЕТ (768–1024px) — средний размер
+   ============================================================ */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .store-badge {
+        gap: 10px;
+        padding: 8px 18px 8px 14px;
+        border-radius: 10px;
+    }
+
+    .store-badge svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .store-badge__small {
+        font-size: 0.65rem;
+        margin-bottom: 1px;
+    }
+
+    .store-badge__big {
+        font-size: 0.7rem;
+    }
+
+    .app-footer {
+        padding: 22px 18px 18px 18px;
+    }
+
+    .app-footer__copy {
+        font-size: 0.8rem;
+        padding-top: 12px;
+    }
+}
+
+/* ============================================================
+   МОБИЛЬНЫЙ (≤768px) — маленький размер
+   ============================================================ */
+@media (max-width: 768px) {
+    .store-badge {
+        gap: 8px;
+        padding: 5px 12px 5px 10px;
+        border-radius: 8px;
+    }
+
+    .store-badge svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .store-badge__small {
+        font-size: 0.55rem;
+        margin-bottom: 1px;
+    }
+
+    .store-badge__big {
+        font-size: 0.6rem;
+    }
+
+    .app-footer {
+        padding: 16px 12px 14px 12px;
+    }
+
+    .app-footer__copy {
+        font-size: 0.72rem;
+        padding-top: 10px;
+    }
+}
+
+/* ============================================================
+   МАЛЕНЬКИЙ ТЕЛЕФОН (≤480px) — самый маленький
+   ============================================================ */
+@media (max-width: 480px) {
+    .store-badge {
+        gap: 6px;
+        padding: 4px 10px 4px 8px;
+        border-radius: 6px;
+    }
+
+    .store-badge svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .store-badge__small {
+        font-size: 0.5rem;
+    }
+
+    .store-badge__big {
+        font-size: 0.55rem;
+    }
+}
+
+/* ============================================================
+   ШАПКА — база (десктоп)
+   ============================================================ */
+.app-header {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 36px 36px 0 0;
+    padding: 28px 25px 22px 25px;
+    text-align: center;
+    box-sizing: border-box;
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
+}
+
+.app-header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(145deg, #0a1f3b, #1d3b5c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.app-header__sub {
+    margin: 6px 0 0 0;
+    font-size: 1rem;
+    color: #3a5470;
+    font-weight: 500;
+}
+
+/* ============================================================
+   КОНТЕЙНЕР — база
+   ============================================================ */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 0;
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.10);
+    padding-top: 20px;
+    padding-right: 25px;
+    padding-bottom: 30px;
+    padding-left: 25px;
+}
+
+/* ============================================================
+   БУРГЕР — только на мобильных, над шапкой в потоке
+   ============================================================ */
+.burger-btn {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    /* ⚡ бургер больше НЕ fixed — он в потоке, над шапкой */
+    .burger-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 5px;
+        position: static;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        height: 52px;
+        padding: 0 18px 0 25px;
+        background: #ffffff;
+        border: none;
+        border-bottom: 1px solid #e4ecf6;
+        border-radius: 24px 24px 0 0;   /* верхние углы, как у шапки */
+        box-shadow: none;
+        box-sizing: border-box;
+        cursor: pointer;
+        z-index: 2000;
+    }
+
+    .burger-btn span {
+        display: block;
+        width: 26px;
+        height: 2px;
+        background: #1a2a3a;
+        border-radius: 2px;
+        transition: transform 0.3s, opacity 0.3s;
+    }
+
+    .burger-btn.active span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    .burger-btn.active span:nth-child(2) {
+        opacity: 0;
+    }
+    .burger-btn.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+}
+
+/* ============================================================
+   ПЛАНШЕТ (768–1024px)
+   ============================================================ */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .app-header {
+        border-radius: 28px 28px 0 0;
+        padding: 22px 20px 18px 20px;
+    }
+
+    .app-header h1 {
+        font-size: 1.9rem;
+    }
+
+    .app-header__sub {
+        font-size: 0.92rem;
+        margin-top: 4px;
+    }
+
+    .container {
+        padding-right: 20px;
+        padding-left: 20px;
+    }
+}
+
+/* ============================================================
+   МОБИЛЬНЫЙ (≤768px)
+   ============================================================ */
+@media (max-width: 768px) {
+    .app-header {
+        border-radius: 0;         
+        padding: 16px 16px 14px 16px;  
+        box-shadow: none;
+    }
+
+    .app-header h1 {
+        font-size: 1.5rem;
+        line-height: 1.25;
+    }
+
+    .app-header__sub {
+        font-size: 0.82rem;
+        margin-top: 4px;
+        line-height: 1.35;
+    }
+
+    .container {
+        padding-right: 12px;
+        padding-bottom: 20px;
+        padding-left: 12px;
+        box-shadow: none;
+    }
+}
+
+/* ============================================================
+   МАЛЕНЬКИЙ ТЕЛЕФОН (≤480px)
+   ============================================================ */
+@media (max-width: 480px) {
+    .app-header {
+        padding: 14px 12px 12px 12px;
+    }
+
+    .app-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .app-header__sub {
+        font-size: 0.75rem;
+    }
+
+    .container {
+        padding-right: 10px;
+        padding-bottom: 16px;
+        padding-left: 10px;
+    }
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    color: #0a1929;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.container {
+    box-shadow: none !important;
+}
+
+.container {
+    padding-bottom: 0 !important;
+}
+
+/* ============================================================
+   ПК и ПЛАНШЕТ — отступы по бокам (базовые значения)
+   ============================================================ */
+body {
+    padding: 30px 20px 0 20px;    
+}
+
+.app-header,
+.container,
+.app-footer {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ============================================================
+   МОБИЛЬНЫЙ — всё растянуто на всю ширину, без отступов
+   ============================================================ */
+@media (max-width: 768px) {
+    body {
+        padding: 0;              
+    }
+
+    .app-header,
+    .container,
+    .app-footer {
+        max-width: 100%;         
+        margin-left: 0;
+        margin-right: 0;
+        border-radius: 0;        
+    }
+
+    .app-header {
+        padding: 10px 14px 16px 10px;  
+        border-radius: 0;              
+    }
+
+    .container {
+        border-radius: 0;
+        padding: 20px 12px;
+    }
+
+    .app-footer {
+        border-radius: 0 0 0 0;        
+        padding: 16px 12px 14px 12px;
+    }
+}
+
+/* ============================================================
+   МАЛЕНЬКИЙ ТЕЛЕФОН — ещё компактнее
+   ============================================================ */
+@media (max-width: 480px) {
+    .app-header {
+        padding: 60px 10px 14px 10px;
+    }
+
+    .container {
+        padding: 16px 10px;
+    }
+
+    .app-footer {
+        padding: 14px 10px 12px 10px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   МОБИЛЬНЫЙ — футер как «карточка» с отступами по бокам
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    body {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-bottom: 12px;  
+        box-sizing: border-box;
+    }
+
+   
+    .app-header,
+    .container {
+        max-width: 100%;
+        border-radius: 0;      
+    }
+
+    .app-footer {
+        max-width: 100%;
+        border-radius: 0 0 20px 20px;  
+        margin: 0;
+        box-shadow: none;
+    }
+
+
+    .app-header {
+        border-radius: 20px 20px 0 0;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-bottom: 8px;
+    }
+
+    .app-header {
+        border-radius: 16px 16px 0 0;
+    }
+
+    .app-footer {
+        border-radius: 0 0 16px 16px;
+    }
+}
+
+body:has(.controls .filter-group.open) {
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ОБЩАЯ ТЕНЬ ВОКРУГ КАРТОЧКИ (шапка + контейнер + футер)
+   ═══════════════════════════════════════════════════════════ */
+.page-card {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 36px;                         
+    box-shadow: 0 20px 60px rgba(0, 20, 40, 0.12); 
+    overflow: hidden;                            
+}
+
+/* Убираем тени и скругления у вложенных блоков */
+.app-header,
+.container,
+.app-footer {
+    box-shadow: none !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+/* Скругление углов — распределяем */
+.app-header {
+    border-radius: 36px 36px 0 0 !important;
+}
+
+.app-footer {
+    border-radius: 0 0 36px 36px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Адаптивная вёрстка
+   ═══════════════════════════════════════════════════════════ */
+
+/* БАЗА — ПК (>1024px) */
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    color: #0a1929;
+    padding: 30px 20px 0 20px;
+}
+
+.app-header,
+.container,
+.app-footer {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+.app-header {
+    background: #ffffff;
+    border-radius: 36px 36px 0 0;
+    padding: 28px 25px 22px 25px;
+    text-align: center;
+}
+
+.container {
+    background: #ffffff;
+    padding: 20px 25px 30px 25px;
+}
+
+.app-footer {
+    background: #0a1929;
+    color: #ffffff;
+    border-radius: 0 0 36px 36px;
+    padding: 28px 25px 22px 25px;
+}
+
+/* ПЛАНШЕТ и ДЕСКТОП (768–1700px) */
+@media (min-width: 768px) and (max-width: 1700px) {
+    html, body {
+        background: #eef3f9;
+        padding: 10px 10px 10px 10px;
+    }
+
+    .app-header {
+        border-radius: 28px 28px 0 0;
+    }
+
+    .app-footer {
+        border-radius: 0 0 28px 28px;
+    }
+}
+
+/* МОБИЛЬНЫЙ (≤768px) */
+@media (max-width: 768px) {
+    body {
+        padding: 12px 12px 12px 12px;
+    }
+
+    .app-header,
+    .container,
+    .app-footer {
+        max-width: 100%;
+        border-radius: 0;
+    }
+
+    .app-header {
+        border-radius: 20px 20px 0 0;
+    }
+
+    .app-footer {
+        border-radius: 0 0 20px 20px;
+    }
+}
+
+/* МАЛЕНЬКИЙ ТЕЛЕФОН (≤480px) */
+@media (max-width: 480px) {
+    body {
+        padding: 8px 8px 8px 8px;
+    }
+
+    .app-header {
+        border-radius: 16px 16px 0 0;
+    }
+
+    .app-footer {
+        border-radius: 0 0 16px 16px;
+    }
+}
+
+
+
+@media (min-width: 769px) {
+
+    /*  ЛЕВЫЕ — открываются ВПРАВО (left: 0) */
+    #voiceMenu,
+    #dropdownMenuPython,
+    #dropdownMenuSchema,
+    #dropdownMenuInterview {
+        left: 0 !important;
+        right: auto !important;
+        max-width: min(340px, calc(100vw - 40px)) !important;
+    }
+
+    /* ⚡ ПРАВЫЕ — открываются ВЛЕВО (right: 0) */
+    #dropdownMenuSql,
+    #cardManageMenu {
+        left: auto !important;
+        right: 0 !important;
+        max-width: min(340px, calc(100vw - 40px)) !important;
+    }
+}
+
+@media (min-width: 769px) {
+
+    .dropdown,
+    .voice-dropdown,
+    .custom-theme-wrapper {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e4ecf6;
+        box-shadow: 0 12px 40px rgba(0, 20, 40, 0.12);
+        padding: 8px 0;
+        z-index: 100;
+        min-width: 180px;
+        max-width: min(340px, calc(100vw - 40px));
+        max-height: 60vh;
+        overflow-y: auto;
+        box-sizing: border-box;
+        /* ❌ НЕТ left/right — JS поставит сам */
     }
 }
