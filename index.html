@@ -7,7 +7,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Теория</title>
-    <!-- 🔥 Inline-скрипт: определяем PWA ДО отрисовки -->
+    <!-- определяем PWA ДО отрисовки -->
     <script>
     (function() {
         var isStandalone = window.matchMedia('(display-mode: standalone)').matches;
@@ -32,6 +32,7 @@
     <link rel="apple-touch-icon" href="icons/icon-180.png">
     <link rel="apple-touch-icon" href="icons/icon-180.png">
 </head>
+
 <body>
 
     <!-- ===== ЛОАДЕР ===== -->
@@ -75,15 +76,20 @@
         </div>
     </div>
 
+    <!-- ===== БУРГЕР — ПЕРВЫЙ ЭЛЕМЕНТ ===== -->
+    <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+<div class="page-card">
+    <header class="app-header">
+        <h1>QA Справочник</h1>
+        <p class="app-header__sub">Теория тестирования · Подготовка к собеседованию</p>
+    </header>
 
-    <div class="container">
-
-            <!-- ===== БУРГЕР — ПЕРВЫЙ ЭЛЕМЕНТ ===== -->
-        <button class="burger-btn" id="burgerBtn" aria-label="Меню фильтров">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
+    <!-- ===== MAIN ===== -->
+    <main class="container">
 
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
 
@@ -1015,7 +1021,7 @@
                 Сбросить и продолжить
             </button>
         </div><!-- /swipeSummary -->
-    </div><!-- /container -->
+    </main><!-- /main -->
 
     <!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА -->
     <div id="cardModal" class="card-modal" style="display:none;">
@@ -1319,5 +1325,23 @@
             <polyline points="18 15 12 9 6 15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
     </button>
+    <footer class="app-footer">
+        <div class="app-footer__inner">
+            <div class="app-badges">
+                <a href="https://vlasov-s-n-96.github.io/learning-test-platform/app-release-signed.apk"
+                class="store-badge store-badge--android"
+                target="_blank" rel="noopener">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#3DDC84" d="M17.6 9.48l1.84-3.18a.38.38 0 0 0-.66-.38l-1.87 3.23a11.4 11.4 0 0 0-9.82 0L5.22 5.92a.38.38 0 0 0-.66.38L6.4 9.48A10.8 10.8 0 0 0 1 18h22a10.8 10.8 0 0 0-5.4-8.52zM7 15.25a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5zm10 0a1.25 1.25 0 1 1 0-2.5 1.25 1.25 0 0 1 0 2.5z"></path></svg>
+                    <span class="store-badge__text">
+                        <span class="store-badge__small">Приложение для Android</span>
+                        <span class="store-badge__big">Скачать APK</span>
+                    </span>
+                </a>
+            </div>
+
+            <div class="app-footer__copy">© 2026 QA Справочник</div>
+        </div>
+    </footer>
+</div>
 </body>
 </html>
