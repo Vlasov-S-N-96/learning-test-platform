@@ -7124,6 +7124,11 @@ const resetCurrentSectionBtn = document.getElementById('resetCurrentSectionBtn')
 
 let currentFilter = 'all';
 let currentSearch = '';
+// ⚡ Защита от undefined
+if (typeof currentFilter !== 'string') currentFilter = 'all';
+if (typeof currentSearch !== 'string') currentSearch = '';
+
+// Тот же фикс в самом filterAndSearch
 
 let learnedCards = JSON.parse(localStorage.getItem('myLearnedCards')) || {};
 const PASS_THRESHOLD = 65; // процент, после которого карточка считается выученной
@@ -8297,6 +8302,11 @@ function renderCards(data) {
             if (e.target.closest('.expand-btn')) return;
             if (e.target.closest('.quiz-toggle-wrapper') || e.target.closest('.quiz-input') || e.target.closest('.quiz-check-btn') || e.target.closest('.quiz-hint-btn') || e.target.closest('.quiz-voice-btn')) return;
             
+            // ⚡ Проверка флага (если фото-модуль установил)
+            if (card._photoClickLock && Date.now() - card._photoClickLock < 300) {
+                console.log('🔒 Клик заблокирован флагом фото');
+                return;
+            }
             // Блокируем клик по карточке в режиме теста
             if (card.classList.contains('quiz-mode')) {
                 return; // выходим, не переключая между "Пример" и "Определение"
@@ -8575,6 +8585,9 @@ if (testBtn) {
 // ================================================================
 
 function filterAndSearch() {
+    // ⚡ Защита: если по какой-то причине currentFilter не задан
+    if (!currentFilter) currentFilter = 'all';
+    if (typeof currentSearch !== 'string') currentSearch = '';
     const allCards = document.querySelectorAll('.card');
     const searchTerm = currentSearch.toLowerCase().trim();
     allCards.forEach(card => {
@@ -8822,7 +8835,6 @@ if (resetCurrentSectionBtn) {
 const burgerBtn = document.getElementById('burgerBtn');
 const filterGroup = document.getElementById('filterGroup');
 
-// 🔹 Единая функция синхронизации состояния бургер-меню и кнопки "Наверх"
 function syncBurgerState() {
     const isOpen = burgerBtn.classList.contains('active');
     document.body.classList.toggle('burger-open', isOpen);
@@ -8832,19 +8844,17 @@ burgerBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     this.classList.toggle('active');
     filterGroup.classList.toggle('open');
-    syncBurgerState();            // ⚡ скрываем/показываем кнопку
-});
 
-document.addEventListener('click', function(e) {
-    if (window.innerWidth <= 768) {
-        if (!e.target.closest('.burger-btn') && !e.target.closest('.filter-group') && !e.target.closest('.dropdown')) {
-            burgerBtn.classList.remove('active');
-            filterGroup.classList.remove('open');
-            syncBurgerState();    // ⚡
+    const filtersRow = document.querySelector('.controls-row--filters');
+    if (filtersRow) {
+        if (filterGroup.classList.contains('open')) {
+            filtersRow.classList.add('open');
+        } else {
+            filtersRow.classList.remove('open');
         }
-    } else {
-        if (!e.target.closest('.dropdown')) closeAllDropdowns();
     }
+
+    syncBurgerState();
 });
 
 // ================================================================
@@ -9693,7 +9703,7 @@ window.deleteCustomCard = function (id) {
 // ---------- ЭКСПОРТ / ИМПОРТ ----------
 safeAdd('exportBtn', 'click', function () {
     const exportData = {
-        _version: 3,
+        _version: 4,
         _exported: new Date().toISOString(),
 
         // === БАЗОВЫЕ КАРТОЧКИ (только для справки, при импорте игнорируются) ===
@@ -9714,9 +9724,24 @@ safeAdd('exportBtn', 'click', function () {
         hiddenThemes: JSON.parse(localStorage.getItem('myHiddenThemes') || '[]'),
         themeRenames: JSON.parse(localStorage.getItem('myThemeRenames') || '{}'),
 
-        // === СТАТИСТИКА И ОБУЧЕНИЕ ===
+                // === СТАТИСТИКА И ОБУЧЕНИЕ ===
         learnedCards: JSON.parse(localStorage.getItem('myLearnedCards') || '{}'),
         qaStats: JSON.parse(localStorage.getItem('qa_stats') || '{"results":[]}'),
+
+        // ═══════════════════════════════════════════════════════════
+        //  ДОБАВЛЕНО: ДОКУМЕНТЫ И ССЫЛКИ
+        // ═══════════════════════════════════════════════════════════
+        docLinks: (function() {
+            const links = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+            const seen = new Set();
+            return links.filter(l => {
+                const url = (l.url || '').toLowerCase().trim();
+                if (!url || seen.has(url)) return false;
+                seen.add(url);
+                return true;
+            });
+        })(),
+        localDocs: JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]'),
 
         // === НАСТРОЙКИ ===
         dashboardCollapsed: localStorage.getItem('dashboardCollapsed') || 'true'
@@ -9760,7 +9785,7 @@ safeAdd('importFile', 'change', function (e) {
             const data = JSON.parse(ev.target.result);
 
             // ⚡ ПРОВЕРКА ВЕРСИИ
-            if (data._version === 3 || data.baseCards) {
+            if (data._version === 4 || data._version === 3 || data.baseCards) {
                 console.log('📦 Файл версии 3, содержит базовые карточки');
                 console.log('   Базовых в файле:', data.baseCardsCount || (data.baseCards || []).length);
                 console.log('   ⚠️ Игнорируем baseCards — они уже встроены в приложение');
@@ -9864,6 +9889,34 @@ safeAdd('importFile', 'change', function (e) {
             // === НАСТРОЙКИ ===
             if (data.dashboardCollapsed !== undefined) {
                 localStorage.setItem('dashboardCollapsed', String(data.dashboardCollapsed));
+            }
+            
+            // ═══════════════════════════════════════════════════════════
+            //  ДОБАВЛЕНО: ИМПОРТ ДОКУМЕНТОВ И ССЫЛОК
+            // ═══════════════════════════════════════════════════════════
+            if (data.docLinks && data.docLinks.length) {
+                const current = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+                // Соберём существующие URL
+                const existingUrls = new Set(current.map(l => (l.url || '').toLowerCase()));
+                data.docLinks.forEach(link => {
+                    const url = (link.url || '').toLowerCase();
+                    if (!url || existingUrls.has(url)) return;   // ⚡ пропускаем дубликаты
+                    existingUrls.add(url);
+                    current.push(link);
+                });
+                localStorage.setItem('myDocLinks_v2', JSON.stringify(current));
+                console.log('🔗 Импортировано ссылок:', data.docLinks.length);
+            }
+
+            if (data.localDocs && data.localDocs.length) {
+                const current = JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]');
+                data.localDocs.forEach(doc => {
+                    if (!current.find(d => d.id === doc.id)) {
+                        current.push(doc);
+                    }
+                });
+                localStorage.setItem('myLocalDocs_v2', JSON.stringify(current));
+                console.log('📄 Импортировано локальных файлов:', data.localDocs.length);
             }
 
             alert('✅ Импорт завершён! Страница перезагрузится.');
@@ -11860,3 +11913,2002 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 })();
 
 
+// ============================================================
+//  МОДУЛЬ ФОТО (ФИНАЛЬНАЯ ВЕРСИЯ С КЭШЕМ И ЛЕНИВОЙ ЗАГРУЗКОЙ)
+// ============================================================
+(function setupPhotoModuleSimple() {
+    'use strict';
+
+    const EXTENSIONS = ['png', 'jpg'];
+    const MAX_USER_PHOTOS = 5;
+    const STORAGE_KEY = 'myCustomPhotos';
+    const PHOTO_CACHE_KEY = 'myPhotoCache_v1';
+    const PHOTO_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 дней
+
+    const CATEGORY_TO_FOLDER = {
+        'theory': 'theory', 'formal': 'formal', 'scenario': 'scenario',
+        'methods': 'methods', 'levels': 'levels', 'functional': 'functional',
+        'nonfunctional': 'nonfunctional', 'documentation': 'documentation',
+        'api': 'api', 'web': 'web', 'testdesign': 'testdesign',
+        'kanban': 'kanban', 'scrum': 'scrum', 'requirements': 'requirements',
+        'sql_basics': 'sql', 'sql_filter': 'sql', 'sql_aggregate': 'sql',
+        'sql_join': 'sql', 'sql_subquery': 'sql', 'sql_window': 'sql',
+        'sql_ddl': 'sql', 'sql_dml': 'sql', 'sql_null': 'sql',
+        'sql_view': 'sql', 'sql_index': 'sql', 'sql_interview': 'sql',
+        'python_variables': 'python', 'python_structures': 'python',
+        'python_io': 'python', 'python_conditions': 'python',
+        'python_loops': 'python', 'python_functions': 'python',
+        'python_algorithms': 'python', 'python_files': 'python',
+        'python_requests': 'python', 'python_pandas': 'python',
+        'python_db': 'python', 'python_interview': 'python',
+        'interview': 'interview', 'interview_testdesign': 'interview',
+        'interview_documentation': 'interview', 'interview_web': 'interview',
+        'interview_api': 'interview', 'interview_data': 'interview',
+        'interview_mobile': 'mobile', 'interview_cases': 'interview','documents': 'documents',
+    };
+
+    // ============================================================
+    //  КЭШ ФОТО (localStorage)
+    // ============================================================
+    let photoCache = {};
+    try {
+        const raw = localStorage.getItem(PHOTO_CACHE_KEY);
+        if (raw) photoCache = JSON.parse(raw);
+    } catch (e) { photoCache = {}; }
+
+    let photoCacheSaveTimer = null;
+    function savePhotoCache() {
+        clearTimeout(photoCacheSaveTimer);
+        photoCacheSaveTimer = setTimeout(() => {
+            try {
+                localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(photoCache));
+            } catch (e) {
+                // Если переполнено — чистим устаревшие записи
+                const now = Date.now();
+                for (const key in photoCache) {
+                    if (now - (photoCache[key].ts || 0) > PHOTO_CACHE_TTL) {
+                        delete photoCache[key];
+                    }
+                }
+                try {
+                    localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(photoCache));
+                } catch (e2) {
+                    console.error('❌ Не удалось сохранить кэш фото:', e2);
+                }
+            }
+        }, 500);
+    }
+
+    // Публичная функция для очистки кэша
+    window.clearPhotoCache = function() {
+        photoCache = {};
+        localStorage.removeItem(PHOTO_CACHE_KEY);
+        console.log('🗑 Фото-кэш очищен');
+        location.reload();
+    };
+
+    // ============================================================
+    //  ХРАНИЛИЩЕ ПОЛЬЗОВАТЕЛЬСКИХ ФОТО
+    // ============================================================
+    function getUserPhotos(cardId) {
+        try {
+            const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            return all[cardId] || [];
+        } catch { return []; }
+    }
+
+    function setUserPhotos(cardId, photos) {
+        try {
+            const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            if (photos && photos.length) {
+                all[cardId] = photos;
+            } else {
+                delete all[cardId];
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+        } catch (e) {
+            console.warn('Не удалось сохранить фото:', e);
+        }
+    }
+
+    // ============================================================
+    //  ЗАГРУЗКА ФОТО ИЗ ПАПОК (с кэшем)
+    // ============================================================
+    function tryLoadImage(url) {
+        return new Promise(resolve => {
+            const img = new Image();
+            img.onload = () => resolve(url);
+            img.onerror = () => resolve(null);
+            img.src = url;
+        });
+    }
+
+   // ═══════════════════════════════════════════════════════════
+    //  ТРАНСЛИТЕРАЦИЯ КИРИЛЛИЦЫ В ЛАТИНИЦУ
+    //  (один раз объявляем рядом с функцией)
+    // ═══════════════════════════════════════════════════════════
+    function transliterate(str) {
+        const map = {
+            'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z',
+            'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
+            'с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch',
+            'ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
+            'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'E','Ж':'Zh','З':'Z',
+            'И':'I','Й':'Y','К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R',
+            'С':'S','Т':'T','У':'U','Ф':'F','Х':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Sch',
+            'Ъ':'','Ы':'Y','Ь':'','Э':'E','Ю':'Yu','Я':'Ya'
+        };
+        return str.split('').map(ch => map[ch] !== undefined ? map[ch] : ch).join('');
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  ПОИСК ФОТО (расширенный — до 10+ вариантов имени)
+    // ═══════════════════════════════════════════════════════════
+    async function findAllBaseImages(folder, term) {
+        const cacheKey = `${folder}::${term}`;
+        const cached = photoCache[cacheKey];
+
+        // Если есть в кэше и не устарел — возвращаем мгновенно
+        if (cached && (Date.now() - cached.ts < PHOTO_CACHE_TTL)) {
+            return cached.photos;
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ГОТОВИМ 10+ ВАРИАНТОВ ИМЕНИ ФАЙЛА
+        // ═══════════════════════════════════════════════════════════
+        const cleanTerm    = term.replace(/[()]/g, '').trim();      // убираем скобки
+        const dashedTerm   = term.replace(/\s+/g, '-');             // пробелы → дефисы
+        const dashedClean  = cleanTerm.replace(/\s+/g, '-');
+        const latin        = transliterate(cleanTerm);              // "Kontrol kachestva QC"
+        const latinDash    = latin.replace(/\s+/g, '-');            // "Kontrol-kachestva-QC"
+        const latinUnder   = latin.replace(/\s+/g, '_');            // "Kontrol_kachestva_QC"
+
+        const names = [
+            // 1. Оригинал
+            term,
+
+            // 2. Пробелы → подчёркивания (кириллица)
+            term.replace(/\s+/g, '_'),
+
+            // 3. Кириллица без скобок + подчёркивания
+            cleanTerm.replace(/\s+/g, '_'),
+
+            // 4. Кириллица без скобок и без подчёркиваний
+            cleanTerm,
+
+            // 5. Кириллица в нижнем регистре
+            term.toLowerCase(),
+
+            // 6. Кириллица в нижнем регистре с подчёркиваниями
+            term.replace(/\s+/g, '_').toLowerCase(),
+
+            // 7. Латиница с заглавными буквами, пробелы → подчёркивания
+            latinUnder,                                     // "Kontrol_kachestva_QC"
+
+            // 8. Латиница в нижнем регистре с подчёркиваниями
+            latinUnder.toLowerCase(),                       // "kontrol_kachestva_qc"
+
+            // 9. Латиница с заглавными буквами, пробелы → дефисы
+            latinDash,                                      // "Kontrol-kachestva-QC"
+
+            // 10. Латиница в нижнем регистре с дефисами
+            latinDash.toLowerCase(),                        // "kontrol-kachestva-qc"
+
+            // 11. Латиница как есть (с пробелами)
+            latin,                                          // "Kontrol kachestva QC"
+
+            // 12. Латиница как есть в нижнем регистре
+            latin.toLowerCase()                             // "kontrol kachestva qc"
+        ];
+
+        // Убираем дубликаты из массива (на случай, если term был уже латиницей)
+        const uniqueNames = [...new Set(names)];
+
+        const found = [];
+        const suffixes = ['', '_1', '_2', '_3', '_4', '_5'];
+
+        for (const suffix of suffixes) {
+            let foundUrl = null;
+            for (const name of uniqueNames) {
+                const nameWithSuffix = name + suffix;
+                for (const ext of EXTENSIONS) {
+                    const url = `images/${folder}/${nameWithSuffix}.${ext}`;
+                    const result = await tryLoadImage(url);
+                    if (result) {
+                        foundUrl = result;
+                        break;
+                    }
+                }
+                if (foundUrl) break;
+            }
+            if (foundUrl) found.push(foundUrl);
+        }
+
+        // Сортировка по номеру в имени
+        found.sort((a, b) => {
+            const numA = parseInt(a.match(/_(\d+)\./)?.[1] || '0');
+            const numB = parseInt(b.match(/_(\d+)\./)?.[1] || '0');
+            return numA - numB;
+        });
+
+        // Сохраняем в кэш
+        photoCache[cacheKey] = {
+            photos: found,
+            ts: Date.now()
+        };
+        savePhotoCache();
+
+        return found;
+    }
+
+    // ============================================================
+    //  СЖАТИЕ ФОТО
+    // ============================================================
+    function readAndCompress(file, maxWidth = 1200, quality = 0.8) {
+        return new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let { width, height } = img;
+                    if (width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => resolve(null);
+                img.src = e.target.result;
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function downloadPhoto(dataUrl, filename) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // ============================================================
+    //  ИНЪЕКЦИЯ ФОТО
+    // ============================================================
+    const basePhotoCache = new Map();  // in-memory на текущую сессию
+
+    async function injectPhotosIntoCard(card) {
+        if (card._photosInjected) return;
+        card._photosInjected = true;
+
+        const id = parseInt(card.dataset.id);
+        const category = card.dataset.category;
+        if (!id || !category) return;
+
+        const folder = CATEGORY_TO_FOLDER[category];
+        if (!folder) return;
+
+        const termEl = card.querySelector('.term');
+        if (!termEl) return;
+        const term = termEl.textContent.trim();
+
+        let basePhotos = [];
+        if (basePhotoCache.has(id)) {
+            basePhotos = basePhotoCache.get(id);
+        } else {
+            basePhotos = await findAllBaseImages(folder, term);
+            basePhotoCache.set(id, basePhotos);
+        }
+
+        const userPhotos = getUserPhotos(id);
+        const allPhotos = [...basePhotos, ...userPhotos];
+
+        if (allPhotos.length === 0) {
+            card._hasPhotos = false;
+            return;
+        }
+
+        if (card.querySelector('.card-photos-wrapper')) return;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'card-photos-wrapper';
+        wrapper.innerHTML = `
+            <button type="button" class="photos-toggle-btn" data-card-id="${id}">
+                Фото (${allPhotos.length}) <span class="arrow">▼</span>
+            </button>
+            <div class="card-photos-block" id="photos_${id}">
+                <div class="card-photos">
+                    ${allPhotos.map((src, idx) => `
+                        <div class="card-photo-thumb" data-photo-src="${src}" data-photo-idx="${idx}">
+                            <img src="${src}" alt="Фото ${idx + 1}" loading="lazy">
+                            <span class="photo-zoom-hint">🔍</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="text-align: center; padding: 10px 0;">
+                    <button type="button" class="photo-add-user-btn" data-card-id="${id}" data-term="${term}" data-folder="${folder}">
+                        📷 Добавить фото
+                    </button>
+                </div>
+            </div>
+        `;
+
+        const quizWrapper = card.querySelector('.quiz-toggle-wrapper');
+        if (quizWrapper) {
+            // ⚡ Вставляем ПОСЛЕ "Проверь себя" (перед .card-actions)
+            const actionsWrapper = card.querySelector('.card-actions');
+            if (actionsWrapper) {
+                card.insertBefore(wrapper, actionsWrapper);
+            } else {
+                card.appendChild(wrapper);
+            }
+        } else {
+            card.appendChild(wrapper);
+        }
+
+        card._hasPhotos = true;
+
+        // Блокируем события на обёртке (capture) — карточка их не получит
+        const eventsToBlock = [
+            'pointerdown', 'pointerup', 'pointermove', 'pointercancel',
+            'mousedown', 'mouseup', 'mousemove',
+            'touchstart', 'touchend', 'touchmove', 'touchcancel'
+        ];
+
+        eventsToBlock.forEach(function(evt) {
+            wrapper.addEventListener(evt, function(e) {
+                e.stopPropagation();
+            }, true);
+        });
+
+        // ═══ 1. Кнопка "Фото (N)" ═══
+        const toggleBtn = wrapper.querySelector('.photos-toggle-btn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+
+                const isOpen = wrapper.classList.contains('open');
+                const count = wrapper.querySelectorAll('.card-photo-thumb').length;
+
+                if (isOpen) {
+                    wrapper.classList.remove('open');
+                    card.classList.remove('photos-open');
+                    toggleBtn.innerHTML = `Фото (${count}) <span class="arrow">▼</span>`;
+                } else {
+                    wrapper.classList.add('open');
+                    card.classList.add('photos-open');
+                    toggleBtn.innerHTML = `Фото (${count}) <span class="arrow">▲</span>`;
+                }
+
+                setTimeout(() => {
+                    if (typeof scheduleUpdateExpandButton === 'function') {
+                        scheduleUpdateExpandButton(card);
+                    }
+                }, 100);
+            });
+        }
+
+        // ═══ 2. Миниатюры — открыть галерею ═══
+        wrapper.querySelectorAll('.card-photo-thumb').forEach(thumb => {
+            thumb.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+
+                const all = card.querySelectorAll('.card-photo-thumb');
+                const photos = Array.from(all).map(t => t.dataset.photoSrc);
+                const idx = parseInt(this.dataset.photoIdx) || 0;
+
+                if (typeof window.openPhotoViewer === 'function') {
+                    window.openPhotoViewer(photos, idx);
+                } else {
+                    console.error('❌ openPhotoViewer не найден!');
+                }
+            });
+        });
+
+        // ═══ 3. Кнопка "Добавить фото" ═══
+        const addBtn = wrapper.querySelector('.photo-add-user-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.preventDefault();
+
+                const cardId = parseInt(this.dataset.cardId);
+                const term = this.dataset.term;
+                const folder = this.dataset.folder;
+
+                const current = getUserPhotos(cardId);
+                if (current.length >= MAX_USER_PHOTOS) {
+                    alert(`Максимум ${MAX_USER_PHOTOS} своих фото`);
+                    return;
+                }
+
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.multiple = true;
+                input.style.display = 'none';
+                document.body.appendChild(input);
+
+                input.onchange = async (ev) => {
+                    const files = Array.from(ev.target.files);
+                    document.body.removeChild(input);
+                    if (!files.length) return;
+
+                    const remaining = MAX_USER_PHOTOS - current.length;
+                    const toProcess = files.slice(0, remaining);
+                    const newPhotos = [...current];
+
+                    for (const file of toProcess) {
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert(`❌ "${file.name}" больше 5 МБ`);
+                            continue;
+                        }
+                        const dataUrl = await readAndCompress(file);
+                        if (dataUrl) newPhotos.push(dataUrl);
+                    }
+
+                    setUserPhotos(cardId, newPhotos);
+
+                    // Скачиваем ВСЕ новые фото с правильными именами
+                    if (newPhotos.length > 0) {
+                        const addedCount = toProcess.length;
+                        const startIdx = newPhotos.length - addedCount;
+
+                        for (let i = 0; i < addedCount; i++) {
+                            const photo = newPhotos[startIdx + i];
+                            const num = startIdx + i + 1;
+                            const suffix = num === 1 ? '' : `_${num}`;
+                            const safeTerm = term.replace(/\s+/g, '_');
+                            const fileName = `${safeTerm}${suffix}.png`;
+                            downloadPhoto(photo, fileName);
+                        }
+                    }
+
+                    card._photosInjected = false;
+                    const oldWrapper = card.querySelector('.card-photos-wrapper');
+                    if (oldWrapper) oldWrapper.remove();
+                    await injectPhotosIntoCard(card);
+
+                    const newWrapper = card.querySelector('.card-photos-wrapper');
+                    if (newWrapper) {
+                        newWrapper.classList.add('open');
+                        card.classList.add('photos-open');
+                        const btn = newWrapper.querySelector('.photos-toggle-btn');
+                        const count = newWrapper.querySelectorAll('.card-photo-thumb').length;
+                        if (btn) btn.innerHTML = `Фото (${count}) <span class="arrow">▲</span>`;
+                    }
+
+                    alert(`📸 Фото добавлено!\n\nЧтобы оно появилось на GitHub:\n1. Скачайте файлы ${term}.png, ${term}_2.png...\n2. Положите в images/${folder}/\n3. Загрузите на GitHub`);
+                };
+
+                input.click();
+            });
+        }
+    }
+
+    // ============================================================
+    //  ЛЕНИВАЯ ЗАГРУЗКА ФОТО (только для видимых карточек)
+    // ============================================================
+    function observeCards() {
+        const grid = document.getElementById('cardsGrid');
+        if (!grid) return;
+
+        // IntersectionObserver — срабатывает, когда карточка появляется в зоне видимости
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const card = entry.target;
+                    if (!card._photosInjected) {
+                        injectPhotosIntoCard(card);
+                    }
+                    observer.unobserve(card);
+                }
+            });
+        }, {
+            rootMargin: '70px',   // Начинаем загрузку за 70px до появления
+            threshold: 0.01
+        });
+
+        // Наблюдаем за всеми карточками
+        const scan = () => {
+            grid.querySelectorAll('.card:not(.hidden)').forEach(card => {
+                if (!card._photosObserved) {
+                    card._photosObserved = true;
+                    observer.observe(card);
+                }
+            });
+        };
+
+        scan();
+
+        const mutationObs = new MutationObserver(() => setTimeout(scan, 100));
+        mutationObs.observe(grid, { childList: true, subtree: false });
+    }
+
+    // ============================================================
+    //  ГАЛЕРЕЯ
+    // ============================================================
+    let viewerPhotos = [];
+    let viewerIndex = 0;
+    let globalResetZoom = function() {};
+
+    function openPhotoViewer(photos, startIdx) {
+        const v = document.getElementById('photoViewer');
+        const img = document.getElementById('photoViewerImg');
+        if (!v || !img || !photos || !photos.length) {
+            console.error('❌ Галерея не найдена или фото пустые');
+            return;
+        }
+
+        if (typeof globalResetZoom === 'function') globalResetZoom();
+
+        viewerPhotos = photos.slice();
+        viewerIndex = startIdx || 0;
+        updateViewerImage();
+
+        v.classList.add('photo-viewer');
+        v.classList.add('photo-viewer--open');
+        v.style.setProperty('display', 'flex', 'important');
+        v.style.setProperty('position', 'fixed', 'important');
+        v.style.setProperty('top', '0', 'important');
+        v.style.setProperty('left', '0', 'important');
+        v.style.setProperty('right', '0', 'important');
+        v.style.setProperty('bottom', '0', 'important');
+        v.style.setProperty('width', '100vw', 'important');
+        v.style.setProperty('height', '100vh', 'important');
+        v.style.setProperty('background', 'rgba(0, 0, 0, 0.95)', 'important');
+        v.style.setProperty('z-index', '2147483647', 'important');
+        v.style.setProperty('align-items', 'center', 'important');
+        v.style.setProperty('justify-content', 'center', 'important');
+
+        document.body.style.overflow = 'hidden';
+    }
+    window.openPhotoViewer = openPhotoViewer;
+
+    function updateViewerImage() {
+        const img = document.getElementById('photoViewerImg');
+        const c = document.getElementById('photoViewerCounter');
+        const p = document.getElementById('photoViewerPrev');
+        const n = document.getElementById('photoViewerNext');
+        if (!img || !viewerPhotos[viewerIndex]) return;
+
+        if (typeof globalResetZoom === 'function') globalResetZoom();
+
+        img.src = viewerPhotos[viewerIndex];
+        if (c) {
+            if (viewerPhotos.length > 1) {
+                c.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`;
+                c.classList.remove('hidden');
+            } else c.classList.add('hidden');
+        }
+        if (p && n) {
+            if (viewerPhotos.length <= 1) {
+                p.classList.add('hidden'); n.classList.add('hidden');
+            } else {
+                p.classList.remove('hidden'); n.classList.remove('hidden');
+            }
+        }
+    }
+
+    function showPrev() {
+        if (viewerPhotos.length <= 1) return;
+        viewerIndex = (viewerIndex - 1 + viewerPhotos.length) % viewerPhotos.length;
+        updateViewerImage();
+    }
+    function showNext() {
+        if (viewerPhotos.length <= 1) return;
+        viewerIndex = (viewerIndex + 1) % viewerPhotos.length;
+        updateViewerImage();
+    }
+    function closeViewer() {
+        const v = document.getElementById('photoViewer');
+        if (!v) return;
+
+        v.classList.remove('photo-viewer--open');
+        v.style.setProperty('display', 'none', 'important');
+        v.style.setProperty('position', '');
+        v.style.setProperty('top', '');
+        v.style.setProperty('left', '');
+        v.style.setProperty('right', '');
+        v.style.setProperty('bottom', '');
+        v.style.setProperty('width', '');
+        v.style.setProperty('height', '');
+        v.style.setProperty('background', '');
+        v.style.setProperty('z-index', '');
+
+        document.body.style.overflow = '';
+        viewerPhotos = [];
+        viewerIndex = 0;
+        if (typeof globalResetZoom === 'function') globalResetZoom();
+    }
+    window.closePhotoViewer = closeViewer;
+
+    // ============================================================
+    //  ОБРАБОТЧИКИ ГАЛЕРЕИ
+    // ============================================================
+    function setupViewerButtons() {
+        const v = document.getElementById('photoViewer');
+        if (!v) return;
+        const c = document.getElementById('photoViewerClose');
+        const p = document.getElementById('photoViewerPrev');
+        const n = document.getElementById('photoViewerNext');
+        const img = document.getElementById('photoViewerImg');
+
+        // ═══════════════════════════════════════════════════════
+        //  1. ЗУМ И ПАНОРАМИРОВАНИЕ (переменные)
+        // ═══════════════════════════════════════════════════════
+        let zoomLevel = 1;
+        let panX = 0, panY = 0;
+
+        function applyZoom() {
+            if (!img) return;
+            img.style.transform = `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`;
+            img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
+            v.classList.toggle('zoomed', zoomLevel > 1);
+        }
+
+        function resetZoom() {
+            zoomLevel = 1;
+            panX = 0;
+            panY = 0;
+            applyZoom();
+        }
+
+        globalResetZoom = resetZoom;
+
+        // ═══════════════════════════════════════════════════════
+        //  2. ПРОВЕРКА: ГАЛЕРЕЯ ОТКРЫТА?
+        // ═══════════════════════════════════════════════════════
+        function isViewerOpen() {
+            return v.classList.contains('photo-viewer--open');
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  3. УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ СТРЕЛОК И КРЕСТИКА
+        //     Используем pointerdown — один раз на любое устройство
+        // ═══════════════════════════════════════════════════════
+        function bindButton(btn, action) {
+            if (!btn) return;
+
+            let lastTrigger = 0;
+            const DEBOUNCE_MS = 250;
+
+            // Убираем старые click-обработчики, если есть
+            btn.onclick = null;
+
+            const handler = function(e) {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+                const now = Date.now();
+                if (now - lastTrigger < DEBOUNCE_MS) return;
+                lastTrigger = now;
+
+                e.stopPropagation();
+                e.preventDefault();
+
+                action();
+            };
+
+            btn.addEventListener('pointerdown', handler);
+
+            btn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') handler(e);
+            });
+        }
+
+        bindButton(c, closeViewer);
+        bindButton(p, showPrev);
+        bindButton(n, showNext);
+
+        // ═══════════════════════════════════════════════════════
+        //  4. ЗАКРЫТИЕ ПО КЛИКУ НА ФОН
+        // ═══════════════════════════════════════════════════════
+        v.addEventListener('click', function(e) {
+            if (e.target === v) closeViewer();
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  5. КЛАВИАТУРА (ПК): ESC, ←, →
+        // ═══════════════════════════════════════════════════════
+        document.addEventListener('keydown', function(e) {
+            if (!isViewerOpen()) return;
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeViewer();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                showPrev();
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                showNext();
+            }
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  6. ЗУМ КОЛЁСИКОМ МЫШИ (ПК)
+        // ═══════════════════════════════════════════════════════
+        v.addEventListener('wheel', function(e) {
+            if (!isViewerOpen()) return;
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.15 : 0.15;
+            zoomLevel = Math.max(1, Math.min(5, zoomLevel + delta));
+            if (zoomLevel === 1) { panX = 0; panY = 0; }
+            applyZoom();
+        }, { passive: false });
+
+        // ═══════════════════════════════════════════════════════
+        //  7. ДВОЙНОЙ КЛИК + ПЕРЕТАСКИВАНИЕ МЫШЬЮ
+        // ═══════════════════════════════════════════════════════
+        if (img) {
+            img.addEventListener('dblclick', function(e) {
+                e.stopPropagation();
+                if (zoomLevel > 1) {
+                    resetZoom();
+                } else {
+                    zoomLevel = 2;
+                    applyZoom();
+                }
+            });
+
+            let isDragging = false;
+            let dragStartX = 0, dragStartY = 0;
+            let startPanX = 0, startPanY = 0;
+
+            img.addEventListener('mousedown', function(e) {
+                if (zoomLevel <= 1) return;
+                e.preventDefault();
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                startPanX = panX;
+                startPanY = panY;
+                v.classList.add('dragging');
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging) return;
+                panX = startPanX + (e.clientX - dragStartX);
+                panY = startPanY + (e.clientY - dragStartY);
+                applyZoom();
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isDragging) {
+                    isDragging = false;
+                    v.classList.remove('dragging');
+                }
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  8. TOUCH: СВАЙП, ПИНЧ, ТАП
+        // ═══════════════════════════════════════════════════════
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartDist = 0;
+        let touchPanStartX = 0;
+        let touchPanStartY = 0;
+        let touchZoomStart = 1;
+        let touchStartTime = 0;
+        let isSwiping = false;
+        let touchOnButton = false;
+
+        v.addEventListener('touchstart', function(e) {
+            if (!isViewerOpen()) return;
+
+            // ⚡ Если палец на кнопке — не считаем это свайпом
+            touchOnButton = !!(e.target.closest &&
+                e.target.closest('#photoViewerClose, #photoViewerPrev, #photoViewerNext'));
+            if (touchOnButton) return;
+
+            touchStartTime = Date.now();
+            isSwiping = false;
+
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+
+                if (zoomLevel > 1) {
+                    touchPanStartX = panX;
+                    touchPanStartY = panY;
+                }
+            } else if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchZoomStart = zoomLevel;
+            }
+        }, { passive: true });
+
+        v.addEventListener('touchmove', function(e) {
+            if (!isViewerOpen() || touchOnButton) return;
+
+            if (e.touches.length === 1 && zoomLevel > 1) {
+                // Панорамирование при зуме
+                const dx = e.touches[0].clientX - touchStartX;
+                const dy = e.touches[0].clientY - touchStartY;
+                panX = touchPanStartX + dx;
+                panY = touchPanStartY + dy;
+                applyZoom();
+            } else if (e.touches.length === 1 && zoomLevel === 1) {
+                // Горизонтальный свайп — перелистывание
+                const dx = Math.abs(e.touches[0].clientX - touchStartX);
+                const dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > 10 && dx > dy) {
+                    isSwiping = true;
+                    if (e.cancelable) e.preventDefault();
+                }
+            } else if (e.touches.length === 2) {
+                // Пинч-зум
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const scale = dist / touchStartDist;
+                zoomLevel = Math.max(1, Math.min(5, touchZoomStart * scale));
+                if (zoomLevel === 1) { panX = 0; panY = 0; }
+                applyZoom();
+            }
+        }, { passive: false });
+
+        v.addEventListener('touchend', function(e) {
+            if (!isViewerOpen() || touchOnButton) {
+                touchOnButton = false;
+                return;
+            }
+            if (e.changedTouches.length !== 1) return;
+
+            const touch = e.changedTouches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+            const dur = Date.now() - touchStartTime;
+
+            // Свайп для перелистывания
+            if (zoomLevel === 1 && isSwiping && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) showNext();
+                else showPrev();
+                isSwiping = false;
+                return;
+            }
+
+            // Тап по картинке — закрыть
+            if (!isSwiping && Math.abs(dx) < 10 && Math.abs(dy) < 10 && dur < 300) {
+                if (e.target && e.target.tagName === 'IMG') {
+                    closeViewer();
+                }
+            }
+
+            isSwiping = false;
+        }, { passive: true });
+    }
+
+    function init() {
+        observeCards();
+        setupViewerButtons();
+        console.log('✅ Модуль фото активен (с кэшем и ленивой загрузкой)');
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else init();
+})();
+
+// ============================================================
+//  ПЕРЕКЛЮЧАТЕЛЬ ВИДА КАРТОЧЕК (1 / 2 / 3 колонки)
+// ============================================================
+(function setupViewSwitcher() {
+    const STORAGE_KEY = 'myViewColumns';
+    const grid = document.getElementById('cardsGrid');
+    const switcher = document.getElementById('viewSwitcher');
+    if (!grid) {
+        console.warn('⚠️ #cardsGrid не найден');
+        return;
+    }
+
+    // ⚡ Возвращает массив доступных колонок в зависимости от ширины экрана
+    function getAvailableCols() {
+        const w = window.innerWidth;
+        if (w >= 1200) return ['1', '2', '3'];   // ПК
+        if (w >= 768)  return ['1', '2'];        // Планшет
+        return ['1'];                             // Мобильный
+    }
+
+    // ⚡ Загружаем сохранённое значение
+    function getSavedCols() {
+        try {
+            const v = localStorage.getItem(STORAGE_KEY);
+            if (v === '1' || v === '2' || v === '3') return v;
+        } catch {}
+        return '1';
+    }
+
+    // ⚡ Применяем значение к grid и switcher
+    function applyCols(cols) {
+        // Проверяем, доступна ли такая колонка на текущей ширине
+        const available = getAvailableCols();
+        let finalCols = cols;
+        if (!available.includes(cols)) {
+            // Если нет — откатываемся к максимально доступной
+            finalCols = available[available.length - 1];
+        }
+
+        grid.setAttribute('data-cols', finalCols);
+
+        // Обновляем активную кнопку
+        if (switcher) {
+            switcher.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.cols === finalCols);
+            });
+        }
+
+        // Сохраняем (то, что выбрал пользователь, а не принудительное)
+        try {
+            localStorage.setItem(STORAGE_KEY, cols);
+        } catch {}
+
+        console.log(`Вид: ${finalCols} колонк(а/и)`);
+    }
+
+    // ⚡ Инициализация
+    applyCols(getSavedCols());
+
+    // ⚡ Обработчик клика
+    if (switcher) {
+        switcher.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const cols = this.dataset.cols;
+                if (cols) applyCols(cols);
+            });
+        });
+    }
+
+    // ⚡ При изменении размера окна — применяем доступные колонки
+    let resizeTimer = null;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            applyCols(getSavedCols());
+        }, 150);
+    });
+
+    // ⚡ Горячие клавиши: Ctrl+1, Ctrl+2, Ctrl+3
+    document.addEventListener('keydown', function(e) {
+        if (!e.ctrlKey && !e.metaKey) return;
+        if (e.key === '1') { e.preventDefault(); applyCols('1'); }
+        else if (e.key === '2') { e.preventDefault(); applyCols('2'); }
+        else if (e.key === '3') { e.preventDefault(); applyCols('3'); }
+    });
+
+    console.log('✅ Переключатель вида карточек активен');
+})();
+
+
+// ============================================================
+//  ★ ГЛОБАЛЬНОЕ ЗАКРЫТИЕ БУРГЕРА ПРИ ВЫБОРЕ ЛЮБОГО ФИЛЬТРА
+//  Работает для всех кнопок: обычных, дропдаунов, кастомных тем,
+//  подтем — независимо от того, забыли вы где-то вызвать closeBurgerMenu или нет
+// ============================================================
+(function setupGlobalBurgerAutoClose() {
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth > 768) return;
+
+        // Определяем, был ли клик по элементу фильтрации
+        const isFilterClick =
+            e.target.closest('.filter-btn[data-filter]') ||
+            e.target.closest('.dropdown-item[data-filter]') ||
+            e.target.closest('.custom-theme-btn[data-filter]') ||
+            e.target.closest('.theme-sections-menu .dropdown-item');
+
+        if (!isFilterClick) return;
+
+        // Небольшая задержка — пусть фильтр успеет примениться
+        setTimeout(function() {
+            if (typeof closeBurgerMenu === 'function') {
+                closeBurgerMenu();
+            } else {
+                // Резервный вариант, если closeBurgerMenu недоступна
+                const burgerBtn = document.getElementById('burgerBtn');
+                const filterGroup = document.getElementById('filterGroup');
+                const filtersRow = document.querySelector('.controls-row--filters');
+                if (burgerBtn) burgerBtn.classList.remove('active');
+                if (filterGroup) filterGroup.classList.remove('open');
+                if (filtersRow) filtersRow.classList.remove('open');
+                document.body.classList.remove('burger-open');
+            }
+        }, 50);
+    }, true);   // ⚡ capture: true — сработает даже если кто-то выше остановил событие
+
+    console.log('✅ Глобальное авто-закрытие бургера активно');
+})();
+
+// ============================================================
+//  МОДУЛЬ ДОКУМЕНТОВ v3 — ФИНАЛЬНАЯ ВЕРСИЯ
+//  - автопоиск файлов из папки documents/{category}/
+//  - кэш в localStorage (7 дней)
+//  - кастомный дропдаун темы
+//  - рабочее переключение табов
+//  - локальные файлы через UI
+//  - внешние ссылки через UI
+//  - мобильная адаптация
+// ============================================================
+(function setupDocumentsModule() {
+    'use strict';
+
+    // ═══════════════════════════════════════════════════════════
+    //  КОНСТАНТЫ
+    // ═══════════════════════════════════════════════════════════
+    const DOC_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'xlsx', 'xls', 'pptx', 'ppt', 'csv', 'zip'];
+    const DOC_CACHE_KEY = 'myDocsCache_v2';
+    const DOC_LINKS_KEY = 'myDocLinks_v2';
+    const LOCAL_DOCS_KEY = 'myLocalDocs_v2';
+    const DOC_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 дней
+
+    const MAX_FILE_SIZE = 2 * 1024 * 1024;          // 2 МБ на файл
+    const MAX_LOCAL_DOCS = 20;                       // макс. локальных документов
+
+    // Категории (папки) — латиница
+    const CATEGORIES = {
+        'theory': 'Теория',
+        'formal': 'Формализация',
+        'scenario': 'Сценарии',
+        'methods': 'Методы',
+        'levels': 'Уровни',
+        'functional': 'Функциональное',
+        'nonfunctional': 'Нефункциональное',
+        'testdesign': 'Тест-дизайн',
+        'documentation': 'Документация',
+        'api': 'API',
+        'web': 'Веб-приложения',
+        'scrum': 'Scrum',
+        'kanban': 'Kanban',
+        'requirements': 'Требования',
+        'sql': 'SQL',
+        'python': 'Python',
+        'interview': 'Собеседование',
+        'mobile': 'Мобильные'
+    };
+
+    // ⚡ Термины для поиска в каждой папке
+    // Это имена файлов (без расширения) — соответствуют названиям карточек
+    const TERMS_BY_CATEGORY = {
+        'theory': ['Тестирование ПО', 'Тестирование_ПО', 'Обеспечение качества', 'Обеспечение_качества', 'Контроль качества', 'Контроль_качества', 'QA QC Testing', 'Отладка', 'Цели тестирования', 'Цели_тестирования', 'Верификация', 'Валидация', 'Управление качеством', 'Управление_качеством', 'Принципы тестирования', 'Принципы_тестирования', 'SDLC', 'STLC', 'V-модель', 'Водопадная модель', 'Водопадная_модель', 'Итерационная модель', 'Спиральная модель', 'Спиральная_модель', 'Agile'],
+        'formal': ['На основе тест-кейсов', 'На_основе_тест-кейсов', 'Исследовательское', 'Свободное', 'Ad-hoc'],
+        'scenario': ['Happy Path', 'Happy_Path', 'Негативный сценарий', 'Негативный_сценарий', 'Деструктивный сценарий', 'Деструктивный_сценарий'],
+        'methods': ['Чёрный ящик', 'Чёрный_ящик', 'Белый ящик', 'Белый_ящик', 'Серый ящик', 'Серый_ящик'],
+        'levels': ['Модульное', 'Интеграционное', 'Системное', 'Приемочное', 'Приёмочное', 'UAT', 'OAT', 'Big Bang', 'Big_Bang', 'Top-Down', 'Bottom-Up', 'Sandwich'],
+        'functional': ['Дымовое', 'Санитарное', 'Регрессионное', 'GUI', 'Инсталляционное', 'Безопасность'],
+        'nonfunctional': ['Производительность', 'Нагрузочное', 'Стрессовое', 'Объёмное', 'Масштабируемость', 'Конкурентное', 'Безопасность', 'Удобство', 'Usability', 'Совместимость', 'Надёжность', 'Локализация', 'Интернационализация'],
+        'testdesign': ['Анализ тестирования', 'Анализ_тестирования', 'Проектирование теста', 'Проектирование_теста', 'Эквивалентное разбиение', 'Эквивалентное_разбиение', 'Анализ граничных значений', 'Анализ_граничных_значений', 'Попарное тестирование', 'Попарное_тестирование', 'Pairwise', 'Таблицы решений', 'Таблицы_решений', 'Диаграмма переходов', 'Диаграмма_переходов', 'Предположение об ошибках', 'Предположение_об_ошибках'],
+        'documentation': ['Тест-план', 'Тест_план', 'Тест-кейс', 'Тест_кейс', 'Чек-лист', 'Чек_лист', 'Баг-репорт', 'Баг_репорт', 'Отчет о тестировании', 'Отчет_о_тестировании', 'Traceability Matrix', 'Traceability_Matrix', 'Тестовая стратегия', 'Тестовая_стратегия'],
+        'api': ['SOAP', 'WSDL', 'XSD', 'REST', 'JSON', 'Swagger', 'Как тестировать API', 'Как_тестировать_API', 'Правила синтаксиса XML', 'Правила_синтаксиса_XML'],
+        'web': ['URL', 'DNS', 'IP-адрес', 'IP_адрес', 'MAC-адрес', 'MAC_адрес', 'OSI', 'TCP/IP', 'TCP_IP', 'TCP', 'UDP', 'QUIC', 'HTTP', 'HTTPS', 'CRUD', 'Коды ответа HTTP', 'Коды_ответа_HTTP', 'Cookies', 'LocalStorage', 'SessionStorage', 'DevTools'],
+        'scrum': ['Scrum', 'Product Owner', 'Product_Owner', 'Scrum Master', 'Scrum_Master', 'Sprint', 'Sprint Planning', 'Sprint_Planning', 'Daily Scrum', 'Daily_Scrum', 'Sprint Review', 'Sprint_Review', 'Sprint Retrospective', 'Sprint_Retrospective', 'Product Backlog', 'Product_Backlog', 'Sprint Backlog', 'Sprint_Backlog', 'Increment', 'Story Points', 'Story_Points', 'Покер планирования', 'Покер_планирования', 'Velocity', 'Backlog Refinement', 'Backlog_Refinement'],
+        'kanban': ['Kanban', 'WIP-лимит', 'WIP_лимит', 'Lead Time', 'Lead_Time', 'Delivery Rate', 'Delivery_Rate', 'Менеджер Запросов', 'Менеджер_Запросов', 'Менеджер Поставки', 'Менеджер_Поставки', 'XP'],
+        'requirements': ['Бизнес-требования', 'Бизнес_требования', 'Пользовательские требования', 'Пользовательские_требования', 'Функциональные требования', 'Функциональные_требования', 'Нефункциональные требования', 'Нефункциональные_требования', 'User Story', 'User_Story', 'Use Case', 'Use_Case', 'Mockup', 'Свойства качественных требований', 'Свойства_качественных_требований'],
+        'sql': ['SELECT', 'WHERE', 'JOIN', 'GROUP BY', 'GROUP_BY', 'NULL', 'CREATE TABLE', 'CREATE_TABLE', 'INSERT', 'UPDATE', 'DELETE', 'Индексы', 'Транзакции', 'Нормализация'],
+        'python': ['Типы данных Python', 'Типы_данных_Python', 'Списки', 'Кортежи', 'Словари', 'Множества', 'Функции', 'Классы', 'Декораторы', 'Генераторы', 'Итераторы', 'GIL', 'Pandas', 'requests'],
+        'interview': ['Тестирование QA QC', 'Тестирование_QA_QC', 'Отладка', 'SDLC', 'STLC', 'Верификация Валидация', 'Верификация_Валидация', 'Принципы тестирования', 'Принципы_тестирования', 'Уровни тестирования', 'Уровни_тестирования', 'Smoke Sanity', 'Smoke_Sanity', 'Ретест Регрессия', 'Ретест_Регрессия', 'API тестирование', 'API_тестирование', 'SQL вопросы', 'SQL_вопросы'],
+        'mobile': ['Типы мобильных приложений', 'Типы_мобильных_приложений', 'Эмуляторы', 'Android Studio', 'Android_Studio', 'Logcat', 'Гайдлайны', 'Жесты', 'Charles Proxy', 'Charles_Proxy', 'Push-уведомления', 'Push_уведомления']
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    //  ХРАНИЛИЩА
+    // ═══════════════════════════════════════════════════════════
+    let docsCache = {};
+    let customLinks = [];
+    let localDocs = [];
+
+
+    try {
+        const raw = localStorage.getItem(DOC_CACHE_KEY);
+        if (raw) docsCache = JSON.parse(raw);
+    } catch (e) { docsCache = {}; }
+
+    try {
+        const raw = localStorage.getItem(DOC_LINKS_KEY);
+        if (raw) customLinks = JSON.parse(raw);
+    } catch (e) { customLinks = []; }
+
+    try {
+        const raw = localStorage.getItem(LOCAL_DOCS_KEY);
+        if (raw) localDocs = JSON.parse(raw);
+    } catch (e) { localDocs = []; }
+
+     // ═══════════════════════════════════════════════════════════
+    //  ЗАГРУЗКА ССЫЛОК ИЗ links.json (публичные ссылки для всех)
+    // ═══════════════════════════════════════════════════════════
+    async function loadLinksFromFile() {
+        try {
+            const response = await fetch('documents/links.json');
+            if (!response.ok) {
+                console.log('📄 links.json не найден — используем только localStorage');
+                return null;
+            }
+            const links = await response.json();
+            console.log('✅ links.json загружен:', links.length, 'ссылок');
+            return links;
+        } catch (e) {
+            console.log('⚠️ links.json недоступен:', e.message);
+            return null;
+        }
+    }
+
+    let saveCacheTimer = null;
+    function saveCache() {
+        clearTimeout(saveCacheTimer);
+        saveCacheTimer = setTimeout(() => {
+            try {
+                localStorage.setItem(DOC_CACHE_KEY, JSON.stringify(docsCache));
+            } catch (e) {
+                console.warn('localStorage переполнен, чистим устаревшие записи документов');
+                const now = Date.now();
+                for (const key in docsCache) {
+                    if (now - (docsCache[key].ts || 0) > DOC_CACHE_TTL) {
+                        delete docsCache[key];
+                    }
+                }
+                try {
+                    localStorage.setItem(DOC_CACHE_KEY, JSON.stringify(docsCache));
+                } catch (e2) {
+                    console.error('❌ Не удалось сохранить кэш документов');
+                }
+            }
+        }, 500);
+    }
+
+    function saveCustomLinks() {
+        try {
+            localStorage.setItem(DOC_LINKS_KEY, JSON.stringify(customLinks));
+        } catch (e) {
+            console.warn('Не удалось сохранить ссылки:', e);
+        }
+    }
+
+    function saveLocalDocs() {
+        try {
+            localStorage.setItem(LOCAL_DOCS_KEY, JSON.stringify(localDocs));
+        } catch (e) {
+            console.warn('Не удалось сохранить локальные документы:', e);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  УТИЛИТЫ
+    // ═══════════════════════════════════════════════════════════
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function getFileIcon(ext) {
+        switch (ext) {
+            case 'pdf': return '📕';
+            case 'doc':
+            case 'docx': return '📘';
+            case 'xls':
+            case 'xlsx':
+            case 'csv': return '📗';
+            case 'ppt':
+            case 'pptx': return '📙';
+            case 'txt': return '📄';
+            case 'zip': return '🗜️';
+            default: return '📎';
+        }
+    }
+
+    function formatSize(bytes) {
+        if (!bytes) return '';
+        if (bytes < 1024) return bytes + ' Б';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' КБ';
+        return (bytes / 1024 / 1024).toFixed(1) + ' МБ';
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  АВТОПОИСК ФАЙЛОВ
+    // ═══════════════════════════════════════════════════════════
+    function tryLoadUrl(url) {
+        return new Promise(resolve => {
+            fetch(url, { method: 'HEAD' })
+                .then(r => resolve(r.ok ? url : null))
+                .catch(() => resolve(null));
+        });
+    }
+
+    async function findFilesForCategory(category) {
+        const cacheKey = `files::${category}`;
+        const cached = docsCache[cacheKey];
+
+        if (cached && (Date.now() - cached.ts < DOC_CACHE_TTL)) {
+            return cached.files;
+        }
+
+        const terms = TERMS_BY_CATEGORY[category] || [];
+        const found = [];
+
+        for (const term of terms) {
+            const baseNames = [
+                term,
+                term.replace(/\s+/g, '_'),
+                term.toLowerCase(),
+                term.replace(/\s+/g, '_').toLowerCase()
+            ];
+            const uniqueNames = [...new Set(baseNames)];
+
+            // Проверяем все варианты: term.ext, term_2.ext, term_3.ext, ...
+            const suffixes = ['', '_2', '_3', '_4', '_5'];
+
+            for (const suffix of suffixes) {
+                let foundUrl = null;
+                for (const name of uniqueNames) {
+                    for (const ext of DOC_EXTENSIONS) {
+                        const url = `documents/${category}/${name}${suffix}.${ext}`;
+                        const ok = await tryLoadUrl(url);
+                        if (ok) {
+                            foundUrl = url;
+                            break;
+                        }
+                    }
+                    if (foundUrl) break;
+                }
+
+                if (foundUrl) {
+                    // Извлекаем чистое название для отображения
+                    const cleanTitle = suffix === ''
+                        ? term.replace(/_/g, ' ')
+                        : `${term.replace(/_/g, ' ')} (${suffix.slice(1)})`;
+
+                    found.push({
+                        id: `file_${category}_${term}_${suffix}`,
+                        title: cleanTitle,
+                        url: foundUrl,
+                        category: category,
+                        description: '',
+                        type: 'file',
+                        ext: foundUrl.split('.').pop().toLowerCase()
+                    });
+                }
+            }
+        }
+
+        docsCache[cacheKey] = { files: found, ts: Date.now() };
+        saveCache();
+
+        return found;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  НОВОЕ: Загрузка из manifest.json + fallback на TERMS_BY_CATEGORY
+    // ═══════════════════════════════════════════════════════════
+    async function loadManifest() {
+        try {
+            const response = await fetch('documents/manifest.json');
+            if (!response.ok) {
+                console.log('📄 manifest.json не найден — используем TERMS_BY_CATEGORY');
+                return null;
+            }
+            const manifest = await response.json();
+            console.log('✅ manifest.json загружен:', Object.keys(manifest).length, 'категорий');
+            return manifest;
+        } catch (e) {
+            console.log('⚠️ manifest.json недоступен:', e.message);
+            return null;
+        }
+    }
+
+    async function findAllFiles() {
+        // 1. Пробуем загрузить manifest.json
+        const manifest = await loadManifest();
+
+        if (manifest) {
+            // 2. Используем manifest.json — все файлы оттуда
+            const allFiles = [];
+
+            for (const category in manifest) {
+                const files = manifest[category] || [];
+                const categoryFiles = files.map((filename, idx) => {
+                    // Извлекаем расширение и чистое имя
+                    const ext = filename.split('.').pop().toLowerCase();
+                    const titleWithoutExt = filename.replace(/\.[^.]+$/, '');
+
+                    return {
+                        id: `file_${category}_${idx}_${filename}`,
+                        title: titleWithoutExt,
+                        url: `documents/${category}/${filename}`,
+                        category: category,
+                        description: '',
+                        type: 'file',
+                        ext: ext
+                    };
+                });
+
+                // Сохраняем в кэш
+                docsCache[`files::${category}`] = {
+                    files: categoryFiles,
+                    ts: Date.now()
+                };
+
+                allFiles.push(...categoryFiles);
+            }
+
+            saveCache();
+            console.log('📦 Загружено файлов из manifest:', allFiles.length);
+            return;
+        }
+
+        // 3. Fallback: старая логика через TERMS_BY_CATEGORY
+        console.log('📦 Используем fallback (TERMS_BY_CATEGORY)');
+        const promises = Object.keys(CATEGORIES).map(cat => findFilesForCategory(cat));
+        await Promise.all(promises);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  СПИСОК ДОКУМЕНТОВ
+    // ═══════════════════════════════════════════════════════════
+    let currentDocCategory = 'all';
+    let currentDocSearch = '';
+
+    function getAllDocuments() {
+        const files = [];
+        for (const cat in CATEGORIES) {
+            const cacheKey = `files::${cat}`;
+            if (docsCache[cacheKey] && docsCache[cacheKey].files) {
+                files.push(...docsCache[cacheKey].files);
+            }
+        }
+
+        const all = [...files, ...localDocs, ...customLinks];
+
+        // ⚡ Дедупликация: по url + title (или только по url)
+        const seen = new Set();
+        const unique = [];
+        all.forEach(doc => {
+            // Нормализуем URL: убираем префиксы, decodeURIComponent и т.д.
+            const key = (doc.url || '').toLowerCase().trim();
+            if (!key) {
+                unique.push(doc);   // документы без url не дедуплицируем
+                return;
+            }
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(doc);
+            }
+        });
+
+        return unique;
+    }
+
+    function getFilteredDocuments() {
+        let all = getAllDocuments();
+
+        // Фильтр по категории
+        if (currentDocCategory !== 'all') {
+            all = all.filter(d => d.category === currentDocCategory);
+        }
+
+        // Фильтр по поиску
+        if (currentDocSearch) {
+            const q = currentDocSearch.toLowerCase();
+            all = all.filter(d =>
+                (d.title || '').toLowerCase().includes(q) ||
+                (d.description || '').toLowerCase().includes(q)
+            );
+        }
+
+        return all;
+    }
+
+    function renderDocuments() {
+        const list = document.getElementById('documentsList');
+        if (!list) return;
+
+        const filtered = getFilteredDocuments();
+
+        if (filtered.length === 0) {
+            const msg = currentDocSearch
+                ? `По запросу «${escapeHtml(currentDocSearch)}» ничего не найдено`
+                : 'Документов пока нет';
+
+            list.innerHTML = `
+                <div class="documents-empty">
+                    <div class="documents-empty__icon">📭</div>
+                    <p>${msg}</p>
+                    <p style="font-size:0.8rem; margin-top:8px;">
+                        Нажмите «➕ Добавить ссылку»<br>
+                        или положите файлы в <code>documents/${currentDocCategory === 'all' ? '{тема}' : currentDocCategory}/</code>
+                    </p>
+                </div>
+            `;
+            return;
+        }
+
+        list.innerHTML = filtered.map(doc => {
+            const icon = doc.type === 'link' ? '🔗' : getFileIcon(doc.ext);
+            const catLabel = CATEGORIES[doc.category] || doc.category || 'Без темы';
+            const isLink = doc.type === 'link';
+            const isLocal = doc.type === 'local';
+
+            return `
+                <div class="doc-item">
+                    <div class="doc-item__icon">${icon}</div>
+                    <div class="doc-item__main">
+                        <div class="doc-item__title">${escapeHtml(doc.title)}</div>
+                        <div class="doc-item__meta">
+                            <span class="doc-item__category">${escapeHtml(catLabel)}</span>
+                            ${doc.description ? `<span>${escapeHtml(doc.description)}</span>` : ''}
+                            ${doc.fileSize ? `<span>${formatSize(doc.fileSize)}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="doc-item__actions">
+                        <a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener" class="doc-action-btn">
+                            👁 Открыть
+                        </a>
+                        ${!isLink ? `<a href="${escapeHtml(doc.url)}" download="${escapeHtml(doc.fileName || '')}" class="doc-action-btn doc-action-btn--download">⬇ Скачать</a>` : ''}
+                        ${(isLink || isLocal) ? `<button class="doc-action-btn doc-action-btn--delete" data-delete-id="${doc.id}" data-delete-type="${doc.type}" title="Удалить">🗑</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Обработчики удаления
+        list.querySelectorAll('.doc-action-btn--delete').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const id = this.dataset.deleteId;
+                const type = this.dataset.deleteType;
+                if (!id) return;
+                if (!confirm('Удалить этот документ?')) return;
+
+                if (type === 'local') {
+                    localDocs = localDocs.filter(l => l.id !== id);
+                    saveLocalDocs();
+                } else {
+                    customLinks = customLinks.filter(l => l.id !== id);
+                    saveCustomLinks();
+                }
+                renderFilters();
+                renderDocuments();
+            });
+        });
+    }
+
+    function renderFilters() {
+        const filters = document.getElementById('documentsFilters');
+        if (!filters) return;
+
+        const allDocs = getAllDocuments();
+
+        let html = `<button class="documents-filter-btn${currentDocCategory === 'all' ? ' active' : ''}" data-cat="all">Все (${allDocs.length})</button>`;
+
+        for (const cat in CATEGORIES) {
+            const count = allDocs.filter(d => d.category === cat).length;
+            const cls = currentDocCategory === cat ? ' active' : '';
+            const disabled = count === 0 ? ' style="opacity:0.5;"' : '';
+            html += `<button class="documents-filter-btn${cls}" data-cat="${cat}"${disabled}>${CATEGORIES[cat]}${count > 0 ? ` (${count})` : ''}</button>`;
+        }
+
+        filters.innerHTML = html;
+
+        filters.querySelectorAll('.documents-filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentDocCategory = this.dataset.cat;
+                renderFilters();
+                renderDocuments();
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  ОТКРЫТИЕ / ЗАКРЫТИЕ
+    // ═══════════════════════════════════════════════════════════
+    let isLoadingDocs = false;
+
+    async function openDocuments() {
+        const modal = document.getElementById('documentsModal');
+        if (!modal) {
+            console.error('❌ #documentsModal не найден');
+            return;
+        }
+
+        // Показываем модалку сразу
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+
+        // Показываем фильтры и "Загрузка..."
+        renderFilters();
+        const list = document.getElementById('documentsList');
+        if (list) {
+            list.innerHTML = `
+                <div class="documents-empty">
+                    <div class="documents-empty__icon">⏳</div>
+                    <p>Загрузка документов...</p>
+                </div>
+            `;
+        }
+
+        // Загружаем файлы (с кэшем)
+        if (!isLoadingDocs) {
+            isLoadingDocs = true;
+            try {
+                await findAllFiles();
+            } catch (e) {
+                console.warn('Ошибка загрузки документов:', e);
+            }
+            isLoadingDocs = false;
+        }
+
+        renderFilters();
+        renderDocuments();
+    }
+
+    function closeDocuments() {
+        const modal = document.getElementById('documentsModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    // Публичный сброс кэша
+    window.clearDocsCache = function() {
+        docsCache = {};
+        localStorage.removeItem(DOC_CACHE_KEY);
+        console.log('🗑 Кэш документов очищен');
+        location.reload();
+    };
+
+    // ═══════════════════════════════════════════════════════════
+    //  КАСТОМНЫЙ ДРОПДАУН ТЕМЫ
+    // ═══════════════════════════════════════════════════════════
+    function buildCategoryDropdown(containerId, hiddenInputId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="cat-dropdown" id="${containerId}_dd">
+                <button type="button" class="cat-toggle" id="${containerId}_toggle">
+                    <span class="cat-label">Теория</span>
+                    <span class="cat-arrow">▼</span>
+                </button>
+                <div class="cat-menu" id="${containerId}_menu">
+                    ${Object.entries(CATEGORIES).map(([key, label]) => `
+                        <button type="button" class="cat-option" data-value="${key}">${label}</button>
+                    `).join('')}
+                </div>
+                <input type="hidden" id="${hiddenInputId}" value="theory">
+            </div>
+        `;
+
+        const dd = container.querySelector('.cat-dropdown');
+        const toggle = container.querySelector('.cat-toggle');
+        const menu = container.querySelector('.cat-menu');
+        const hidden = document.getElementById(hiddenInputId);
+        const label = container.querySelector('.cat-label');
+
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+
+            const wasOpen = menu.classList.contains('open');
+            document.querySelectorAll('.cat-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.cat-toggle.open').forEach(t => t.classList.remove('open'));
+
+            if (!wasOpen) {
+                menu.classList.add('open');
+                toggle.classList.add('open');
+            }
+        });
+
+        menu.querySelectorAll('.cat-option').forEach(opt => {
+            opt.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const value = this.dataset.value;
+                const text = this.textContent.trim();
+                hidden.value = value;
+                label.textContent = text;
+
+                menu.querySelectorAll('.cat-option').forEach(o => o.classList.remove('selected'));
+                this.classList.add('selected');
+
+                menu.classList.remove('open');
+                toggle.classList.remove('open');
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!dd.contains(e.target)) {
+                menu.classList.remove('open');
+                toggle.classList.remove('open');
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  МОДАЛКА ДОБАВЛЕНИЯ
+    // ═══════════════════════════════════════════════════════════
+    let currentTab = 'link';
+
+    function switchDocTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.doc-add-tab').forEach(t => {
+            t.classList.toggle('active', t.dataset.tab === tab);
+        });
+        document.querySelectorAll('.doc-add-panel').forEach(p => {
+            p.style.display = p.dataset.panel === tab ? 'flex' : 'none';
+        });
+    }
+
+    function openAddForm() {
+        const modal = document.getElementById('docAddModal');
+        if (!modal) {
+            console.error('❌ #docAddModal не найден');
+            return;
+        }
+
+        // Очистка
+        ['docLinkTitle', 'docLinkUrl', 'docLinkDescription',
+         'docFileTitle', 'docFileDescription'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const fileInput = document.getElementById('docFileInput');
+        if (fileInput) fileInput.value = '';
+
+        // Ставим дефолтную тему
+        const defaultCat = currentDocCategory === 'all' ? 'theory' : currentDocCategory;
+        const linkHidden = document.getElementById('docLinkCategory');
+        const fileHidden = document.getElementById('docFileCategory');
+        if (linkHidden) linkHidden.value = defaultCat;
+        if (fileHidden) fileHidden.value = defaultCat;
+
+        // Обновляем текст в лейблах кастомных дропдаунов
+        document.querySelectorAll('#docLinkCategoryContainer .cat-label, #docFileCategoryContainer .cat-label').forEach(l => {
+            l.textContent = CATEGORIES[defaultCat] || 'Теория';
+        });
+
+        switchDocTab('link');
+
+        modal.style.display = 'flex';
+    }
+
+    function closeAddForm() {
+        const modal = document.getElementById('docAddModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function saveLinkDoc() {
+        const titleEl = document.getElementById('docLinkTitle');
+        const urlEl = document.getElementById('docLinkUrl');
+        const catEl = document.getElementById('docLinkCategory');
+        const descEl = document.getElementById('docLinkDescription');
+
+        const title = titleEl ? titleEl.value.trim() : '';
+        const url = urlEl ? urlEl.value.trim() : '';
+        const category = catEl ? catEl.value : 'theory';
+        const description = descEl ? descEl.value.trim() : '';
+
+        if (!title) { alert('Введите название'); return false; }
+        if (!url || !/^https?:\/\//i.test(url)) {
+            alert('Введите корректную ссылку (http:// или https://)');
+            return false;
+        }
+
+        customLinks.push({
+            id: 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            title: title,
+            url: url,
+            category: category,
+            description: description,
+            type: 'link',
+            createdAt: Date.now()
+        });
+        saveCustomLinks();
+
+        closeAddForm();
+        renderFilters();
+        renderDocuments();
+
+        if (typeof showToast === 'function') {
+            showToast(`✅ Ссылка «${title}» добавлена`);
+        }
+        return true;
+    }
+
+    async function saveFileDoc() {
+        const inputEl = document.getElementById('docFileInput');
+        const titleEl = document.getElementById('docFileTitle');
+        const catEl = document.getElementById('docFileCategory');
+        const descEl = document.getElementById('docFileDescription');
+
+        const file = inputEl && inputEl.files ? inputEl.files[0] : null;
+        const title = titleEl ? titleEl.value.trim() : '';
+        const category = catEl ? catEl.value : 'theory';
+        const description = descEl ? descEl.value.trim() : '';
+
+        if (!file) { alert('Выберите файл'); return false; }
+        if (!title) { alert('Введите название'); return false; }
+
+        // ⚡ Проверка размера — не больше 20 МБ (для комфортной работы)
+        const MAX_FILE_SIZE = 20 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`❌ Файл больше ${MAX_FILE_SIZE / 1024 / 1024} МБ.`);
+            return false;
+        }
+
+        // ⚡ Сохраняем только имя файла, без Base64
+        const safeFileName = file.name.replace(/[^\wа-яё\-\s\.]/gi, '_').trim();
+        const targetPath = `documents/${category}/${safeFileName}`;
+
+        // ⚡ Скачиваем файл на устройство пользователя, чтобы он мог его положить в папку
+        const url = URL.createObjectURL(file);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = safeFileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        // ⚡ Сохраняем запись в localStorage — только метаданные
+        const localDoc = {
+            id: 'local_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            title: title,
+            url: targetPath,               // ← путь, а не data URL
+            category: category,
+            description: description,
+            type: 'local',
+            ext: safeFileName.split('.').pop().toLowerCase(),
+            fileName: safeFileName,
+            fileSize: file.size,
+            createdAt: Date.now()
+        };
+
+        localDocs.push(localDoc);
+        saveLocalDocs();
+
+        closeAddForm();
+        renderFilters();
+        renderDocuments();
+
+        // ⚡ Показываем инструкцию
+        setTimeout(() => {
+            alert(
+                `📥 Файл «${safeFileName}» скачан на устройство.\n\n` +
+                `Чтобы он открывался в приложении:\n\n` +
+                `1. Скопируйте файл в папку:\n   documents/${category}/\n\n` +
+                `2. Если работаете через GitHub — загрузите файл в репозиторий.\n\n` +
+                `3. Обновите список (кнопка "🔄 Обновить").`
+            );
+        }, 300);
+
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  ИНИЦИАЛИЗАЦИЯ
+    // ═══════════════════════════════════════════════════════════
+    function init() {
+
+         // ⚡ Загружаем публичные ссылки из links.json
+        (async function loadPublicLinks() {
+            const fileLinks = await loadLinksFromFile();
+            if (fileLinks && fileLinks.length) {
+                const localLinks = JSON.parse(localStorage.getItem(DOC_LINKS_KEY) || '[]');
+                const merged = [...fileLinks];
+                const fileUrls = new Set(fileLinks.map(l => (l.url || '').toLowerCase()));
+                localLinks.forEach(l => {
+                    const url = (l.url || '').toLowerCase();
+                    if (!fileUrls.has(url)) {
+                        merged.push(l);
+                    }
+                });
+                customLinks = merged;
+                saveCustomLinks();
+                console.log('🔗 Всего ссылок:', customLinks.length);
+            }
+        })();
+        // 1. Кнопка "Документы"
+        const btn = document.getElementById('documentsBtn');
+        if (btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                openDocuments();
+            });
+        }
+
+        // 1.1. Кнопка "Добавить ссылку" — открывает модалку добавления
+        const addBtn = document.getElementById('addDocumentBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                openAddForm();
+            });
+        } else {
+            console.warn('⚠️ Кнопка #addDocumentBtn не найдена');
+        }
+
+        // 2. Кнопка закрытия модалки списка
+        const closeBtn = document.getElementById('documentsCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeDocuments();
+            });
+        }
+
+        // 3. Клик по фону модалки списка
+        const modal = document.getElementById('documentsModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeDocuments();
+            });
+        }
+
+        // 4.1. Кнопка "Обновить" — сброс кэша и перезагрузка списка
+        const refreshBtn = document.getElementById('refreshDocsBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                const btn = this;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Загрузка...';
+                btn.disabled = true;
+
+                try {
+                    // Очищаем кэш
+                    docsCache = {};
+                    localStorage.removeItem(DOC_CACHE_KEY);
+
+                    // Показываем индикатор
+                    const list = document.getElementById('documentsList');
+                    if (list) {
+                        list.innerHTML = `
+                            <div class="documents-empty">
+                                <div class="documents-empty__icon">⏳</div>
+                                <p>Обновление...</p>
+                            </div>
+                        `;
+                    }
+
+                    // Переискиваем файлы
+                    await findAllFiles();
+
+                    // Перерисовываем
+                    renderFilters();
+                    renderDocuments();
+
+                    if (typeof showToast === 'function') {
+                        showToast('✅ Список обновлён');
+                    }
+                } catch (err) {
+                    console.error('Ошибка обновления:', err);
+                    if (typeof showToast === 'function') {
+                        showToast('❌ Ошибка обновления', 'error');
+                    }
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // 5. Строим кастомные дропдауны
+        const linkCatSelect = document.getElementById('docLinkCategory');
+        const fileCatSelect = document.getElementById('docFileCategory');
+
+        if (linkCatSelect && linkCatSelect.tagName === 'SELECT') {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'docLinkCategoryContainer';
+            linkCatSelect.parentNode.replaceChild(wrapper, linkCatSelect);
+            buildCategoryDropdown('docLinkCategoryContainer', 'docLinkCategory');
+        }
+
+        if (fileCatSelect && fileCatSelect.tagName === 'SELECT') {
+            const wrapper = document.createElement('div');
+            wrapper.id = 'docFileCategoryContainer';
+            fileCatSelect.parentNode.replaceChild(wrapper, fileCatSelect);
+            buildCategoryDropdown('docFileCategoryContainer', 'docFileCategory');
+        }
+
+        // 6. Табы
+        document.querySelectorAll('.doc-add-tab').forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                switchDocTab(this.dataset.tab);
+            });
+        });
+
+        // 7. Кнопки модалки добавления
+        const addClose = document.getElementById('docAddModalClose');
+        const addCancel = document.getElementById('docAddModalCancel');
+        const addSave = document.getElementById('docAddModalSave');
+        const addModal = document.getElementById('docAddModal');
+
+        if (addClose) {
+            addClose.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeAddForm();
+            });
+        }
+        if (addCancel) {
+            addCancel.addEventListener('click', function(e) {
+                e.stopPropagation();
+                closeAddForm();
+            });
+        }
+        if (addModal) {
+            addModal.addEventListener('click', function(e) {
+                if (e.target === addModal) closeAddForm();
+            });
+        }
+
+        // 8. Кнопка "Добавить"
+        if (addSave) {
+            addSave.addEventListener('click', async function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (currentTab === 'link') {
+                    saveLinkDoc();
+                } else {
+                    await saveFileDoc();
+                }
+            });
+        }
+
+        // 9. Поиск по документам
+        const searchInput = document.getElementById('documentsSearchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                currentDocSearch = this.value.trim();
+                renderDocuments();
+            });
+        }
+
+        // 10. ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Escape') return;
+
+            const addModalEl = document.getElementById('docAddModal');
+            const docModalEl = document.getElementById('documentsModal');
+
+            if (addModalEl && addModalEl.style.display === 'flex') {
+                closeAddForm();
+            } else if (docModalEl && docModalEl.style.display === 'flex') {
+                closeDocuments();
+            }
+        });
+
+        console.log('✅ Модуль документов v3 активен');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Публичный API
+    window.openDocuments = openDocuments;
+    window.closeDocuments = closeDocuments;
+    window.openAddForm = openAddForm;
+    window.closeAddForm = closeAddForm;
+})();

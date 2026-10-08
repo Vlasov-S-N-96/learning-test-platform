@@ -1,0 +1,38 @@
+[
+  {
+    "id": "link_functional_gitbook",
+    "title": "Функциональное тестирование",
+    "url": "https://vladislaveremeev.gitbook.io/qa_bible/vidy-metody-urovni-testirovaniya/funkcionalnoe-testirovanie-functional-behavioral-testing",
+    "category": "functional",
+    "description": "Глава из QA Bible",
+    "type": "link",
+    "createdAt": 1791449629948
+  },
+  {
+    "id": "link_nonfunctional_gitbook",
+    "title": "Нефункциональное тестирование",
+    "url": "https://vladislaveremeev.gitbook.io/qa_bible/vidy-metody-urovni-testirovaniya/nefunkcionalnoe-testirovanie-non-functional-testing",
+    "category": "nonfunctional",
+    "description": "Глава из QA Bible",
+    "type": "link",
+    "createdAt": 1791449681548
+  },
+  {
+    "id": "link_habr_checklist",
+    "title": "Чек-листы требований",
+    "url": "https://habr.com/ru/articles/543340/",
+    "category": "requirements",
+    "description": "Статья на Habr",
+    "type": "link",
+    "createdAt": 1791459645702
+  },
+  {
+    "id": "link_habr_vizual",
+    "title": "Визуализация ТЗ — диаграммы, схемы, картинки",
+    "url": "https://habr.com/ru/articles/550498/",
+    "category": "requirements",
+    "description": "Статья на Habr",
+    "type": "link",
+    "createdAt": 1791459677222
+  }
+]

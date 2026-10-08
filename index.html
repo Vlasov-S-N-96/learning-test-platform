@@ -883,7 +883,8 @@
 
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ТЕРМИНАМИ ===== -->
         <div class="controls">
-
+        <!-- ═══ СТРОКА 1: Поиск + Сбросить + Работа с карточками ═══ -->
+        <div class="controls-row controls-row--top">
             <div class="search-wrap">
                 <input type="text" id="searchInput" placeholder="Поиск терминов..." />
                 <button class="clear-btn" id="clearSearch" title="Очистить">✕</button>
@@ -905,12 +906,14 @@
                 </div>
                 <input type="file" id="importFile" accept=".json" style="display:none;">
             </div>
+        </div>
 
+        <!-- ═══ СТРОКА 2: Фильтры ═══ -->
+        <div class="controls-row controls-row--filters">
             <div class="filter-group" id="filterGroup">
                 <button class="filter-btn" data-filter="orphan" id="orphanFilterBtn" style="display:none;">Хранилище</button>
                 <button class="filter-btn active" data-filter="all">Все</button>
                 <button class="filter-btn" data-filter="theory">Теория</button>
-                 <!-- ===== ДРОПДАУН: СХЕМА ТЕСТИРОВАНИЯ ===== -->
                 <div class="dropdown">
                     <button class="filter-btn dropdown-toggle" id="dropdownToggleSchema">
                         Схема тестирования <span class="arrow">▼</span>
@@ -924,8 +927,6 @@
                         <button class="dropdown-item" data-filter="nonfunctional">Нефункциональное</button>
                     </div>
                 </div>
-                
-                <!-- ===== ОСТАЛЬНЫЕ КНОПКИ ===== -->
                 <button class="filter-btn" data-filter="documentation">Тест. документация</button>
                 <button class="filter-btn" data-filter="api">API</button>
                 <button class="filter-btn" data-filter="web">Веб-приложения</button>
@@ -933,8 +934,6 @@
                 <button class="filter-btn" data-filter="kanban">Kanban</button>
                 <button class="filter-btn" data-filter="scrum">Scrum</button>
                 <button class="filter-btn" data-filter="requirements">Требования</button>
-
-                                <!-- ===== ДРОПДАУН: СОБЕСЕДОВАНИЕ ===== -->
                 <div class="dropdown">
                     <button class="filter-btn dropdown-toggle" id="dropdownToggleInterview">
                         Собеседование <span class="arrow">▼</span>
@@ -950,7 +949,6 @@
                         <button class="dropdown-item" data-filter="interview_cases">Ситуационные кейсы</button>
                     </div>
                 </div>
-
                 <div class="dropdown">
                     <button class="filter-btn dropdown-toggle" id="dropdownToggleSql">
                         SQL <span class="arrow">▼</span>
@@ -970,7 +968,6 @@
                         <button class="dropdown-item" data-filter="sql_interview">Вопросы для собеседования</button>
                     </div>
                 </div>
-
                 <div class="dropdown">
                     <button class="filter-btn dropdown-toggle" id="dropdownTogglePython">
                         Python <span class="arrow">▼</span>
@@ -990,16 +987,46 @@
                         <button class="dropdown-item" data-filter="python_interview">Вопросы для собеседования</button>
                     </div>
                 </div>
-
             </div>
+        </div>
+
+        <!-- ═══ СТРОКА 3: Голос + Прогресс + Статистика + Вид ═══ -->
+        <div class="controls-row controls-row--bottom">
             <div class="dropdown voice-dropdown">
                 <button class="filter-btn dropdown-toggle" id="voiceToggle">
                     Авто (системный голос) <span class="arrow">▼</span>
                 </button>
                 <div class="dropdown-menu" id="voiceMenu"></div>
             </div>
+            <button class="filter-btn" id="documentsBtn" title="Документы по темам">
+                Документы
+            </button>
+
             <div class="stats">Показано: <strong id="visibleCount">0</strong> / <strong id="totalCount">0</strong></div>
+            <div class="view-switcher" id="viewSwitcher">
+                <button class="view-btn active" data-cols="1" title="1 колонка" aria-label="1 колонка">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <rect x="3" y="3" width="18" height="7" rx="2"/>
+                        <rect x="3" y="14" width="18" height="7" rx="2"/>
+                    </svg>
+                </button>
+                <button class="view-btn" data-cols="2" title="2 колонки" aria-label="2 колонки">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <rect x="3" y="3" width="8" height="18" rx="2"/>
+                        <rect x="13" y="3" width="8" height="18" rx="2"/>
+                    </svg>
+                </button>
+                <button class="view-btn" data-cols="3" title="3 колонки" aria-label="3 колонки">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                        <rect x="2" y="3" width="6" height="18" rx="2"/>
+                        <rect x="9" y="3" width="6" height="18" rx="2"/>
+                        <rect x="16" y="3" width="6" height="18" rx="2"/>
+                    </svg>
+                </button>
+            </div>
         </div>
+
+    </div>
         <div id="dashboard" class="dashboard-collapsed">
             <button class="dashboard-toggle" id="dashboardToggle" aria-expanded="false">
                 <span class="dashboard-toggle-text">Статистика</span>
@@ -1008,7 +1035,8 @@
             <div class="dashboard-content" id="dashboardContent"></div>
         </div>
         <div class="section-title">Справочник терминов</div>
-        <div class="grid-cards" id="cardsGrid"></div>
+            <div class="grid-cards" id="cardsGrid"></div>
+        </div>
 
         <!-- ===== БЛОК ИТОГОВ ПОСЛЕ СВАЙПА ===== -->
         <div id="swipeSummary" style="display: none; margin-top: 20px; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.05);">
@@ -1325,6 +1353,7 @@
             <polyline points="18 15 12 9 6 15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
     </button>
+
     <footer class="app-footer">
         <div class="app-footer__inner">
             <div class="app-badges">
@@ -1342,6 +1371,109 @@
             <div class="app-footer__copy">© 2026 QA Справочник</div>
         </div>
     </footer>
+</div>
+<div id="photoViewer" class="photo-viewer" style="display: none;">
+        <button class="photo-viewer-close" id="photoViewerClose" aria-label="Закрыть">✕</button>
+        <button class="photo-viewer-nav photo-viewer-prev" id="photoViewerPrev" aria-label="Назад">‹</button>
+        <img id="photoViewerImg" src="" alt="Просмотр фото">
+        <button class="photo-viewer-nav photo-viewer-next" id="photoViewerNext" aria-label="Вперёд">›</button>
+        <div class="photo-viewer-counter" id="photoViewerCounter"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  МОДАЛЬНОЕ ОКНО: ДОКУМЕНТЫ (список)                           -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="documentsModal" class="documents-modal" style="display: none;">
+    <div class="documents-modal__content">
+
+        <!-- Шапка -->
+        <div class="documents-modal__header">
+            <h3>Документы</h3>
+            <div class="documents-modal__actions">
+                <button class="documents-add-btn" id="addDocumentBtn">➕ Добавить ссылку</button>
+                <button class="documents-close-btn" id="documentsCloseBtn">✕</button>
+            </div>
+        </div>
+
+        <!-- ⚡ ПОИСК — отдельная строка -->
+        <div class="documents-modal__search">
+            <input type="text" id="documentsSearchInput" placeholder="Поиск по документам...">
+        </div>
+
+        <!-- Фильтры по темам -->
+        <div class="documents-modal__filters" id="documentsFilters"></div>
+
+        <!-- Список документов -->
+        <div class="documents-modal__list" id="documentsList"></div>
+
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  МОДАЛЬНОЕ ОКНО: ДОБАВЛЕНИЕ ДОКУМЕНТА                        -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="docAddModal" class="card-modal" style="display:none; z-index: 11000;">
+    <div class="card-modal-content" style="max-width: 520px;">
+        <div class="card-modal-header">
+            <h3>Добавить документ</h3>
+            <button class="card-modal-close" id="docAddModalClose">✕</button>
+        </div>
+
+        <div class="card-modal-body">
+
+            <!-- Переключатель: ссылка / файл -->
+            <div class="doc-add-tabs">
+                <button class="doc-add-tab active" data-tab="link">🔗 Ссылка</button>
+            </div>
+
+            <!-- Вкладка 1: Ссылка -->
+            <div class="doc-add-panel" data-panel="link">
+                <label>Название *
+                    <input type="text" id="docLinkTitle" placeholder="Например: Scrum Guide 2020">
+                </label>
+                <label>Ссылка (URL) *
+                    <input type="url" id="docLinkUrl" placeholder="https://...">
+                </label>
+                <label>Тема *
+                    <select id="docLinkCategory">
+                        <!-- Заполняется через JS -->
+                    </select>
+                </label>
+                <label>Краткое описание
+                    <textarea id="docLinkDescription" rows="2" placeholder="Необязательно"></textarea>
+                </label>
+            </div>
+
+            <!-- Вкладка 2: Файл -->
+            <div class="doc-add-panel" data-panel="file" style="display:none;">
+                <label>Файл * (PDF, DOCX, XLSX, PPTX, TXT, ZIP)
+                    <input type="file" id="docFileInput"
+                           accept=".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.txt,.csv,.zip">
+                </label>
+                <label>Название *
+                    <input type="text" id="docFileTitle" placeholder="Например: Scrum Guide 2020">
+                </label>
+                <label>Тема *
+                    <select id="docFileCategory">
+                        <!-- Заполняется через JS -->
+                    </select>
+                </label>
+                <label>Краткое описание
+                    <textarea id="docFileDescription" rows="2" placeholder="Необязательно"></textarea>
+                </label>
+                <div class="doc-add-hint">
+                    📎 Файл сохранится в браузере и скачается на устройство с правильным именем.
+                    Чтобы он был виден всем — положите его в <code>documents/{тема}/</code> и загрузите на GitHub.
+                </div>
+            </div>
+
+        </div>
+
+        <div class="card-modal-footer">
+            <button class="btn-cancel" id="docAddModalCancel">Отмена</button>
+            <button class="btn-save" id="docAddModalSave">Добавить</button>
+        </div>
+    </div>
 </div>
 </body>
 </html>

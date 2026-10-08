@@ -1,0 +1,32 @@
+{
+  "theory": [
+    "SDLC_STLC.pdf",
+    "Верификация и валидация.pdf",
+    "Принципы тестирования.pdf",
+    "Уровни_тестирования.pdf",
+    "Что такое тестирование, QC и QA_.pdf"
+  ],
+  "formal": [],
+  "scenario": [],
+  "methods": [],
+  "levels": [],
+  "functional": [],
+  "nonfunctional": [
+    "Testing_Types.pdf"
+  ],
+  "testdesign": [],
+  "documentation": [],
+  "api": [],
+  "web": [],
+  "scrum": [
+    "SCRUM.pdf"
+  ],
+  "kanban": [],
+  "requirements": [
+    "Requirements.pdf"
+  ],
+  "sql": [],
+  "python": [],
+  "interview": [],
+  "mobile": []
+}
