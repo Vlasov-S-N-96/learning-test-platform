@@ -9703,7 +9703,7 @@ window.deleteCustomCard = function (id) {
 // ---------- ЭКСПОРТ / ИМПОРТ ----------
 safeAdd('exportBtn', 'click', function () {
     const exportData = {
-        _version: 4,
+        _version: 5,
         _exported: new Date().toISOString(),
 
         // === БАЗОВЫЕ КАРТОЧКИ (только для справки, при импорте игнорируются) ===
@@ -9724,17 +9724,17 @@ safeAdd('exportBtn', 'click', function () {
         hiddenThemes: JSON.parse(localStorage.getItem('myHiddenThemes') || '[]'),
         themeRenames: JSON.parse(localStorage.getItem('myThemeRenames') || '{}'),
 
-                // === СТАТИСТИКА И ОБУЧЕНИЕ ===
+        // === СТАТИСТИКА И ОБУЧЕНИЕ ===
         learnedCards: JSON.parse(localStorage.getItem('myLearnedCards') || '{}'),
         qaStats: JSON.parse(localStorage.getItem('qa_stats') || '{"results":[]}'),
 
         // ═══════════════════════════════════════════════════════════
-        //  ДОБАВЛЕНО: ДОКУМЕНТЫ И ССЫЛКИ
+        //  ДОКУМЕНТЫ, ССЫЛКИ И ФОТО
         // ═══════════════════════════════════════════════════════════
         docLinks: (function() {
             const links = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
             const seen = new Set();
-            return links.filter(l => {
+            return links.filter(function(l) {
                 const url = (l.url || '').toLowerCase().trim();
                 if (!url || seen.has(url)) return false;
                 seen.add(url);
@@ -9742,6 +9742,7 @@ safeAdd('exportBtn', 'click', function () {
             });
         })(),
         localDocs: JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]'),
+        customPhotos: JSON.parse(localStorage.getItem('myCustomPhotos') || '{}'),
 
         // === НАСТРОЙКИ ===
         dashboardCollapsed: localStorage.getItem('dashboardCollapsed') || 'true'
@@ -9752,13 +9753,13 @@ safeAdd('exportBtn', 'click', function () {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `qa-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = 'qa-backup-' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
 
     const size = (json.length / 1024).toFixed(2);
     if (typeof showToast === 'function') {
-        showToast(`📤 Экспортировано (${size} KB)`);
+        showToast('📤 Экспортировано (' + size + ' KB)');
     }
     console.log('✅ Экспорт завершён. Размер:', size, 'KB');
     console.log('📊 Что вошло в файл:', {
@@ -9767,7 +9768,10 @@ safeAdd('exportBtn', 'click', function () {
         customCards: exportData.cards.length,
         extraSections: Object.keys(exportData.extraSections).length,
         learnedCards: Object.keys(exportData.learnedCards).length,
-        qaStats: exportData.qaStats.results.length
+        qaStats: exportData.qaStats.results.length,
+        docLinks: exportData.docLinks.length,
+        localDocs: exportData.localDocs.length,
+        photos: Object.keys(exportData.customPhotos).length
     });
 });
 
@@ -9784,29 +9788,27 @@ safeAdd('importFile', 'change', function (e) {
         try {
             const data = JSON.parse(ev.target.result);
 
-            // ⚡ ПРОВЕРКА ВЕРСИИ
-            if (data._version === 4 || data._version === 3 || data.baseCards) {
-                console.log('📦 Файл версии 3, содержит базовые карточки');
+            // ⚡ Если в файле есть baseCards — это старый экспорт (v3/v4), игнорируем baseCards
+            if (data.baseCards) {
+                console.log('📦 Файл содержит базовые карточки — пропускаем их');
                 console.log('   Базовых в файле:', data.baseCardsCount || (data.baseCards || []).length);
-                console.log('   ⚠️ Игнорируем baseCards — они уже встроены в приложение');
-                
-                // ⚡ НЕ ИМПОРТИРУЕМ baseCards
-                // (в localStorage их нет и не должно быть)
             }
 
             if (!confirm(
-                `Импортировать файл?\n\n` +
-                `📁 Тем: ${(data.themes || []).length}\n` +
-                `📝 Кастомных карточек: ${(data.cards || []).length}\n` +
-                `📂 Подтем (стандартных): ${Object.keys(data.extraSections || {}).length}\n` +
-                `👁 Скрытых карточек: ${(data.hiddenCards || []).length}\n` +
-                `✅ Изученных: ${Object.keys(data.learnedCards || {}).length}\n` +
-                `📊 Записей статистики: ${(data.qaStats?.results || []).length}\n\n` +
-                (data.baseCards ? `(Базовых карточек в файле: ${data.baseCards.length} — пропустим)\n\n` : '') +
-                `Данные добавятся к текущим.`
+                'Импортировать файл?\n\n' +
+                '📁 Тем: ' + (data.themes || []).length + '\n' +
+                '📝 Кастомных карточек: ' + (data.cards || []).length + '\n' +
+                '📂 Подтем (стандартных): ' + Object.keys(data.extraSections || {}).length + '\n' +
+                '👁 Скрытых карточек: ' + (data.hiddenCards || []).length + '\n' +
+                '✅ Изученных: ' + Object.keys(data.learnedCards || {}).length + '\n' +
+                '📊 Записей статистики: ' + ((data.qaStats && data.qaStats.results) || []).length + '\n' +
+                '📸 Фото: ' + Object.keys(data.customPhotos || {}).length + '\n' +
+                '🔗 Ссылок: ' + (data.docLinks || []).length + '\n' +
+                '📄 Файлов: ' + (data.localDocs || []).length + '\n\n' +
+                'Данные добавятся к текущим.'
             )) return;
 
-            // === ОСНОВНОЕ (без baseCards!) ===
+            // === ОСНОВНОЕ ===
             if (data.themes && data.themes.length) {
                 window.customThemes = (window.customThemes || []).concat(data.themes);
                 saveCustomThemes();
@@ -9823,10 +9825,10 @@ safeAdd('importFile', 'change', function (e) {
             // === ПОДТЕМЫ СТАНДАРТНЫХ ТЕМ ===
             if (data.extraSections) {
                 const current = JSON.parse(localStorage.getItem('myExtraSections') || '{}');
-                Object.keys(data.extraSections).forEach(themeId => {
+                Object.keys(data.extraSections).forEach(function (themeId) {
                     current[themeId] = current[themeId] || [];
-                    data.extraSections[themeId].forEach(sec => {
-                        if (!current[themeId].includes(sec)) current[themeId].push(sec);
+                    data.extraSections[themeId].forEach(function (sec) {
+                        if (current[themeId].indexOf(sec) === -1) current[themeId].push(sec);
                     });
                 });
                 localStorage.setItem('myExtraSections', JSON.stringify(current));
@@ -9834,7 +9836,7 @@ safeAdd('importFile', 'change', function (e) {
 
             if (data.sectionMeta) {
                 const current = JSON.parse(localStorage.getItem('mySectionMeta') || '{}');
-                Object.keys(data.sectionMeta).forEach(themeId => {
+                Object.keys(data.sectionMeta).forEach(function (themeId) {
                     current[themeId] = Object.assign({}, current[themeId] || {}, data.sectionMeta[themeId]);
                 });
                 localStorage.setItem('mySectionMeta', JSON.stringify(current));
@@ -9851,8 +9853,8 @@ safeAdd('importFile', 'change', function (e) {
             // === СКРЫТИЯ ===
             if (data.hiddenCards) {
                 const current = JSON.parse(localStorage.getItem('myHiddenCards') || '[]');
-                data.hiddenCards.forEach(id => {
-                    if (!current.includes(id)) current.push(id);
+                data.hiddenCards.forEach(function (id) {
+                    if (current.indexOf(id) === -1) current.push(id);
                 });
                 localStorage.setItem('myHiddenCards', JSON.stringify(current));
                 window.hiddenCardIds = current;
@@ -9860,8 +9862,8 @@ safeAdd('importFile', 'change', function (e) {
 
             if (data.hiddenThemes) {
                 const current = JSON.parse(localStorage.getItem('myHiddenThemes') || '[]');
-                data.hiddenThemes.forEach(id => {
-                    if (!current.includes(id)) current.push(id);
+                data.hiddenThemes.forEach(function (id) {
+                    if (current.indexOf(id) === -1) current.push(id);
                 });
                 localStorage.setItem('myHiddenThemes', JSON.stringify(current));
             }
@@ -9886,21 +9888,13 @@ safeAdd('importFile', 'change', function (e) {
                 localStorage.setItem('qa_stats', JSON.stringify(current));
             }
 
-            // === НАСТРОЙКИ ===
-            if (data.dashboardCollapsed !== undefined) {
-                localStorage.setItem('dashboardCollapsed', String(data.dashboardCollapsed));
-            }
-            
-            // ═══════════════════════════════════════════════════════════
-            //  ДОБАВЛЕНО: ИМПОРТ ДОКУМЕНТОВ И ССЫЛОК
-            // ═══════════════════════════════════════════════════════════
+            // === ДОКУМЕНТЫ И ССЫЛКИ ===
             if (data.docLinks && data.docLinks.length) {
                 const current = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
-                // Соберём существующие URL
-                const existingUrls = new Set(current.map(l => (l.url || '').toLowerCase()));
-                data.docLinks.forEach(link => {
+                const existingUrls = new Set(current.map(function (l) { return (l.url || '').toLowerCase(); }));
+                data.docLinks.forEach(function (link) {
                     const url = (link.url || '').toLowerCase();
-                    if (!url || existingUrls.has(url)) return;   // ⚡ пропускаем дубликаты
+                    if (!url || existingUrls.has(url)) return;
                     existingUrls.add(url);
                     current.push(link);
                 });
@@ -9910,17 +9904,40 @@ safeAdd('importFile', 'change', function (e) {
 
             if (data.localDocs && data.localDocs.length) {
                 const current = JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]');
-                data.localDocs.forEach(doc => {
-                    if (!current.find(d => d.id === doc.id)) {
-                        current.push(doc);
-                    }
+                const existingIds = new Set(current.map(function (d) { return d.id; }));
+                data.localDocs.forEach(function (doc) {
+                    if (!doc.id || existingIds.has(doc.id)) return;
+                    existingIds.add(doc.id);
+                    current.push(doc);
                 });
                 localStorage.setItem('myLocalDocs_v2', JSON.stringify(current));
                 console.log('📄 Импортировано локальных файлов:', data.localDocs.length);
             }
 
+            // === ФОТО ===
+            if (data.customPhotos && Object.keys(data.customPhotos).length) {
+                const current = JSON.parse(localStorage.getItem('myCustomPhotos') || '{}');
+                let addedPhotos = 0;
+                Object.keys(data.customPhotos).forEach(function (cardId) {
+                    if (!current[cardId]) current[cardId] = [];
+                    (data.customPhotos[cardId] || []).forEach(function (photo) {
+                        if (current[cardId].indexOf(photo) === -1) {
+                            current[cardId].push(photo);
+                            addedPhotos++;
+                        }
+                    });
+                });
+                localStorage.setItem('myCustomPhotos', JSON.stringify(current));
+                console.log('📸 Импортировано фото:', addedPhotos);
+            }
+
+            // === НАСТРОЙКИ ===
+            if (data.dashboardCollapsed !== undefined) {
+                localStorage.setItem('dashboardCollapsed', String(data.dashboardCollapsed));
+            }
+
             alert('✅ Импорт завершён! Страница перезагрузится.');
-            setTimeout(() => location.reload(), 800);
+            setTimeout(function () { location.reload(); }, 800);
 
         } catch (err) {
             console.error('Ошибка импорта:', err);
@@ -13085,6 +13102,81 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         }
     }
 
+    
+    // ═══════════════════════════════════════════════════════════
+    //  ЭКСПОРТ ЛОКАЛЬНЫХ ССЫЛОК В links.json
+    // ═══════════════════════════════════════════════════════════
+    function exportLinksToFile() {
+        const localLinks = JSON.parse(localStorage.getItem(DOC_LINKS_KEY) || '[]');
+        if (localLinks.length === 0) {
+            alert('Нет локальных ссылок для экспорта.\n\nСначала добавьте ссылку через «➕ Добавить».');
+            return;
+        }
+
+        const seen = new Set();
+        const unique = localLinks.filter(l => {
+            const url = (l.url || '').toLowerCase().trim();
+            if (!url || seen.has(url)) return false;
+            seen.add(url);
+            return true;
+        });
+
+        const json = JSON.stringify(unique, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'links.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('✅ links.json выгружен, ссылок:', unique.length);
+        if (typeof showToast === 'function') {
+            showToast(`📥 links.json (${unique.length} ссылок)`);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  ЭКСПОРТ ЛОКАЛЬНЫХ ФАЙЛОВ В manifest.json
+    // ═══════════════════════════════════════════════════════════
+    function exportManifestToFile() {
+        const localDocsData = JSON.parse(localStorage.getItem(LOCAL_DOCS_KEY) || '[]');
+        if (localDocsData.length === 0) {
+            alert('Нет локальных файлов для экспорта.\n\nСначала добавьте файл через «➕ Добавить» → вкладка «📤 Файл».');
+            return;
+        }
+
+        const manifest = {};
+        Object.keys(CATEGORIES).forEach(cat => { manifest[cat] = []; });
+
+        localDocsData.forEach(doc => {
+            if (doc.type === 'local' && doc.category && doc.fileName) {
+                manifest[doc.category] = manifest[doc.category] || [];
+                if (!manifest[doc.category].includes(doc.fileName)) {
+                    manifest[doc.category].push(doc.fileName);
+                }
+            }
+        });
+
+        const json = JSON.stringify(manifest, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'manifest.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log('✅ manifest.json выгружен');
+        if (typeof showToast === 'function') {
+            showToast('📥 manifest.json');
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  УТИЛИТЫ
     // ═══════════════════════════════════════════════════════════
@@ -13355,10 +13447,10 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                     </div>
                     <div class="doc-item__actions">
                         <a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener" class="doc-action-btn">
-                            👁 Открыть
+                            👁 <span class="doc-action-btn__label">Открыть</span>
                         </a>
-                        ${!isLink ? `<a href="${escapeHtml(doc.url)}" download="${escapeHtml(doc.fileName || '')}" class="doc-action-btn doc-action-btn--download">⬇ Скачать</a>` : ''}
-                        ${(isLink || isLocal) ? `<button class="doc-action-btn doc-action-btn--delete" data-delete-id="${doc.id}" data-delete-type="${doc.type}" title="Удалить">🗑</button>` : ''}
+                        ${!isLink ? `<a href="${escapeHtml(doc.url)}" download="${escapeHtml(doc.fileName || '')}" class="doc-action-btn doc-action-btn--download">⬇ <span class="doc-action-btn__label">Скачать</span></a>` : ''}
+                        ${(isLink || isLocal) ? `<button class="doc-action-btn doc-action-btn--delete" data-delete-id="${doc.id}" data-delete-type="${doc.type}" title="Удалить">🗑 <span class="doc-action-btn__label">Удалить</span></button>` : ''}
                     </div>
                 </div>
             `;
@@ -13424,6 +13516,17 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             return;
         }
 
+        // ⚡ Убираем фокус с кнопки — чтобы не оставалась подсветка
+        const docsBtn = document.getElementById('documentsBtn');
+        if (docsBtn) docsBtn.blur();
+
+        // ⚡ Сброс поиска при открытии
+        const searchInput = document.getElementById('documentsSearchInput');
+        const searchClear = document.getElementById('documentsSearchClear');
+        if (searchInput) searchInput.value = '';
+        if (searchClear) searchClear.classList.remove('visible');
+        currentDocSearch = '';
+
         // Показываем модалку сразу
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
@@ -13460,6 +13563,13 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         if (!modal) return;
         modal.style.display = 'none';
         document.body.style.overflow = '';
+
+        // ⚡ Снимаем выделение с кнопки "Документы"
+        const docsBtn = document.getElementById('documentsBtn');
+        if (docsBtn) {
+            docsBtn.classList.remove('active');
+            docsBtn.blur();                 // ⚡ убираем фокус
+        }
     }
 
     // Публичный сброс кэша
@@ -13552,41 +13662,137 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     }
 
     function openAddForm() {
-        const modal = document.getElementById('docAddModal');
-        if (!modal) {
-            console.error('❌ #docAddModal не найден');
-            return;
+        const addModal = document.getElementById('docAddModal');
+        if (!addModal) return;
+
+        const isMobile = window.innerWidth <= 768;
+
+        // ═══════════════════════════════════════════════════════════
+        //  МОДАЛКА — overlay на весь экран
+        // ═══════════════════════════════════════════════════════════
+        addModal.style.cssText = '';  // ⚡ сброс всего, что было
+        addModal.style.setProperty('display', 'flex', 'important');
+        addModal.style.setProperty('position', 'fixed', 'important');
+        addModal.style.setProperty('top', '0', 'important');
+        addModal.style.setProperty('left', '0', 'important');
+        addModal.style.setProperty('right', '0', 'important');
+        addModal.style.setProperty('bottom', '0', 'important');
+        addModal.style.setProperty('width', '100vw', 'important');
+        addModal.style.setProperty('height', '100vh', 'important');
+        addModal.style.setProperty('padding', '20px', 'important');
+        addModal.style.setProperty('box-sizing', 'border-box', 'important');
+        addModal.style.setProperty('background', 'rgba(0, 0, 0, 0.55)', 'important');
+        addModal.style.setProperty('z-index', '2147483646', 'important');
+        addModal.style.setProperty('visibility', 'visible', 'important');
+        addModal.style.setProperty('opacity', '1', 'important');
+        addModal.style.setProperty('overflow-y', 'auto', 'important');
+
+        // ⚡ Центрирование
+        addModal.style.setProperty('align-items', isMobile ? 'flex-start' : 'center', 'important');
+        addModal.style.setProperty('justify-content', 'center', 'important');
+
+        // ═══════════════════════════════════════════════════════════
+        //  КОНТЕНТ — фиксированный
+        // ═══════════════════════════════════════════════════════════
+        const content = addModal.querySelector('.card-modal-content');
+        if (content) {
+            content.style.cssText = '';  // ⚡ сброс
+
+            if (isMobile) {
+                content.style.setProperty('width', '100%', 'important');
+                content.style.setProperty('max-width', '100%', 'important');
+                content.style.setProperty('height', '100vh', 'important');
+                content.style.setProperty('max-height', '100vh', 'important');
+                content.style.setProperty('min-height', '100vh', 'important');
+                content.style.setProperty('border-radius', '0', 'important');
+                content.style.setProperty('margin', '0', 'important');
+            } else {
+                content.style.setProperty('width', '520px', 'important');
+                content.style.setProperty('max-width', '520px', 'important');
+                content.style.setProperty('min-width', '520px', 'important');   // ⚡ жёстко
+                content.style.setProperty('height', 'auto', 'important');
+                content.style.setProperty('max-height', 'calc(100vh - 40px)', 'important');
+                content.style.setProperty('border-radius', '20px', 'important');
+                content.style.setProperty('margin', '0', 'important');           // ⚡ не auto!
+                content.style.setProperty('flex-shrink', '0', 'important');      // ⚡ не сжимать
+                content.style.setProperty('flex-grow', '0', 'important');        // ⚡ не растягивать
+            }
+
+            content.style.setProperty('display', 'flex', 'important');
+            content.style.setProperty('flex-direction', 'column', 'important');
+            content.style.setProperty('background', '#fff', 'important');
+            content.style.setProperty('box-shadow', '0 20px 60px rgba(0, 0, 0, 0.4)', 'important');
+            content.style.setProperty('overflow', 'hidden', 'important');
+            content.style.setProperty('position', 'relative', 'important');
+            content.style.setProperty('box-sizing', 'border-box', 'important');
+
+            // Внутренние части
+            const header = content.querySelector('.card-modal-header');
+            const body = content.querySelector('.card-modal-body');
+            const footer = content.querySelector('.card-modal-footer');
+
+            if (header) {
+                header.style.setProperty('flex-shrink', '0', 'important');
+                header.style.setProperty('background', '#fff', 'important');
+                header.style.setProperty('border-radius', isMobile ? '0' : '20px 20px 0 0', 'important');
+            }
+            if (body) {
+                body.style.setProperty('flex', '1 1 auto', 'important');
+                body.style.setProperty('min-height', '0', 'important');
+                body.style.setProperty('overflow-y', 'auto', 'important');
+                body.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+            }
+            if (footer) {
+                footer.style.setProperty('flex-shrink', '0', 'important');
+                footer.style.setProperty('background', '#fff', 'important');
+                footer.style.setProperty('border-radius', isMobile ? '0' : '0 0 20px 20px', 'important');
+            }
         }
 
-        // Очистка
+        // ═══════════════════════════════════════════════════════════
+        //  Кнопка "Наверх/Вниз"
+        // ═══════════════════════════════════════════════════════════
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        if (scrollBtn) scrollBtn.style.setProperty('display', 'none', 'important');
+
+        // ═══════════════════════════════════════════════════════════
+        //  Очистка + дефолт
+        // ═══════════════════════════════════════════════════════════
         ['docLinkTitle', 'docLinkUrl', 'docLinkDescription',
-         'docFileTitle', 'docFileDescription'].forEach(id => {
+        'docFileTitle', 'docFileDescription'].forEach(function(id) {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
         const fileInput = document.getElementById('docFileInput');
         if (fileInput) fileInput.value = '';
 
-        // Ставим дефолтную тему
         const defaultCat = currentDocCategory === 'all' ? 'theory' : currentDocCategory;
         const linkHidden = document.getElementById('docLinkCategory');
         const fileHidden = document.getElementById('docFileCategory');
         if (linkHidden) linkHidden.value = defaultCat;
         if (fileHidden) fileHidden.value = defaultCat;
 
-        // Обновляем текст в лейблах кастомных дропдаунов
-        document.querySelectorAll('#docLinkCategoryContainer .cat-label, #docFileCategoryContainer .cat-label').forEach(l => {
+        document.querySelectorAll('#docLinkCategoryContainer .cat-label, #docFileCategoryContainer .cat-label').forEach(function(l) {
             l.textContent = CATEGORIES[defaultCat] || 'Теория';
         });
 
-        switchDocTab('link');
+        if (typeof switchDocTab === 'function') switchDocTab('link');
 
-        modal.style.display = 'flex';
+        console.log('✅ openAddForm (' + (isMobile ? 'mobile' : 'desktop') + '), ширина контента:', content.style.width);
     }
 
+
     function closeAddForm() {
-        const modal = document.getElementById('docAddModal');
-        if (modal) modal.style.display = 'none';
+        const addModal = document.getElementById('docAddModal');
+        if (addModal) {
+            addModal.style.display = 'none';
+        }
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        if (scrollBtn) {
+            scrollBtn.style.removeProperty('display');
+        }
+        if (typeof renderFilters === 'function') renderFilters();
+        if (typeof renderDocuments === 'function') renderDocuments();
     }
 
     function saveLinkDoc() {
@@ -13720,7 +13926,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                 console.log('🔗 Всего ссылок:', customLinks.length);
             }
         })();
-        // 1. Кнопка "Документы"
+        // 1. Кнопка "Документы" — открывает модалку списка
         const btn = document.getElementById('documentsBtn');
         if (btn) {
             btn.addEventListener('click', function(e) {
@@ -13728,18 +13934,35 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                 e.preventDefault();
                 openDocuments();
             });
+            console.log('✅ Кнопка "Документы" привязана');
+        } else {
+            console.warn('⚠️ Кнопка #documentsBtn не найдена');
         }
 
-        // 1.1. Кнопка "Добавить ссылку" — открывает модалку добавления
-        const addBtn = document.getElementById('addDocumentBtn');
-        if (addBtn) {
-            addBtn.addEventListener('click', function(e) {
+        // ═══ Кнопка «📥 links.json» ═══
+        const exportLinksBtn = document.getElementById('exportLinksBtn');
+        if (exportLinksBtn) {
+            exportLinksBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 e.preventDefault();
-                openAddForm();
+                window.exportLinksToFile();
             });
+            console.log('✅ Кнопка links.json привязана');
         } else {
-            console.warn('⚠️ Кнопка #addDocumentBtn не найдена');
+            console.warn('⚠️ Кнопка #exportLinksBtn не найдена');
+        }
+
+        // ═══ Кнопка «📥 manifest.json» ═══
+        const exportManifestBtn = document.getElementById('exportManifestBtn');
+        if (exportManifestBtn) {
+            exportManifestBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                window.exportManifestToFile();
+            });
+            console.log('✅ Кнопка manifest.json привязана');
+        } else {
+            console.warn('⚠️ Кнопка #exportManifestBtn не найдена');
         }
 
         // 2. Кнопка закрытия модалки списка
@@ -13809,6 +14032,19 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             });
         }
 
+       // ⚡ Кнопка "Добавить" — открывает модалку добавления (только click)
+        const addDocBtn = document.getElementById('addDocumentBtn');
+        if (addDocBtn) {
+            addDocBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                openAddForm();
+            });
+            console.log('✅ Кнопка "Добавить" привязана (только click)');
+        } else {
+            console.warn('⚠️ Кнопка #addDocumentBtn не найдена');
+        }
+
         // 5. Строим кастомные дропдауны
         const linkCatSelect = document.getElementById('docLinkCategory');
         const fileCatSelect = document.getElementById('docFileCategory');
@@ -13856,7 +14092,10 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         }
         if (addModal) {
             addModal.addEventListener('click', function(e) {
-                if (e.target === addModal) closeAddForm();
+                // ⚡ Закрываем только если клик реально был по фону, а не синтетический после touchend
+                if (e.target === addModal && e.isTrusted) {
+                    closeAddForm();
+                }
             });
         }
 
@@ -13874,11 +14113,33 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             });
         }
 
-        // 9. Поиск по документам
+        // 9. Поиск по документам + кнопка сброса
         const searchInput = document.getElementById('documentsSearchInput');
+        const searchClear = document.getElementById('documentsSearchClear');
+
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 currentDocSearch = this.value.trim();
+                renderDocuments();
+
+                // ⚡ Показываем/скрываем крестик
+                if (searchClear) {
+                    searchClear.classList.toggle('visible', this.value.length > 0);
+                }
+            });
+        }
+
+        if (searchClear) {
+            searchClear.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.focus();
+                }
+                currentDocSearch = '';
+                this.classList.remove('visible');
                 renderDocuments();
             });
         }
@@ -13912,3 +14173,403 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     window.openAddForm = openAddForm;
     window.closeAddForm = closeAddForm;
 })();
+
+// ═══════════════════════════════════════════════════════════
+//  ЭКСПОРТ links.json — ФИНАЛЬНАЯ ВЕРСИЯ (data: URL)
+// ═══════════════════════════════════════════════════════════
+window.exportLinksToFile = function() {
+    console.log('🚀 exportLinksToFile: старт');
+    
+    // 1. Читаем из localStorage (гарантированный источник)
+    const raw = localStorage.getItem('myDocLinks_v2');
+    console.log('📦 Сырые данные:', raw ? raw.length + ' символов' : 'null');
+    
+    if (!raw) {
+        alert('❌ Нет ключа myDocLinks_v2 в localStorage.\n\nСначала добавьте ссылку.');
+        return;
+    }
+    
+    // 2. Парсим
+    let links;
+    try {
+        links = JSON.parse(raw);
+    } catch (e) {
+        alert('❌ Ошибка JSON: ' + e.message);
+        return;
+    }
+    
+    console.log('📋 Ссылок:', links.length);
+    
+    if (links.length === 0) {
+        alert('❌ Массив ссылок пустой.\n\nСначала добавьте ссылку через «➕ Добавить».');
+        return;
+    }
+    
+    // 3. Дедупликация по URL
+    const seen = new Set();
+    const unique = links.filter(l => {
+        const url = (l.url || '').toLowerCase().trim();
+        if (!url || seen.has(url)) return false;
+        seen.add(url);
+        return true;
+    });
+    
+    console.log('📋 Уникальных ссылок:', unique.length);
+    
+    // 4. JSON
+    const json = JSON.stringify(unique, null, 2);
+    console.log('📄 JSON размер:', json.length, 'символов');
+    
+    // 5. Скачивание через data: URL (работает везде)
+    try {
+        const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+        console.log('📎 data URL создан, длина:', dataUrl.length);
+        
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'links.json';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        
+        console.log('🖱️ Программный клик...');
+        a.click();
+        
+        setTimeout(() => {
+            document.body.removeChild(a);
+            console.log('🧹 Временный тег удалён');
+        }, 100);
+        
+        console.log('✅ Файл должен скачаться');
+        
+        if (typeof showToast === 'function') {
+            showToast(`📥 links.json (${unique.length} ссылок)`);
+        }
+    } catch (e) {
+        console.error('❌ Ошибка скачивания:', e);
+        alert('❌ Ошибка: ' + e.message);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════
+//  ЭКСПОРТ manifest.json — ФИНАЛЬНАЯ ВЕРСИЯ (data: URL)
+// ═══════════════════════════════════════════════════════════
+window.exportManifestToFile = function() {
+    console.log('🚀 exportManifestToFile: старт');
+    
+    const raw = localStorage.getItem('myLocalDocs_v2');
+    console.log('📦 Сырые данные:', raw ? raw.length + ' символов' : 'null');
+    
+    if (!raw) {
+        alert('❌ Нет ключа myLocalDocs_v2 в localStorage.\n\nСначала добавьте файл.');
+        return;
+    }
+    
+    let docs;
+    try {
+        docs = JSON.parse(raw);
+    } catch (e) {
+        alert('❌ Ошибка JSON: ' + e.message);
+        return;
+    }
+    
+    console.log('📋 Локальных файлов:', docs.length);
+    
+    if (docs.length === 0) {
+        alert('❌ Нет локальных файлов.\n\nСначала добавьте файл через «➕ Добавить» → «📤 Файл».');
+        return;
+    }
+    
+    // Категории
+    const CATEGORIES = {
+        'theory': 'Теория', 'formal': 'Формализация', 'scenario': 'Сценарии',
+        'methods': 'Методы', 'levels': 'Уровни', 'functional': 'Функциональное',
+        'nonfunctional': 'Нефункциональное', 'testdesign': 'Тест-дизайн',
+        'documentation': 'Документация', 'api': 'API', 'web': 'Веб-приложения',
+        'scrum': 'Scrum', 'kanban': 'Kanban', 'requirements': 'Требования',
+        'sql': 'SQL', 'python': 'Python', 'interview': 'Собеседование',
+        'mobile': 'Мобильные'
+    };
+    
+    const manifest = {};
+    Object.keys(CATEGORIES).forEach(cat => { manifest[cat] = []; });
+    
+    docs.forEach(doc => {
+        if (doc.type === 'local' && doc.category && doc.fileName) {
+            manifest[doc.category] = manifest[doc.category] || [];
+            if (!manifest[doc.category].includes(doc.fileName)) {
+                manifest[doc.category].push(doc.fileName);
+            }
+        }
+    });
+    
+    const json = JSON.stringify(manifest, null, 2);
+    console.log('📄 JSON размер:', json.length);
+    
+    try {
+        const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'manifest.json';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
+        console.log('✅ manifest.json должен скачаться');
+        
+        if (typeof showToast === 'function') {
+            showToast('📥 manifest.json');
+        }
+    } catch (e) {
+        console.error('❌ Ошибка:', e);
+        alert('❌ Ошибка: ' + e.message);
+    }
+};
+
+console.log('✅ Функции экспорта зарегистрированы (data: URL версия)');
+
+// ═══════════════════════════════════════════════════════════
+//  ЭКСПОРТ / ИМПОРТ ПОЛЬЗОВАТЕЛЬСКИХ ФОТО
+//  (myCustomPhotos — Base64-изображения, привязанные к карточкам)
+// ═══════════════════════════════════════════════════════════
+
+window.exportCustomPhotos = function() {
+    console.log('🚀 exportCustomPhotos: старт');
+    
+    const raw = localStorage.getItem('myCustomPhotos') || '{}';
+    let photos;
+    try {
+        photos = JSON.parse(raw);
+    } catch (e) {
+        alert('❌ Ошибка чтения фото: ' + e.message);
+        return;
+    }
+    
+    const ids = Object.keys(photos);
+    if (ids.length === 0) {
+        alert('❌ Нет пользовательских фото для экспорта.\n\nСначала добавьте фото через карточку («📷 Добавить фото»).');
+        return;
+    }
+    
+    const totalPhotos = ids.reduce((sum, id) => sum + (photos[id]?.length || 0), 0);
+    console.log('📸 Карточек с фото:', ids.length, ', всего фото:', totalPhotos);
+    
+    const json = JSON.stringify(photos, null, 2);
+    console.log('📄 JSON размер:', (json.length / 1024).toFixed(1), 'КБ');
+    
+    try {
+        const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = 'custom-photos.json';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
+        console.log('✅ custom-photos.json должен скачаться');
+        
+        if (typeof showToast === 'function') {
+            showToast(`📸 Экспорт фото: ${totalPhotos} шт.`);
+        }
+    } catch (e) {
+        console.error('❌ Ошибка:', e);
+        alert('❌ Ошибка: ' + e.message);
+    }
+};
+
+window.importCustomPhotos = function(file) {
+    console.log('🚀 importCustomPhotos: старт');
+    
+    if (!file) {
+        alert('❌ Файл не выбран');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            if (typeof data !== 'object' || Array.isArray(data)) {
+                alert('❌ Неверный формат файла. Ожидается объект вида { "cardId": ["data:image/...", ...] }');
+                return;
+            }
+            
+            const ids = Object.keys(data);
+            const totalPhotos = ids.reduce((sum, id) => sum + (data[id]?.length || 0), 0);
+            
+            if (!confirm(
+                `Импортировать фото?\n\n` +
+                `📸 Карточек: ${ids.length}\n` +
+                `🖼 Фото: ${totalPhotos}\n\n` +
+                `Фото добавятся к существующим (не перезапишут).`
+            )) return;
+            
+            const current = JSON.parse(localStorage.getItem('myCustomPhotos') || '{}');
+            let added = 0;
+            
+            ids.forEach(cardId => {
+                if (!current[cardId]) current[cardId] = [];
+                (data[cardId] || []).forEach(photo => {
+                    if (!current[cardId].includes(photo)) {
+                        current[cardId].push(photo);
+                        added++;
+                    }
+                });
+            });
+            
+            localStorage.setItem('myCustomPhotos', JSON.stringify(current));
+            console.log('✅ Добавлено фото:', added);
+            
+            if (typeof showToast === 'function') {
+                showToast(`📸 Импортировано фото: ${added}`);
+            }
+            
+            setTimeout(() => {
+                if (confirm('Перезагрузить страницу, чтобы увидеть фото?')) {
+                    location.reload();
+                }
+            }, 500);
+        } catch (err) {
+            console.error('❌ Ошибка импорта:', err);
+            alert('❌ Ошибка импорта: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+};
+
+// ═══════════════════════════════════════════════════════════
+//  ЭКСПОРТ / ИМПОРТ ДОКУМЕНТОВ И ССЫЛОК
+//  (myDocLinks_v2 + myLocalDocs_v2)
+// ═══════════════════════════════════════════════════════════
+
+window.exportDocuments = function() {
+    console.log('🚀 exportDocuments: старт');
+    
+    const links = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+    const docs = JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]');
+    
+    console.log('📋 Ссылок:', links.length, ', файлов:', docs.length);
+    
+    if (links.length === 0 && docs.length === 0) {
+        alert('❌ Нет ссылок и файлов для экспорта.');
+        return;
+    }
+    
+    // Дедупликация ссылок по URL
+    const seen = new Set();
+    const uniqueLinks = links.filter(l => {
+        const url = (l.url || '').toLowerCase().trim();
+        if (!url || seen.has(url)) return false;
+        seen.add(url);
+        return true;
+    });
+    
+    const exportData = {
+        _version: 1,
+        _exported: new Date().toISOString(),
+        docLinks: uniqueLinks,
+        localDocs: docs
+    };
+    
+    const json = JSON.stringify(exportData, null, 2);
+    console.log('📄 JSON размер:', (json.length / 1024).toFixed(1), 'КБ');
+    
+    try {
+        const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(json);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `documents-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => document.body.removeChild(a), 100);
+        console.log('✅ documents-backup.json должен скачаться');
+        
+        if (typeof showToast === 'function') {
+            showToast(`📄 Экспорт: ${uniqueLinks.length} ссылок, ${docs.length} файлов`);
+        }
+    } catch (e) {
+        console.error('❌ Ошибка:', e);
+        alert('❌ Ошибка: ' + e.message);
+    }
+};
+
+window.importDocuments = function(file) {
+    console.log('🚀 importDocuments: старт');
+    
+    if (!file) {
+        alert('❌ Файл не выбран');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            const links = data.docLinks || [];
+            const docs = data.localDocs || [];
+            
+            if (links.length === 0 && docs.length === 0) {
+                alert('❌ В файле нет ссылок и файлов.');
+                return;
+            }
+            
+            if (!confirm(
+                `Импортировать документы?\n\n` +
+                `🔗 Ссылок: ${links.length}\n` +
+                `📄 Файлов: ${docs.length}\n\n` +
+                `Данные добавятся к существующим (без дубликатов по URL).`
+            )) return;
+            
+            // Ссылки
+            if (links.length > 0) {
+                const currentLinks = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+                const existingUrls = new Set(currentLinks.map(l => (l.url || '').toLowerCase()));
+                let addedLinks = 0;
+                
+                links.forEach(link => {
+                    const url = (link.url || '').toLowerCase();
+                    if (!url || existingUrls.has(url)) return;
+                    existingUrls.add(url);
+                    currentLinks.push(link);
+                    addedLinks++;
+                });
+                
+                localStorage.setItem('myDocLinks_v2', JSON.stringify(currentLinks));
+                console.log('🔗 Добавлено ссылок:', addedLinks);
+            }
+            
+            // Файлы
+            if (docs.length > 0) {
+                const currentDocs = JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]');
+                const existingIds = new Set(currentDocs.map(d => d.id));
+                let addedDocs = 0;
+                
+                docs.forEach(doc => {
+                    if (!doc.id || existingIds.has(doc.id)) return;
+                    existingDocsIds.add(doc.id);
+                    currentDocs.push(doc);
+                    addedDocs++;
+                });
+                
+                localStorage.setItem('myLocalDocs_v2', JSON.stringify(currentDocs));
+                console.log('📄 Добавлено файлов:', addedDocs);
+            }
+            
+            if (typeof showToast === 'function') {
+                showToast('📄 Документы импортированы');
+            }
+            
+            setTimeout(() => {
+                if (confirm('Перезагрузить страницу?')) {
+                    location.reload();
+                }
+            }, 500);
+        } catch (err) {
+            console.error('❌ Ошибка импорта:', err);
+            alert('❌ Ошибка импорта: ' + err.message);
+        }
+    };
+    reader.readAsText(file);
+};

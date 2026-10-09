@@ -4538,6 +4538,66 @@ body.burger-open #scrollTopBtn.scroll-top-btn {
     color: #1a2a3a;
 }
 
+
+
+/* ============================================================
+   ТУЛБАР ВИЗУАЛЬНОГО РЕДАКТОРА
+   ============================================================ */
+.editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    padding: 6px 8px;
+    background: #f6faff;
+    border: 1px solid #d0ddea;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+
+.editor-toolbar button {
+    background: white;
+    border: 1px solid #d0ddea;
+    border-radius: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    padding: 0;
+    color: #2a405a;
+}
+.editor-toolbar button:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+    transform: translateY(-1px);
+}
+.editor-toolbar .sep {
+    width: 1px;
+    height: 22px;
+    background: #d0ddea;
+    margin: 4px 3px;
+    align-self: center;
+}
+.editor-toolbar + textarea {
+    border-radius: 0 0 8px 8px;
+    margin-top: 0;
+}
+
+.editor-preview {
+    margin-top: 6px;
+    padding: 10px 14px;
+    background: #fafcff;
+    border: 1px dashed #b0c8e0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #1a2a3a;
+}
+
 /* ============================================================
    СПИСОК ТЕМ В МОДАЛЬНОМ ОКНЕ УПРАВЛЕНИЯ
    ============================================================ */
@@ -7599,7 +7659,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 24px;
+    padding: 20px 24px 16px 24px; 
     border-bottom: 2px solid #e6edf6;
     background: #f6faff;
     flex-shrink: 0;
@@ -7618,21 +7678,6 @@ body {
     align-items: center;
 }
 
-.documents-add-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 30px;
-    border: 1px solid #c5d8ef;
-    background: white;
-    color: #1d3b5c;
-    font-weight: 600;
-    font-size: 0.8rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: 0.2s;
-}
 
 .documents-add-btn:hover {
     background: #e1ebf9;
@@ -7673,7 +7718,7 @@ body {
     padding: 6px 14px;
     border-radius: 30px;
     border: 1px solid #d0ddea;
-    background: white;
+    background: #fff;
     color: #2a405a;
     font-weight: 600;
     font-size: 0.75rem;
@@ -7681,6 +7726,8 @@ body {
     cursor: pointer;
     transition: 0.2s;
     white-space: nowrap;
+    flex-shrink: 0;
+    line-height: 1.4;
 }
 
 .documents-filter-btn:hover {
@@ -7690,7 +7737,7 @@ body {
 
 .documents-filter-btn.active {
     background: #0a1929;
-    color: white;
+    color: #fff;
     border-color: #0a1929;
 }
 
@@ -8009,7 +8056,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 24px;
+    padding: 18px 24px 18px 24px;
     border-bottom: 2px solid #e6edf6;
     background: #f6faff;
     flex-shrink: 0;
@@ -8028,21 +8075,6 @@ body {
     align-items: center;
 }
 
-.documents-add-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 30px;
-    border: 1px solid #c5d8ef;
-    background: white;
-    color: #1d3b5c;
-    font-weight: 600;
-    font-size: 0.8rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: 0.2s;
-}
 
 .documents-add-btn:hover {
     background: #e1ebf9;
@@ -8078,29 +8110,40 @@ body {
     overflow-y: auto;
 }
 
-.documents-filter-btn {
-    padding: 6px 14px;
-    border-radius: 30px;
-    border: 1px solid #d0ddea;
-    background: white;
-    color: #2a405a;
-    font-weight: 600;
-    font-size: 0.75rem;
-    font-family: inherit;
-    cursor: pointer;
-    transition: 0.2s;
-    white-space: nowrap;
-}
 
-.documents-filter-btn:hover {
+.documents-add-btn:hover {
     background: #e1ebf9;
     border-color: #8aacc9;
 }
 
-.documents-filter-btn.active {
-    background: #0a1929;
-    color: white;
-    border-color: #0a1929;
+.documents-add-btn:active {
+    transform: scale(0.97);
+}
+
+.documents-add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.documents-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #6a8aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.documents-close-btn:hover {
+    background: #e6edf6;
+    color: #1a2a3a;
 }
 
 .documents-modal__list {
@@ -8246,7 +8289,7 @@ body {
     }
 
     .documents-modal__header {
-        padding: 14px 16px;
+        padding: 18px 24px 18px 24px;
     }
 
     .documents-modal__header h3 {
@@ -8297,7 +8340,6 @@ body {
     /* Шапка — фиксированная высота */
     .documents-modal__header {
         flex: 0 0 auto !important;
-        padding: 12px 14px !important;
     }
 
     /* Фильтры — фиксированная высота, скролл по горизонтали */
@@ -8381,11 +8423,21 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 24px;
+    flex-wrap: wrap;                  /* ⚡ Разрешаем перенос */
+    padding: 14px 20px 18px 24px;
     border-bottom: 2px solid #e6edf6;
     background: #f6faff;
     flex-shrink: 0;
-    gap: 12px;
+    gap: 10px;
+}
+
+.documents-modal__actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;                  /* ⚡ Разрешаем перенос */
+    flex: 1 1 auto;                   /* ⚡ Растягивается */
+    justify-content: flex-end;        /* ⚡ Прижато вправо */
 }
 
 .documents-modal__header h3 {
@@ -8395,12 +8447,6 @@ body {
     font-weight: 800;
 }
 
-.documents-modal__actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    flex-shrink: 0;
-}
 
 /* ═══ Строка поиска ═══ */
 .documents-modal__search {
@@ -8442,31 +8488,59 @@ body {
     align-content: flex-start;
 }
 
-.documents-filter-btn {
-    padding: 6px 14px;
+.documents-add-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    min-height: 36px;
     border-radius: 30px;
-    border: 1px solid #d0ddea;
-    background: white;
-    color: #2a405a;
+    border: 1px solid #c5d8ef;
+    background: #fff;
+    color: #1d3b5c;
     font-weight: 600;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-family: inherit;
     cursor: pointer;
     transition: 0.2s;
     white-space: nowrap;
-    flex-shrink: 0;
-    line-height: 1.4;
+    box-sizing: border-box;
 }
 
-.documents-filter-btn:hover {
+.documents-add-btn:hover {
     background: #e1ebf9;
     border-color: #8aacc9;
 }
 
-.documents-filter-btn.active {
-    background: #0a1929;
-    color: white;
-    border-color: #0a1929;
+.documents-add-btn:active {
+    transform: scale(0.97);
+}
+
+.documents-add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.documents-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #6a8aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.documents-close-btn:hover {
+    background: #e6edf6;
+    color: #1a2a3a;
 }
 
 /* ═══ Список документов ═══ */
@@ -8515,17 +8589,6 @@ body {
 
     .documents-modal__header h3 {
         font-size: 1.05rem;
-    }
-
-    .documents-add-btn {
-        padding: 6px 12px;
-        font-size: 0.72rem;
-    }
-
-    .documents-close-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
     }
 
     .documents-modal__search {
@@ -8735,4 +8798,1311 @@ body {
 #refreshDocsBtn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.doc-item__main {
+    flex: 1;
+    min-width: 0;      /* ⬅️ добавьте это */
+    overflow: hidden;
+}
+
+.doc-item__title {
+    font-weight: 700;
+    color: #0a1929;
+    font-size: 0.92rem;
+    line-height: 1.3;
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 900px) {
+    .doc-item {
+        padding: 12px 12px;
+        gap: 10px;
+    }
+    .doc-action-btn {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        gap: 3px;
+    }
+    .doc-item__actions {
+        gap: 4px;
+    }
+}
+
+.doc-item {
+    display: flex;
+    align-items: center;      /* ⚡ выравнивание по центру */
+    gap: 14px;
+    padding: 14px 16px;
+    background: white;
+    border: 1px solid #e6eef9;
+    border-radius: 14px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+    .doc-action-btn__label {
+        display: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  КНОПКИ В ШАПКЕ МОДАЛКИ ДОКУМЕНТОВ — адаптация */
+/* ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .documents-modal__header {
+        padding: 12px 14px 18px 24px;
+        gap: 8px;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 1.05rem;
+        flex: 1 1 100%;               /* ⚡ Заголовок на всю ширину */
+        margin-bottom: 4px;
+    }
+
+    .documents-modal__actions {
+        flex: 1 1 100%;                /* ⚡ Кнопки на всю ширину */
+        justify-content: flex-start;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .documents-modal__header {
+        padding: 10px 10px;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 1rem;
+    }
+
+}
+
+
+.documents-add-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+}
+
+.documents-add-btn:active {
+    transform: scale(0.97);
+}
+
+.documents-add-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.documents-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #6a8aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.documents-close-btn:hover {
+    background: #e6edf6;
+    color: #1a2a3a;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ФИНАЛЬНЫЙ ФИКС: отступы в шапке модалки документов          */
+/*  Сверху, слева, снизу, справа — комфортные отступы          */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-modal__header {
+    padding: 22px 32px 18px 28px !important;   /* ⬅️ справа 32px от крестика */
+    gap: 14px !important;
+    align-items: center !important;
+}
+
+.documents-modal__actions {
+    padding-top: 4px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    /* Крестик — последний элемент, справа от него будет отступ за счёт padding шапки */
+}
+
+/* На планшете — меньше */
+@media (max-width: 768px) {
+    .documents-modal__header {
+        padding: 18px 22px 14px 18px !important;
+        gap: 10px !important;
+        flex-wrap: wrap !important;
+    }
+}
+
+/* На мобильном — компактнее, но с отступом справа от крестика */
+@media (max-width: 480px) {
+    .documents-modal__header {
+        padding: 16px 18px 12px 14px !important;
+        gap: 8px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ФИНАЛЬНЫЙ ФИКС: отступы в шапке модалки документов          */
+/*  Сверху, слева, снизу, справа — комфортные отступы          */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-modal__header {
+    padding: 22px 32px 18px 28px !important;   /* ⬅️ справа 32px от крестика */
+    gap: 14px !important;
+    align-items: center !important;
+}
+
+.documents-modal__actions {
+    padding-top: 4px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    /* Крестик — последний элемент, справа от него будет отступ за счёт padding шапки */
+}
+
+/* На планшете — меньше */
+@media (max-width: 768px) {
+    .documents-modal__header {
+        padding: 18px 22px 14px 18px !important;
+        gap: 10px !important;
+        flex-wrap: wrap !important;
+    }
+}
+
+/* На мобильном — компактнее, но с отступом справа от крестика */
+@media (max-width: 480px) {
+    .documents-modal__header {
+        padding: 16px 18px 12px 14px !important;
+        gap: 8px !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  МОДАЛЬНОЕ ОКНО ДОКУМЕНТОВ — ЧИСТАЯ РАЗМЕТКА                 */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.documents-modal__content {
+    background: #fff;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 900px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+}
+
+/* Шапка — фиксированная */
+.documents-modal__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 24px;
+    background: #f6faff;
+    border-bottom: 2px solid #e6edf6;
+    flex-shrink: 0;
+}
+
+.documents-modal__header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0a1929;
+    flex: 1;
+}
+
+.documents-modal__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Поиск — фиксированный */
+.documents-modal__search {
+    padding: 12px 24px 0 24px;
+    flex-shrink: 0;
+}
+
+.documents-modal__search input {
+    width: 100%;
+    padding: 10px 16px;
+    border: 1px solid #d0ddea;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.documents-modal__search input:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+/* Фильтры — фиксированные, скролл по горизонтали на мобильном */
+.documents-modal__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 24px;
+    flex-shrink: 0;
+    border-bottom: 1px solid #e6edf6;
+}
+
+/* СПИСОК — единственный скроллируемый элемент */
+.documents-modal__list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 24px 24px;
+    background: #fafcff;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
+/* ═══ МОБИЛЬНЫЙ — на весь экран ═══ */
+@media (max-width: 768px) {
+    .documents-modal {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    .documents-modal__content {
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .documents-modal__header {
+        padding: 16px 18px;
+        flex-wrap: wrap;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 1.05rem;
+        flex: 1 1 100%;
+        margin-bottom: 4px;
+    }
+
+    .documents-modal__actions {
+        flex: 1 1 100%;
+        justify-content: flex-start;
+    }
+
+    .documents-modal__search {
+        padding: 10px 18px 0 18px;
+    }
+
+    .documents-modal__filters {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 10px 18px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .documents-modal__filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .documents-modal__list {
+        padding: 12px 18px 30px 18px;
+        padding-bottom: max(30px, env(safe-area-inset-bottom, 30px));
+    }
+}
+
+@media (max-width: 768px) {
+    .documents-modal__filters {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        max-height: 52px !important;
+        min-height: 52px !important;
+        padding: 8px 14px !important;
+        gap: 6px !important;
+        scrollbar-width: none !important;
+        position: relative !important;
+        z-index: 1 !important;
+    }
+
+    .documents-modal__filters::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .documents-modal__filters .documents-filter-btn {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        height: 36px !important;
+    }
+
+    /* Шапка — поверх всего */
+    .documents-modal__header {
+        flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 100 !important;
+        background: #f6faff !important;
+    }
+
+    .documents-modal__header .documents-add-btn,
+    .documents-modal__header .documents-close-btn,
+    #addDocumentBtn {
+        position: relative !important;
+        z-index: 101 !important;
+        pointer-events: auto !important;
+    }
+}
+
+/* ⚡ ЖЁСТКИЙ ФИКС: шапка модалки документов поверх всего */
+.documents-modal__header {
+    position: relative !important;
+    z-index: 10000 !important;
+    background: #f6faff !important;
+}
+
+#addDocumentBtn {
+    position: relative !important;
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ФИНАЛЬНЫЙ ФИКС: отступы в шапке модалки документов          */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-modal__header {
+    padding: 22px 32px 18px 28px !important;
+    gap: 14px !important;
+    align-items: center !important;
+}
+
+.documents-modal__actions {
+    padding-top: 4px !important;
+    gap: 8px !important;
+    align-items: center !important;
+}
+
+@media (max-width: 768px) {
+    .documents-modal__header {
+        padding: 18px 22px 14px 18px !important;
+        gap: 10px !important;
+        flex-wrap: wrap !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .documents-modal__header {
+        padding: 16px 18px 12px 14px !important;
+        gap: 8px !important;
+    }
+}
+
+/* ⚡ ЖЁСТКИЙ ФИКС: шапка модалки документов поверх всего */
+.documents-modal__header {
+    position: relative !important;
+    z-index: 10000 !important;
+    background: #f6faff !important;
+}
+
+#addDocumentBtn {
+    position: relative !important;
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  МОДАЛКА ДОКУМЕНТОВ — ЧИСТАЯ ШАПКА                          */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* Шапка — заголовок слева, кнопки + крестик справа */
+.documents-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #f6faff;
+    border-bottom: 2px solid #e6edf6;
+    flex-shrink: 0;
+    flex-wrap: nowrap;             /* ⚡ не переносим */
+}
+
+.documents-modal__header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0a1929;
+    flex-shrink: 0;                /* не сжимаем заголовок */
+    white-space: nowrap;
+}
+
+/* Блок кнопок + крестик */
+.documents-modal__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;             /* ⚡ все в одну строку */
+    flex-shrink: 0;
+    margin-left: auto;             /* ⚡ прижимаем к правому краю */
+}
+
+/* Кнопки и крестик — фиксированный размер, не сжимаются */
+.documents-add-btn,
+.documents-close-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.documents-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #6a8aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin-left: 4px;              /* ⚡ небольшой отступ от "Добавить" */
+}
+
+.documents-close-btn:hover {
+    background: #e6edf6;
+    color: #1a2a3a;
+}
+
+/* ═══ Мобильный — уменьшаем размеры, но всё в одну строку ═══ */
+@media (max-width: 768px) {
+    .documents-modal__header {
+        padding: 12px 14px;
+        gap: 8px;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 1rem;
+    }
+
+    .documents-add-btn {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+        min-height: 32px;
+        gap: 4px;
+    }
+
+    .documents-close-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+}
+
+/* ═══ Маленький телефон — кнопки компактнее ═══ */
+@media (max-width: 480px) {
+    .documents-modal__header {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 0.9rem;
+    }
+
+    .documents-add-btn {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+        min-height: 28px;
+    }
+
+    .documents-close-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ПОИСК В ДОКУМЕНТАХ — ОБЁРТКА С КНОПКОЙ СБРОСА                */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.documents-search-wrap input {
+    width: 100%;
+    padding: 10px 44px 10px 16px;      /* ⚡ отступ справа под крестик */
+    border: 1px solid #d0ddea;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+    background: white;
+}
+
+.documents-search-wrap input:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 3px rgba(74, 144, 217, 0.15);
+}
+
+/* ⚡ Кнопка сброса — скрыта по умолчанию */
+.documents-search-clear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    background: #e6edf6;
+    color: #4a6a8a;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;                     /* ⚡ Скрыта, пока нет текста */
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    padding: 0;
+    line-height: 1;
+    font-family: inherit;
+}
+
+.documents-search-clear.visible {
+    display: flex;                     /* ⚡ Показываем при вводе */
+}
+
+.documents-search-clear:hover {
+    background: #c62828;
+    color: #ffffff;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.documents-search-clear:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  КРЕСТИК ЗАКРЫТИЯ МОДАЛКИ — ЗАМЕТНЫЙ HOVER                   */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-close-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #6a8aaa;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, transform 0.15s;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    font-family: inherit;
+}
+
+/* ⚡ Hover — красный фон, белый крестик */
+.documents-close-btn:hover {
+    background: #c62828;
+    color: #ffffff;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(198, 40, 40, 0.35);
+}
+
+.documents-close-btn:active {
+    transform: scale(0.95);
+}
+
+/* ⚡ Для тач-устройств — заметное состояние при касании */
+@media (hover: none) {
+    .documents-close-btn:active {
+        background: #c62828;
+        color: #ffffff;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  МОДАЛКА ДОКУМЕНТОВ — АДАПТИВ 360–480px                     */
+/* ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+
+    /* ─── Шапка: заголовок на всю ширину, кнопки — сеткой 2×2 ─── */
+    .documents-modal__header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 12px 10px 12px !important;
+    }
+
+    .documents-modal__header h3 {
+        flex: 1 1 auto;
+        font-size: 1rem;
+        margin: 0;
+        order: 1;
+    }
+
+    .documents-close-btn {
+        order: 2;
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+
+    /* Кнопки "Обновить / links.json / manifest.json / Добавить" — в 2 колонки */
+    .documents-modal__actions {
+        order: 3;
+        flex: 1 1 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;    /* ⚡ 2 колонки */
+        gap: 6px;
+        margin-left: 0;
+        margin-top: 4px;
+        width: 100%;
+    }
+
+    /* "Добавить" — на всю ширину (важная кнопка) */
+    .documents-modal__actions #addDocumentBtn {
+        grid-column: 1 / -1;               /* ⚡ растянуть на 2 колонки */
+    }
+
+    .documents-add-btn {
+        padding: 8px 10px !important;
+        font-size: 0.72rem !important;
+        min-height: 34px !important;
+        gap: 4px !important;
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ─── Поиск ─── */
+    .documents-modal__search {
+        padding: 10px 12px 0 12px !important;
+    }
+
+    .documents-search-wrap input {
+        font-size: 0.82rem;
+        padding: 9px 40px 9px 14px;
+    }
+
+    .documents-search-clear {
+        width: 26px;
+        height: 26px;
+        font-size: 0.8rem;
+        right: 6px;
+    }
+
+    /* ─── Фильтры — горизонтальный скролл ─── */
+    .documents-modal__filters {
+        padding: 8px 12px !important;
+        gap: 5px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+    }
+
+    .documents-filter-btn {
+        padding: 5px 11px !important;
+        font-size: 0.7rem !important;
+        height: 32px !important;
+    }
+
+    /* ─── Список документов ─── */
+    .documents-modal__list {
+        padding: 10px 12px 24px 12px !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+    }
+
+    /* ─── Карточка документа — компактнее ─── */
+    .doc-item {
+        padding: 10px 10px !important;
+        gap: 8px !important;
+        border-radius: 12px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .doc-item__icon {
+        font-size: 1.5rem !important;
+    }
+
+    .doc-item__title {
+        font-size: 0.82rem !important;
+        white-space: normal !important;    /* ⚡ разрешаем перенос */
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
+    .doc-item__meta {
+        font-size: 0.65rem !important;
+        gap: 6px !important;
+        margin-top: 3px;
+    }
+
+    .doc-item__category {
+        padding: 1px 7px !important;
+        font-size: 0.62rem !important;
+    }
+
+    /* Кнопки действий — вертикально, компактно */
+    .doc-item__actions {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .doc-action-btn {
+        padding: 6px 10px !important;
+        font-size: 0.72rem !important;
+        min-height: 32px !important;
+        min-width: 36px;
+        border-radius: 10px !important;
+    }
+
+    .doc-action-btn--delete {
+        padding: 6px 8px !important;
+    }
+
+    /* Скрываем текстовые подписи у кнопок, оставляем иконки */
+    .doc-action-btn__label {
+        display: none !important;
+    }
+}
+
+/* ═══ Совсем маленькие (360px) ═══ */
+@media (max-width: 380px) {
+
+    .documents-modal__header h3 {
+        font-size: 0.92rem;
+    }
+
+    .documents-add-btn {
+        padding: 6px 8px !important;
+        font-size: 0.68rem !important;
+        min-height: 30px !important;
+    }
+
+    .documents-modal__header {
+        padding: 10px !important;
+        gap: 4px;
+    }
+
+    .documents-modal__search {
+        padding: 8px 10px 0 10px !important;
+    }
+
+    .documents-search-wrap input {
+        font-size: 0.78rem;
+        padding: 8px 36px 8px 12px;
+    }
+
+    .documents-modal__filters {
+        padding: 6px 10px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+    }
+
+    .documents-filter-btn {
+        padding: 4px 9px !important;
+        font-size: 0.66rem !important;
+        height: 28px !important;
+    }
+
+    .documents-modal__list {
+        padding: 8px 10px 20px 10px !important;
+    }
+
+    .doc-item {
+        padding: 8px !important;
+        gap: 6px !important;
+    }
+
+    .doc-item__icon {
+        font-size: 1.3rem !important;
+    }
+
+    .doc-item__title {
+        font-size: 0.76rem !important;
+    }
+
+    .doc-action-btn {
+        padding: 5px 8px !important;
+        font-size: 0.68rem !important;
+        min-height: 28px !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ШАПКА ДОКУМЕНТОВ ДО 768px                                   */
+/*  Кнопки — слева, крестик — справа, всё в одну строку          */
+/* ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+    /* ─── Шапка: строка с заголовком + flex-строка с кнопками ─── */
+    .documents-modal__header {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+        padding: 14px 14px 14px 16px !important;
+    }
+
+    /* Заголовок — на всю ширину */
+    .documents-modal__header h3 {
+        flex: 1 1 100% !important;
+        margin: 0 0 4px 0 !important;
+        font-size: 1.05rem !important;
+        order: 1;
+    }
+
+    /* ─── Контейнер кнопок + крестика — в одну строку ─── */
+    .documents-modal__actions {
+        order: 2;
+        flex: 1 1 100% !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;         /* ⚡ не переносим */
+        align-items: center !important;
+        justify-content: space-between !important;   /* ⚡ кнопки слева, крестик справа */
+        gap: 6px !important;
+        padding: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    /* ─── Кнопки ─── */
+    .documents-add-btn {
+        flex: 0 1 auto !important;
+        min-width: 0 !important;
+        padding: 6px 10px !important;
+        font-size: 0.7rem !important;
+        min-height: 34px !important;
+        gap: 3px !important;
+        white-space: nowrap;
+    }
+
+    /* ─── Крестик — отдельно справа ─── */
+    .documents-close-btn {
+        flex: 0 0 auto !important;             /* ⚡ не сжимается */
+        margin-left: auto !important;          /* ⚡ прижат к правому краю */
+        width: 34px !important;
+        height: 34px !important;
+        min-width: 34px !important;
+        min-height: 34px !important;
+        font-size: 1rem !important;
+        background: #eef3f9 !important;        /* ⚡ лёгкий фон для заметности */
+        color: #4a6a8a !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: background 0.2s, color 0.2s, transform 0.15s !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  КРЕСТИК — ЗАМЕТНЫЙ HOVER (на всех разрешениях)              */
+/* ═══════════════════════════════════════════════════════════ */
+
+.documents-close-btn:hover {
+    background: #c62828 !important;
+    color: #ffffff !important;
+    transform: scale(1.1);
+    box-shadow: 0 2px 10px rgba(198, 40, 40, 0.4) !important;
+}
+
+.documents-close-btn:active {
+    background: #b71c1c !important;
+    color: #ffffff !important;
+    transform: scale(0.95);
+}
+
+/* ⚡ На тач-устройствах — заметный отклик при касании */
+@media (hover: none) {
+    .documents-close-btn:active {
+        background: #c62828 !important;
+        color: #ffffff !important;
+    }
+}
+
+/* ═══ Очень узкие экраны (360px) ═══ */
+@media (max-width: 480px) {
+
+    .documents-modal__header {
+        padding: 12px 10px !important;
+        gap: 6px !important;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 0.95rem !important;
+    }
+
+    .documents-add-btn {
+        padding: 5px 8px !important;
+        font-size: 0.65rem !important;
+        min-height: 30px !important;
+    }
+
+    .documents-close-btn {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        font-size: 0.9rem !important;
+    }
+}
+
+/* ═══ Совсем узкие (до 400px) — 2 строки кнопок + крестик ═══ */
+@media (max-width: 400px) {
+
+    .documents-modal__actions {
+        flex-wrap: wrap !important;             /* ⚡ разрешаем перенос */
+        position: relative;
+        padding-right: 38px !important;         /* ⚡ место под крестик */
+    }
+
+    .documents-add-btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        justify-content: center;
+    }
+
+    /* "Добавить" — на всю ширину */
+    .documents-modal__actions #addDocumentBtn {
+        flex: 1 1 100% !important;
+    }
+
+    /* ⚡ Крестик — прибит к правому верхнему углу контейнера */
+    .documents-close-btn {
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  МОБИЛЬНЫЙ — принудительно растягиваем ВСЕ модалки           */
+/*  (перебивает inline max-width)                               */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+    /* Селектор с !important перебивает inline-стили */
+    .card-modal > .card-modal-content,
+    .card-modal .card-modal-content,
+    #docAddModal .card-modal-content,
+    #themeModal .card-modal-content,
+    #themeManageModal .card-modal-content,
+    #subThemeModal .card-modal-content {
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        box-shadow: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ⚡ МОДАЛКА ДОКУМЕНТОВ — РАЗМЕТКА 360–480px                  */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+    /* ─── Шапка: заголовок слева, крестик справа, кнопки — сеткой 2×2 ─── */
+    .documents-modal__header {
+        display: grid !important;
+        grid-template-columns: 1fr auto;   /* ⚡ заголовок + крестик */
+        grid-template-areas:
+            "title   close"
+            "actions actions";             /* ⚡ кнопки на всю ширину */
+        align-items: center !important;
+        gap: 8px 6px !important;
+        padding: 12px 12px 10px 14px !important;
+    }
+
+    /* Заголовок */
+    .documents-modal__header h3 {
+        grid-area: title;
+        font-size: 1rem !important;
+        margin: 0 !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ⚡ Кнопка закрытия — в правом верхнем углу */
+    .documents-modal__header .documents-close-btn {
+        grid-area: close;
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        min-height: 32px !important;
+        font-size: 1rem !important;
+        background: #eef3f9 !important;
+        color: #4a6a8a !important;
+        border-radius: 50% !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 !important;
+        transition: background 0.2s, color 0.2s, transform 0.15s !important;
+    }
+
+    /* ⚡ Hover — красный */
+    .documents-modal__header .documents-close-btn:hover,
+    .documents-modal__header .documents-close-btn:active {
+        background: #c62828 !important;
+        color: #ffffff !important;
+    }
+
+    /* ─── Контейнер кнопок — сетка 2×2 ─── */
+    .documents-modal__actions {
+        grid-area: actions;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;   /* ⚡ 2 колонки */
+        gap: 6px !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* ─── Кнопки ─── */
+    .documents-add-btn {
+        padding: 8px 10px !important;
+        font-size: 0.72rem !important;
+        min-height: 34px !important;
+        gap: 4px !important;
+        width: 100% !important;
+        justify-content: center !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* ⚡ "Добавить" — на всю ширину (важная кнопка) */
+    .documents-modal__actions #addDocumentBtn {
+        grid-column: 1 / -1 !important;   /* растянуть на 2 колонки */
+        background: #e8f5e9 !important;
+        border-color: #b8d9c8 !important;
+        color: #2e7d32 !important;
+    }
+
+    /* ─── Поиск ─── */
+    .documents-modal__search {
+        padding: 10px 12px 0 12px !important;
+    }
+
+    .documents-search-wrap input {
+        font-size: 0.82rem !important;
+        padding: 9px 40px 9px 14px !important;
+    }
+
+    .documents-search-clear {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.8rem !important;
+        right: 6px !important;
+    }
+
+    /* ─── Фильтры — горизонтальный скролл ─── */
+    .documents-modal__filters {
+        padding: 8px 12px !important;
+        gap: 5px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        scrollbar-width: none !important;
+    }
+
+    .documents-modal__filters::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .documents-filter-btn {
+        padding: 5px 11px !important;
+        font-size: 0.7rem !important;
+        height: 32px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* ─── Список документов ─── */
+    .documents-modal__list {
+        padding: 10px 12px 24px 12px !important;
+        padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+    }
+
+    /* ─── Карточка документа ─── */
+    .doc-item {
+        padding: 10px !important;
+        gap: 8px !important;
+        border-radius: 12px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .doc-item__icon {
+        font-size: 1.5rem !important;
+    }
+
+    .doc-item__title {
+        font-size: 0.82rem !important;
+        white-space: normal !important;
+        word-break: break-word;
+        line-height: 1.3;
+    }
+
+    .doc-item__meta {
+        font-size: 0.65rem !important;
+        gap: 6px !important;
+        margin-top: 3px;
+    }
+
+    .doc-item__category {
+        padding: 1px 7px !important;
+        font-size: 0.62rem !important;
+    }
+
+    /* Кнопки действий — вертикально, компактно */
+    .doc-item__actions {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+
+    .doc-action-btn {
+        padding: 6px 10px !important;
+        font-size: 0.72rem !important;
+        min-height: 32px !important;
+        min-width: 36px;
+        border-radius: 10px !important;
+    }
+
+    .doc-action-btn--delete {
+        padding: 6px 8px !important;
+    }
+
+    /* Скрываем текстовые подписи у кнопок, оставляем иконки */
+    .doc-action-btn__label {
+        display: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/*  ⚡ СОВСЕМ УЗКИЕ (360px) — компактнее                         */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 380px) {
+
+    .documents-modal__header {
+        padding: 10px 10px 8px 12px !important;
+        gap: 6px !important;
+    }
+
+    .documents-modal__header h3 {
+        font-size: 0.92rem !important;
+    }
+
+    .documents-modal__header .documents-close-btn {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        min-height: 30px !important;
+        font-size: 0.9rem !important;
+    }
+
+    .documents-add-btn {
+        padding: 7px 8px !important;
+        font-size: 0.68rem !important;
+        min-height: 32px !important;
+        gap: 3px !important;
+    }
+
+    .documents-modal__search {
+        padding: 8px 10px 0 10px !important;
+    }
+
+    .documents-search-wrap input {
+        font-size: 0.78rem !important;
+        padding: 8px 36px 8px 12px !important;
+    }
+
+    .documents-modal__filters {
+        padding: 6px 10px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+    }
+
+    .documents-filter-btn {
+        padding: 4px 9px !important;
+        font-size: 0.66rem !important;
+        height: 28px !important;
+    }
+
+    .documents-modal__list {
+        padding: 8px 10px 20px 10px !important;
+    }
+
+    .doc-item {
+        padding: 8px !important;
+        gap: 6px !important;
+    }
+
+    .doc-item__icon {
+        font-size: 1.3rem !important;
+    }
+
+    .doc-item__title {
+        font-size: 0.76rem !important;
+    }
+
+    .doc-action-btn {
+        padding: 5px 8px !important;
+        font-size: 0.68rem !important;
+        min-height: 28px !important;
+    }
 }
