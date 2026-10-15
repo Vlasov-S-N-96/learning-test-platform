@@ -78,314 +78,7 @@
     </header>
 
     <main class="container">
-
-        <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ СХЕМАМИ ===== -->
-        <div class="schema-controls">
-            <button class="toggle-schema-btn" data-target="testingSchemaFull">Схема тестирования</button>
-            <button class="toggle-schema-btn" data-target="algorithmBlock">Алгоритм тестирования</button>
-            <button class="toggle-schema-btn" data-target="testingTypesBlock">Типы тестирования</button>
-            <button class="toggle-schema-btn" data-target="scrumSchema">Scrum схема</button>
-            <button class="toggle-schema-btn" data-target="kanbanSchema">Kanban схема</button>
-        </div>
-
-        <!-- ===== ПОЛНАЯ СХЕМА ТЕСТИРОВАНИЯ ПО ===== -->
-        <div class="testing-schema hidden" id="testingSchemaFull">
-            <div class="testing-title">Схема тестирования ПО</div>
-
-            <div class="testing-grid">
-
-                <div class="testing-section formalization">
-                    <div class="section-header">Степень формализации</div>
-                    <div class="section-items">
-                        <span class="item purple">Исследовательское</span>
-                        <span class="item blue">На основе тест-кейсов</span>
-                        <span class="item orange">Ad-hoc (свободное)</span>
-                    </div>
-                </div>
-
-                <div class="testing-section methods">
-                    <div class="section-header">Методы (Как?)</div>
-                    <div class="method-group">
-                        <div class="method-subtitle">Сценарии</div>
-                        <div class="section-items">
-                            <span class="item green">Happy Path</span>
-                            <span class="item red">Negative</span>
-                            <span class="item orange">Destructive</span>
-                        </div>
-                    </div>
-                    <div class="method-group">
-                        <div class="method-subtitle">Доступ к коду</div>
-                        <div class="section-items">
-                            <span class="item blue">Чёрный ящик</span>
-                            <span class="item teal">Серый ящик</span>
-                            <span class="item purple">Белый ящик</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testing-section levels">
-                    <div class="section-header">Уровни (Где я нахожусь?)</div>
-
-                    <div class="level-block">
-                        <div class="level-title item green">Модульное (Unit)</div>
-                        <div class="level-approaches">
-                            <span class="approach-tag">TDD</span>
-                            <span class="approach-tag">BDD</span>
-                            <span class="approach-tag">Property-based</span>
-                        </div>
-                    </div>
-
-                    <div class="level-block">
-                        <div class="level-title item blue">Интеграционное</div>
-                        <div class="level-approaches">
-                            <span class="approach-tag">Big Bang</span>
-                            <span class="approach-tag">Top-Down</span>
-                            <span class="approach-tag">Bottom-Up</span>
-                            <span class="approach-tag">Sandwich</span>
-                            <span class="approach-tag">CI</span>
-                        </div>
-                    </div>
-
-                    <div class="level-block">
-                        <div class="level-title item purple">Системное</div>
-                        <div class="level-approaches">
-                            <span class="approach-tag">Сквозное (E2E)</span>
-                            <span class="approach-tag">Smoke</span>
-                            <span class="approach-tag">Sanity</span>
-                            <span class="approach-tag">Регрессия</span>
-                            <span class="approach-tag">Исследовательское</span>
-                            <span class="approach-tag">Автоматизация</span>
-                        </div>
-                    </div>
-
-                    <div class="level-block">
-                        <div class="level-title item teal">Приёмочное (Acceptance)</div>
-                        <div class="level-approaches">
-                            <span class="approach-tag">UAT</span>
-                            <span class="approach-tag">BAT</span>
-                            <span class="approach-tag">OAT</span>
-                            <span class="approach-tag">Альфа</span>
-                            <span class="approach-tag">Бета</span>
-                            <span class="approach-tag">Контрактное</span>
-                            <span class="approach-tag">Нормативное</span>
-                            <span class="approach-tag">ATDD</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testing-section functional">
-                    <div class="section-header">Функциональное (Что?)</div>
-                    <div class="section-items">
-                        <span class="item red">Регрессионное</span>
-                        <span class="item orange">Дымовое (Smoke)</span>
-                        <span class="item blue">Санитарное (Sanity)</span>
-                        <span class="item purple">GUI</span>
-                        <span class="item teal">Безопасность (Security)</span>
-                        <span class="item green">Инсталляционное</span>
-                        <span class="item orange">Конфигурационное</span>
-                        <span class="item blue">Миграционное</span>
-                        <span class="item purple">Документации</span>
-                    </div>
-                </div>
-
-                <div class="testing-section nonfunctional">
-                    <div class="section-header">Нефункциональное (Качество)</div>
-
-                    <div class="nf-group">
-                        <div class="nf-subtitle">Производительность</div>
-                        <div class="section-items">
-                            <span class="item purple">Нагрузочное (Load)</span>
-                            <span class="item red">Стрессовое (Stress)</span>
-                            <span class="item teal">Объёмное (Volume)</span>
-                            <span class="item blue">Масштабируемость</span>
-                            <span class="item orange">Конкурентное</span>
-                        </div>
-                    </div>
-
-                    <div class="nf-group">
-                        <div class="nf-subtitle">Безопасность</div>
-                        <div class="section-items">
-                            <span class="item red">Стойкость к атакам</span>
-                            <span class="item orange">Стойкость к перебору</span>
-                            <span class="item blue">Шифрование</span>
-                            <span class="item purple">Изоляция сессий</span>
-                        </div>
-                    </div>
-
-                    <div class="nf-group">
-                        <div class="nf-subtitle">Качество использования</div>
-                        <div class="section-items">
-                            <span class="item green">Удобство (Usability)</span>
-                            <span class="item green">Совместимость</span>
-                            <span class="item green">Надёжность</span>
-                            <span class="item teal">Доступность (A11Y)</span>
-                            <span class="item blue">Локализация (L10n)</span>
-                            <span class="item purple">Интернационализация (I18n)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="testing-section form">
-                    <div class="section-header">По форме проведения</div>
-                    <div class="section-items">
-                        <span class="item blue">Ручное (Manual)</span>
-                        <span class="item purple">Автоматизированное</span>
-                        <span class="item teal">Полуавтоматизированное</span>
-                    </div>
-                </div>
-
-                <div class="testing-section changes">
-                    <div class="section-header">По изменениям</div>
-                    <div class="section-items">
-                        <span class="item red">Регрессионное</span>
-                        <span class="item purple">Конфигурационное</span>
-                        <span class="item teal">Миграционное</span>
-                    </div>
-                </div>
-
-                <div class="testing-section result">
-                    <div class="section-header">По результату выполнения</div>
-                    <div class="section-items">
-                        <span class="item green">Пройден (Passed)</span>
-                        <span class="item red">Не пройден (Failed)</span>
-                        <span class="item orange">Пропущен (Skipped)</span>
-                        <span class="item purple">Прерван (Aborted)</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <button class="toggle-interview-btn" data-target="interview-testing-full">Ответ на собеседовании</button>
-            <div id="interview-testing-full" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о полной схеме тестирования на собеседовании:</h4>
-                <p><strong>Вступление:</strong> «Тестирование — это не просто поиск багов. Это комплексный процесс, который помогает понять, насколько продукт соответствует ожиданиям пользователей, работает ли он так, как задумано, и готов ли к релизу...»</p>
-            </div>
-        </div>
-
-        <!-- ===== ТИПЫ ТЕСТИРОВАНИЯ ===== -->
-        <div class="schema-block testing-types-block hidden" id="testingTypesBlock">
-            <div class="testing-title">Типы тестирования</div>
-            <div class="testing-grid">
-                <div class="testing-section types">
-                    <div class="section-header">По цели</div>
-                    <div class="section-items">
-                        <span class="item green">Функциональное</span>
-                        <span class="item purple">Нефункциональное</span>
-                    </div>
-                </div>
-                <div class="testing-section types">
-                    <div class="section-header">По способу выполнения</div>
-                    <div class="section-items">
-                        <span class="item blue">Ручное (Manual)</span>
-                        <span class="item purple">Автоматизированное</span>
-                        <span class="item teal">Полуавтоматизированное</span>
-                    </div>
-                </div>
-                <div class="testing-section types">
-                    <div class="section-header">По изменениям</div>
-                    <div class="section-items">
-                        <span class="item orange">Smoke</span>
-                        <span class="item blue">Sanity</span>
-                        <span class="item red">Регрессия</span>
-                        <span class="item green">Re-test</span>
-                    </div>
-                </div>
-                <div class="testing-section types">
-                    <div class="section-header">По запуску кода</div>
-                    <div class="section-items">
-                        <span class="item teal">Статическое</span>
-                        <span class="item purple">Динамическое</span>
-                    </div>
-                </div>
-                <div class="testing-section types">
-                    <div class="section-header">По принципу работы</div>
-                    <div class="section-items">
-                        <span class="item green">Позитивное</span>
-                        <span class="item red">Негативное</span>
-                    </div>
-                </div>
-                <div class="testing-section types">
-                    <div class="section-header">По степени формализации</div>
-                    <div class="section-items">
-                        <span class="item blue">На основе тест-кейсов</span>
-                        <span class="item purple">Исследовательское</span>
-                        <span class="item orange">Ad-hoc</span>
-                    </div>
-                </div>
-            </div>
-            <button class="toggle-interview-btn" data-target="interview-types">Ответ на собеседовании</button>
-            <div id="interview-types" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о типах тестирования на собеседовании:</h4>
-                <p><strong>Вступление:</strong> «Тип тестирования — это группа активностей, объединённых общей целью...»</p>
-            </div>
-        </div>
-
-        <!-- ===== БЛОК АЛГОРИТМА ===== -->
-        <div class="algorithm-block hidden" id="algorithmBlock">
-            <div class="algorithm-title">Как применять тестирование ПО на практике</div>
-            <div class="algorithm-steps">
-                <div class="step"><span class="step-num">1</span><span class="step-text"><strong>Начинаем с планирования</strong></span></div>
-                <div class="step-arrow">→</div>
-                <div class="step"><span class="step-num">2</span><span class="step-text"><strong>Определяем глубину</strong></span></div>
-                <div class="step-arrow">→</div>
-                <div class="step"><span class="step-num">3</span><span class="step-text"><strong>Протестируем функции</strong></span></div>
-                <div class="step-arrow">→</div>
-                <div class="step"><span class="step-num">4</span><span class="step-text"><strong>Проверим качество</strong></span></div>
-                <div class="step-arrow">→</div>
-                <div class="step"><span class="step-num">5</span><span class="step-text"><strong>Решаем: Release or Stop</strong></span></div>
-            </div>
-            <div class="algorithm-footer">
-                <div class="always-block">
-                    <span class="block-label"><strong>Делаем всегда</strong></span>
-                    <div class="block-tags">
-                        <span class="tag-green">Smoke</span>
-                        <span class="tag-orange">Sanity</span>
-                        <span class="tag-blue">Регрессия</span>
-                    </div>
-                </div>
-                <div class="always-block">
-                    <span class="block-label"><strong>По необходимости</strong></span>
-                    <div class="block-tags">
-                        <span class="tag-purple">Нагрузочное</span>
-                        <span class="tag-orange">Стрессовое</span>
-                        <span class="tag-red">Безопасность</span>
-                        <span class="tag-green">Usability</span>
-                        <span class="tag-teal">Совместимость</span>
-                    </div>
-                </div>
-            </div>
-            <button class="toggle-interview-btn" data-target="interview-algorithm">Ответ на собеседовании</button>
-            <div id="interview-algorithm" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о практическом алгоритме тестирования на собеседовании:</h4>
-            </div>
-        </div>
-
-        <!-- ===== SCRUM ===== -->
-        <div class="scrum-schema hidden" id="scrumSchema">
-            <div class="scrum-title">Структура Scrum</div>
-            <div class="schema-container">
-                <div class="scrum-values">
-                    <span class="value-badge">Приверженность</span>
-                    <span class="value-badge">Фокус</span>
-                    <span class="value-badge">Открытость</span>
-                    <span class="value-badge">Уважение</span>
-                    <span class="value-badge">Смелость</span>
-                </div>
-            </div>
-            <button class="toggle-interview-btn" data-target="interview-scrum">Ответ на собеседовании</button>
-            <div id="interview-scrum" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о Scrum на собеседовании:</h4>
-            </div>
-        </div>
-
-        <!-- ===== KANBAN ===== -->
-        <div class="kanban-schema hidden" id="kanbanSchema">
-            <div class="kanban-title">Структура Kanban</div>
-            <button class="toggle-interview-btn" data-target="interview-kanban">Ответ на собеседовании</button>
-            <div id="interview-kanban" class="interview-answer" style="display:none;">
-                <h4>Как рассказать о Kanban на собеседовании:</h4>
-            </div>
-        </div>
+        
 
         <!-- ===== ПАНЕЛЬ УПРАВЛЕНИЯ ТЕРМИНАМИ ===== -->
         <div class="controls">
@@ -541,8 +234,61 @@
             <div class="dashboard-content" id="dashboardContent"></div>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  ШПАРГАЛКИ — каталог + интерактивные подсказки               -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- КАТАЛОГ -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  ШПАРГАЛКИ — СВОРАЧИВАЕМЫЙ БЛОК                               -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <div id="cheatsheetsSection">
+
+            <!-- ─── Заголовок-переключатель (общий для каталога и просмотра) ─── -->
+            <div class="cs-collapsible-header">
+                <button class="cs-collapsible-toggle" id="cheatsheetsToggle" aria-expanded="true">
+                    <span class="cs-collapsible-title">Шпаргалки для тестировщика</span>
+                    <span class="cs-collapsible-arrow">▼</span>
+                </button>
+            </div>
+
+            <!-- ─── Сворачиваемый контент ─── -->
+            <div class="cs-collapsible-content" id="cheatsheetsContent">
+
+                <!-- ═══ КАТАЛОГ ═══ -->
+                <div id="csCatalogView">
+                    <div class="cs-filters" id="csFilters">
+                        <button class="cs-chip cs-chip--active" data-cat="all">Все</button>
+                        <button class="cs-chip" data-cat="base">База</button>
+                        <button class="cs-chip" data-cat="classification">Классификация тестирования</button>
+                        <button class="cs-chip" data-cat="documentation">Документация</button>
+                        <button class="cs-chip" data-cat="web">Тестирование web</button>
+                        <button class="cs-chip" data-cat="processes">Процессы</button>
+                        <button class="cs-chip" data-cat="testdesign">Тест-дизайн</button>
+                    </div>
+                    <div class="cs-grid" id="csGrid"></div>
+                </div>
+
+                <!-- ═══ ДЕТАЛЬНЫЙ ПРОСМОТР ═══ -->
+                <div id="csDetailView" style="display:none;">
+                    <div class="cs-back-wrapper">
+                        <button class="cs-back-btn" id="csBackBtn">
+                            ← Вернуться к каталогу шпаргалок
+                        </button>
+                    </div>
+
+                    <div class="cs-app">
+                        <aside class="cs-sidebar" id="csSidebar"></aside>
+                        <section class="cs-content" id="csContent"></section>
+                    </div>
+                </div>
+
+            </div><!-- /cs-collapsible-content -->
+        </div><!-- /cheatsheetsSection -->
+
         <div class="section-title">Справочник терминов</div>
         <div class="grid-cards" id="cardsGrid"></div>
+        
 
         <!-- ===== БЛОК ИТОГОВ ===== -->
         <div id="swipeSummary" style="display: none; margin-top: 20px; background: white; border-radius: 20px; padding: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.05);">
@@ -804,6 +550,7 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="cheatsheets.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
