@@ -19118,6 +19118,132 @@ body {
     box-shadow: 0 4px 16px rgba(0, 137, 123, 0.1);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   2. GIT FLOW — скроллится только график, info остаётся
+   ═══════════════════════════════════════════════════════════ */
+
+/* Раскладка: вертикальная колонка, обычный поток */
+.cs-git .cs-git__layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: visible;   /* ⚡ снимаем overflow с родителя */
+}
+
+/* Диаграмма: сама становится и холстом, и скроллом.
+   Используем grid-трюк, чтобы absolute-дети считались от 720px. */
+.cs-git .cs-git__diagram {
+    display: grid;
+    grid-template-columns: 720px;   /* ⚡ холст 720px */
+    grid-template-rows: auto;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #c5d8ef transparent;
+    min-height: 500px;
+    box-sizing: border-box;
+    padding: 0;
+    position: relative;
+}
+
+.cs-git .cs-git__diagram::-webkit-scrollbar {
+    height: 6px;
+}
+.cs-git .cs-git__diagram::-webkit-scrollbar-thumb {
+    background: #c5d8ef;
+    border-radius: 3px;
+}
+
+/* ⚡ Ключевой момент: все absolute-дети должны быть внутри
+   внутреннего «полотна» шириной 720px.
+   Так как в JS обёртки нет — превращаем сам .cs-git__diagram
+   в «полотно» через grid, а его потомки-absolute считают
+   left/top в % от сетки 720px. */
+.cs-git .cs-git__diagram > * {
+    grid-column: 1;
+    grid-row: 1;
+    /* они остаются absolute — grid-область лишь создаёт
+       им «родителя» с шириной 720px */
+}
+
+/* Info — НЕ уезжает, остаётся по ширине экрана */
+.cs-git .cs-git__info {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+    min-width: 0;   /* ⚡ важно: без этого он может растянуться */
+}
+
+/* Размеры узлов (без изменений) */
+.cs-git .cs-git-branch {
+    font-size: 0.72rem;
+    padding: 7px 14px;
+}
+.cs-git .cs-git-branch--horizontal {
+    font-size: 0.78rem;
+    padding: 6px 16px;
+}
+.cs-git .cs-git-branch--down {
+    font-size: 0.68rem;
+    padding: 6px 12px;
+}
+.cs-git .cs-git-stage {
+    font-size: 0.65rem;
+    padding: 6px 11px;
+    max-width: 130px;
+}
+.cs-git .cs-git-legend {
+    font-size: 0.6rem;
+    padding: 6px 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Освобождаем цепочку родителей для Git Flow
+   ═══════════════════════════════════════════════════════════ */
+
+/* Диаграмма — холст 800px */
+.cs-git .cs-git__diagram {
+    display: block;
+    position: relative;
+    min-width: 800px;
+    min-height: 500px;
+    overflow: visible;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+/* Родитель диаграммы — единственный, кто скроллит */
+.cs-git .cs-git__layout {
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #c5d8ef transparent;
+    padding-bottom: 4px;
+}
+
+.cs-git .cs-git__layout::-webkit-scrollbar {
+    height: 6px;
+}
+.cs-git .cs-git__layout::-webkit-scrollbar-thumb {
+    background: #c5d8ef;
+    border-radius: 3px;
+}
+
+/* Info — не уезжает и не расширяется */
+.cs-git .cs-git__info {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    box-sizing: border-box;
+    position: sticky;
+    left: 0;
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /*  2. DEVTOOLS SIMULATOR — финальная версия                   */
 /* ═══════════════════════════════════════════════════════════ */
@@ -21565,4 +21691,996 @@ body {
     .cs-pyramid__info p,
     .cs-pyramid__features,
     .cs-pyramid__goal { font-size: 0.82rem; }
+}
+
+/* ============================================================
+   ФИКС МОБИЛЬНОЙ ВЁРСТКИ — только CSS
+   ============================================================ */
+
+/* ═══════════════════════════════════════════════════════════
+   1. ВКЛАДКИ — горизонтальный скролл
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-content .cs-tabs {
+    overflow: visible;
+}
+
+.cs-content .cs-tabs > .cs-tabs__nav {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+}
+
+.cs-content .cs-tabs > .cs-tabs__nav::-webkit-scrollbar {
+    display: none;
+}
+
+.cs-content .cs-tabs > .cs-tabs__nav > .cs-tabs__tab {
+    flex-shrink: 0;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   2. GIT FLOW — «виртуально широкая» диаграмма со скроллом
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-git .cs-git__layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Внешний контейнер: обрезает + скроллит */
+.cs-git .cs-git__diagram {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+
+    /* ⚡ Делаем «холст» шириной не меньше 720px.
+       Все absolute-узлы внутри будут считать left/top в % от этой ширины. */
+    min-width: 720px;
+    min-height: 500px;
+    box-sizing: border-box;
+}
+
+/* Убираем прокрутку у самого блока в случае, если она случайно унаследована */
+.cs-git .cs-git__diagram::-webkit-scrollbar {
+    height: 6px;
+}
+
+.cs-git .cs-git__diagram::-webkit-scrollbar-thumb {
+    background: #c5d8ef;
+    border-radius: 3px;
+}
+
+/* Уменьшаем размеры узлов для мобильного, чтобы влезали в 720px */
+.cs-git .cs-git-branch {
+    font-size: 0.72rem;
+    padding: 7px 14px;
+}
+
+.cs-git .cs-git-branch--horizontal {
+    font-size: 0.78rem;
+    padding: 6px 16px;
+}
+
+.cs-git .cs-git-branch--down {
+    font-size: 0.68rem;
+    padding: 6px 12px;
+}
+
+.cs-git .cs-git-stage {
+    font-size: 0.65rem;
+    padding: 6px 11px;
+    max-width: 130px;
+}
+
+.cs-git .cs-git-legend {
+    font-size: 0.6rem;
+    padding: 6px 10px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   3. ЖИЗНЕННЫЙ ЦИКЛ ТЕСТ-КЕЙСА — «виртуально широкая» схема
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-tclife .cs-tclife__diagram-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+}
+
+/* ⚡ Аналогичный приём: фиксируем минимальную ширину диаграммы */
+.cs-tclife .cs-tclife__diagram-wrap > .cs-tclife__diagram {
+    min-width: 560px;
+    height: 400px;
+    box-sizing: border-box;
+}
+
+.cs-tclife .cs-tclife__diagram-wrap > .cs-tclife__diagram::-webkit-scrollbar {
+    height: 6px;
+}
+
+.cs-tclife .cs-tclife__diagram-wrap > .cs-tclife__diagram::-webkit-scrollbar-thumb {
+    background: #c5d8ef;
+    border-radius: 3px;
+}
+
+.cs-tclife .cs-tclife__status {
+    font-size: 0.72rem;
+    padding: 7px 12px;
+    min-width: 75px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   4. BUG LIFECYCLE — аналогично (если используется SVG-схема)
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-buglife .cs-buglife__diagram-wrap {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cs-buglife .cs-buglife__diagram--desktop {
+    min-width: 560px;
+    min-height: 400px;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   МОБИЛЬНЫЙ (до 767px) — общие улучшения
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+    /* Вкладки */
+    .cs-content .cs-tabs > .cs-tabs__nav > .cs-tabs__tab {
+        font-size: 0.7rem;
+        padding: 8px 12px;
+    }
+
+    /* Контент */
+    .cs-content {
+        padding: 16px 12px;
+    }
+
+    .cs-content .cs-content__title {
+        font-size: 1.2rem;
+    }
+
+    .cs-content .cs-content__subtitle {
+        font-size: 0.8rem;
+    }
+
+    /* Аккордеон */
+    .cs-accordion .cs-acc-header {
+        padding: 12px 14px;
+        gap: 10px;
+    }
+
+    .cs-accordion .cs-acc-icon {
+        flex-shrink: 0;
+    }
+
+    /* Свойства качества */
+    .cs-req .cs-req__props-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .cs-req .cs-req__prop {
+        font-size: 0.75rem;
+        padding: 8px 10px;
+    }
+
+    /* Git Flow — ещё чуть компактнее на телефонах */
+    .cs-git .cs-git__diagram {
+        min-width: 700px;
+    }
+
+    .cs-tclife .cs-tclife__diagram-wrap > .cs-tclife__diagram {
+        min-width: 540px;
+        height: 380px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ПЛАНШЕТ (768px – 1024px)
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+
+    .cs-git .cs-git__layout {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .cs-git .cs-git__info {
+        max-height: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС ЖИЗНЕННОГО ЦИКЛА ТЕСТ-КЕЙСА на мобильном
+   ═══════════════════════════════════════════════════════════ */
+
+/* На узких экранах — одна колонка вместо двух */
+@media (max-width: 767px) {
+
+    /* Отключаем grid-сетку: блок становится обычным потоком */
+    .cs-tclife .cs-tclife__diagram-block {
+        display: block;
+        gap: 0;
+    }
+
+    /* Диаграмма и info идут друг под другом */
+    .cs-tclife .cs-tclife__diagram-wrap {
+        margin-bottom: 16px;
+    }
+
+    /* Info получает полную ширину */
+    .cs-tclife .cs-tclife__info {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    /* Заголовок диаграммы не переносится по слогам */
+    .cs-tclife .cs-tclife__diagram-title {
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: break-word;
+        hyphens: none;
+        font-size: 0.9rem;
+    }
+
+    /* Узлы статусов — компактнее */
+    .cs-tclife .cs-tclife__status {
+        font-size: 0.65rem;
+        padding: 5px 9px;
+        min-width: 60px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС ВКЛАДОК — не обрезаются, скроллятся
+   ═══════════════════════════════════════════════════════════ */
+
+/* Снимаем ограничение у родителя */
+.cs-tabs {
+    overflow: visible;
+}
+
+/* Навигация вкладок — горизонтальный скролл */
+.cs-tabs > .cs-tabs__nav {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+}
+
+.cs-tabs > .cs-tabs__nav::-webkit-scrollbar {
+    display: none;
+}
+
+/* Вкладки не сжимаются и не переносятся */
+.cs-tabs > .cs-tabs__nav > .cs-tabs__tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+/* На мобильном — компактнее */
+@media (max-width: 767px) {
+    .cs-tabs > .cs-tabs__nav > .cs-tabs__tab {
+        font-size: 0.7rem;
+        padding: 8px 12px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ОБЩИЕ УЛУЧШЕНИЯ ДЛЯ МОБИЛЬНОГО
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+
+    /* Уменьшаем заголовки */
+    .cs-content .cs-content__title {
+        font-size: 1.2rem;
+    }
+
+    .cs-content .cs-content__subtitle {
+        font-size: 0.8rem;
+    }
+
+    /* Уменьшаем отступы в контенте */
+    .cs-content {
+        padding: 16px 12px;
+    }
+
+    /* Заголовки внутри вкладок — поменьше */
+    .cs-tabs__panel-title {
+        font-size: 0.95rem;
+    }
+
+    .cs-tabs__panel-sub {
+        font-size: 0.8rem;
+    }
+
+    /* Превью карточек каталога — чуть ниже */
+    .cs-card__preview {
+        aspect-ratio: 16 / 9;
+    }
+
+    /* Убираем лишние отступы у чипов */
+    .cs-chip {
+        font-size: 0.72rem;
+        padding: 0 12px;
+        min-height: 32px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ПЛАНШЕТ (768–1024)
+   ═══════════════════════════════════════════════════════════ */
+
+@media (min-width: 768px) and (max-width: 1024px) {
+
+    /* Две колонки в диаграмме тест-кейса — но шире */
+    .cs-tclife .cs-tclife__diagram-block {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Блок "Тестирование требований" (.cs-req)
+   ═══════════════════════════════════════════════════════════ */
+
+/* На узких экранах — одна колонка */
+@media (max-width: 767px) {
+
+    /* Убираем grid-сетку: сайдбар и контент идут друг под другом */
+    .cs-req {
+        display: block;
+        grid-template-columns: none;
+    }
+
+    /* Сайдбар — горизонтальный список с прокруткой */
+    .cs-req .cs-req__sidebar {
+        display: block;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #e6eef9;
+        padding: 14px 0 8px 0;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .cs-req .cs-req__sidebar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cs-req .cs-req__sidebar-title {
+        font-size: 0.85rem;
+        padding: 0 14px 10px 14px;
+        white-space: nowrap;
+    }
+
+    /* Навигация — горизонтальная */
+    .cs-req .cs-req__nav {
+        display: flex;
+        flex-direction: row;
+        padding: 0 10px;
+        gap: 6px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+    }
+
+    .cs-req .cs-req__nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .cs-req .cs-req__nav-item {
+        flex: 0 0 auto;
+        font-size: 0.78rem;
+        padding: 8px 14px;
+        white-space: nowrap;
+        border-radius: 20px;
+        background: #f0f5fd;
+    }
+
+    .cs-req .cs-req__nav-item.active {
+        background: #00897b;
+        color: #fff;
+    }
+
+    /* Контент — на всю ширину */
+    .cs-req .cs-req__content {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 16px 14px 24px 14px;
+        box-sizing: border-box;
+    }
+
+    /* Заголовок контента */
+    .cs-req .cs-req__panel-title {
+        font-size: 1.15rem;
+        word-break: normal;
+        overflow-wrap: break-word;
+    }
+
+    .cs-req .cs-req__panel-sub {
+        font-size: 0.82rem;
+    }
+
+    /* Свойства качества — 2 колонки вместо 3-4 */
+    .cs-req .cs-req__props-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .cs-req .cs-req__prop {
+        font-size: 0.72rem;
+        padding: 8px 8px;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* Карточки — на всю ширину */
+    .cs-req .cs-req__cards {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .cs-req .cs-req__card {
+        padding: 14px 16px;
+    }
+
+    /* Список неявных требований — в одну колонку */
+    .cs-req .cs-req__implicit-list {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+
+    /* Процесс — в одну колонку */
+    .cs-req .cs-req__process {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   На всякий случай — фикс для страницы в целом
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+
+    /* Любой grid-контейнер внутри шпаргалок — не даём вылезать за экран */
+    .cs-content * {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Запрещаем горизонтальный overflow у контента */
+    .cs-content {
+        overflow-x: hidden;
+    }
+
+    /* Длинные слова не должны расширять блоки */
+    .cs-content h1,
+    .cs-content h2,
+    .cs-content h3,
+    .cs-content h4,
+    .cs-content p {
+        overflow-wrap: break-word;
+        word-break: normal;
+        hyphens: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Текст на кнопках вкладок по центру
+   ═══════════════════════════════════════════════════════════ */
+
+/* Общее правило для всех nav-кнопок в блоке требований */
+.cs-req .cs-req__nav-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;   /* ⚡ центрируем по главной оси */
+    text-align: center;
+}
+
+/* То же самое для мобильного */
+@media (max-width: 767px) {
+    .cs-req .cs-req__nav-item {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 8px 16px;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   POSTMAN SIMULATOR
+   ═══════════════════════════════════════════════════════════ */
+
+.postman-sim {
+    background: #f0f4fa;
+    border-radius: 14px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.postman-sim__layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+/* ─── Левая панель: коллекции ─── */
+.postman-sidebar {
+    background: #1e2a3a;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: #d0ddea;
+    font-family: inherit;
+    max-height: 560px;
+}
+
+.postman-sidebar__header {
+    padding: 12px 16px;
+    background: #16222f;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #4db6ac;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid #0a1520;
+}
+
+.postman-sidebar__body {
+    padding: 10px 8px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.postman-collection {
+    margin-bottom: 12px;
+}
+
+.postman-collection__title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #a5c8e0;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.postman-collection__folder {
+    font-size: 0.9rem;
+}
+
+.postman-collection__requests {
+    padding-left: 6px;
+}
+
+.postman-request {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: background 0.15s;
+    margin-bottom: 2px;
+}
+
+.postman-request:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.postman-request.active {
+    background: rgba(77, 182, 172, 0.15);
+    border-left: 3px solid #4db6ac;
+    padding-left: 7px;
+}
+
+.postman-method {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+    min-width: 44px;
+    text-align: center;
+}
+
+.postman-method--get    { background: rgba(76, 175, 80, 0.2);  color: #81c784; }
+.postman-method--post   { background: rgba(255, 152, 0, 0.2);  color: #ffb74d; }
+.postman-method--put    { background: rgba(33, 150, 243, 0.2); color: #64b5f6; }
+.postman-method--patch  { background: rgba(156, 39, 176, 0.2); color: #ba68c8; }
+.postman-method--delete { background: rgba(244, 67, 54, 0.2);  color: #ef5350; }
+
+.postman-request__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ─── Правая панель: запрос/ответ ─── */
+.postman-main {
+    background: #1e2a3a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #d0ddea;
+    font-family: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+/* Строка запроса */
+.postman-request-bar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: #16222f;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.postman-method-badge {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 6px;
+    letter-spacing: 0.4px;
+    flex-shrink: 0;
+    min-width: 60px;
+    text-align: center;
+}
+
+.postman-method-badge--get    { background: #4caf50; color: #fff; }
+.postman-method-badge--post   { background: #ff9800; color: #fff; }
+.postman-method-badge--put    { background: #2196f3; color: #fff; }
+.postman-method-badge--patch  { background: #9c27b0; color: #fff; }
+.postman-method-badge--delete { background: #f44336; color: #fff; }
+
+.postman-url-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #d0ddea;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.72rem;
+    padding: 6px 4px;
+    outline: none;
+    min-width: 0;
+    text-overflow: ellipsis;
+}
+
+.postman-send-btn {
+    background: #4db6ac;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 7px 16px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    flex-shrink: 0;
+}
+
+.postman-send-btn:hover:not(:disabled) {
+    background: #26a69a;
+    transform: translateY(-1px);
+}
+
+.postman-send-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+/* Вкладки */
+.postman-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid #0a1520;
+    padding-bottom: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.postman-tabs::-webkit-scrollbar { display: none; }
+
+.postman-tab {
+    background: transparent;
+    border: none;
+    color: #8a9fb8;
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: color 0.2s, border-bottom 0.2s;
+    border-bottom: 2px solid transparent;
+    flex-shrink: 0;
+}
+
+.postman-tab:hover {
+    color: #d0ddea;
+}
+
+.postman-tab.active {
+    color: #4db6ac;
+    border-bottom-color: #4db6ac;
+}
+
+/* Панели */
+.postman-tab-panel {
+    display: none;
+}
+
+.postman-tab-panel.active {
+    display: block;
+}
+
+/* Key-Value */
+.postman-kv {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 6px 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.72rem;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.postman-kv__row {
+    display: grid;
+    grid-template-columns: 35% 65%;
+    gap: 12px;
+    padding: 5px 12px;
+    align-items: baseline;
+}
+
+.postman-kv__row + .postman-kv__row {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.postman-kv__key {
+    color: #4db6ac;
+    font-weight: 700;
+    word-break: break-all;
+}
+
+.postman-kv__value {
+    color: #d0ddea;
+    word-break: break-all;
+}
+
+.postman-kv__empty {
+    display: block;
+    padding: 10px 12px;
+    color: #6a8aaa;
+    font-style: italic;
+    font-size: 0.72rem;
+    text-align: center;
+    font-family: inherit;
+}
+
+/* Body */
+.postman-body,
+.postman-response-body {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: #d0ddea;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 220px;
+    overflow: auto;
+    margin: 0;
+}
+
+/* Разделитель */
+.postman-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 6px 0;
+}
+
+.postman-divider::before,
+.postman-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #2a3a4a;
+}
+
+.postman-divider__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #6a8aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+/* Мета ответа */
+.postman-response-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.72rem;
+    transition: background 0.3s;
+}
+
+.postman-response-meta.postman-flash {
+    background: rgba(77, 182, 172, 0.15);
+}
+
+.postman-response__status {
+    font-weight: 800;
+    font-family: 'Consolas', 'Monaco', monospace;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+}
+
+.postman-response__status--ok {
+    background: rgba(76, 175, 80, 0.2);
+    color: #81c784;
+}
+
+.postman-response__status--warn {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ffb74d;
+}
+
+.postman-response__status--error {
+    background: rgba(244, 67, 54, 0.2);
+    color: #ef5350;
+}
+
+.postman-response__time,
+.postman-response__size {
+    color: #8a9fb8;
+    font-size: 0.7rem;
+}
+
+/* Объяснение */
+.postman-explanation {
+    background: #fff;
+    border-left: 4px solid #4db6ac;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #1a2a3a;
+    transition: all 0.25s;
+}
+
+.postman-explanation code {
+    background: #f0f5fd;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.78rem;
+    color: #1d3b5c;
+}
+
+.postman-explanation strong {
+    color: #0a1929;
+}
+
+/* ─── Мобильный ─── */
+@media (max-width: 767px) {
+    .postman-sim {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .postman-sim__layout {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .postman-sidebar,
+    .postman-main {
+        max-height: none;
+    }
+
+    .postman-sidebar {
+        max-height: 200px;
+    }
+
+    .postman-sidebar__body {
+        max-height: 160px;
+    }
+
+    .postman-request-bar {
+        flex-wrap: wrap;
+    }
+
+    .postman-method-badge {
+        min-width: 52px;
+        font-size: 0.65rem;
+        padding: 5px 8px;
+    }
+
+    .postman-url-input {
+        font-size: 0.68rem;
+        flex: 1 1 calc(100% - 60px - 8px - 80px);
+    }
+
+    .postman-send-btn {
+        padding: 6px 12px;
+        font-size: 0.7rem;
+    }
+
+    .postman-body,
+    .postman-response-body {
+        font-size: 0.68rem;
+        padding: 10px;
+        max-height: 180px;
+    }
+
+    .postman-kv {
+        font-size: 0.68rem;
+    }
+
+    .postman-kv__row {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .postman-explanation {
+        padding: 12px 14px;
+        font-size: 0.8rem;
+    }
 }
