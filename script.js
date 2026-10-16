@@ -13554,7 +13554,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 
             list.innerHTML = `
                 <div class="documents-empty">
-                    <div class="documents-empty__icon">📭</div>
+                    <div class="documents-empty__icon"></div>
                     <p>${msg}</p>
                     <p style="font-size:0.8rem; margin-top:8px;">
                         Нажмите «➕ Добавить ссылку»<br>
@@ -14356,7 +14356,7 @@ window.exportLinksToFile = function() {
     
     // 1. Читаем из localStorage (гарантированный источник)
     const raw = localStorage.getItem('myDocLinks_v2');
-    console.log('📦 Сырые данные:', raw ? raw.length + ' символов' : 'null');
+    console.log('Сырые данные:', raw ? raw.length + ' символов' : 'null');
     
     if (!raw) {
         alert('❌ Нет ключа myDocLinks_v2 в localStorage.\n\nСначала добавьте ссылку.');
@@ -16487,6 +16487,245 @@ const CHEATSHEETS = [
         ]
     },
 
+    // ═══════════════════════════════════════════════════════
+    //  CI/CD — ПАЙПЛАЙН ОТ КОДА ДО ПРОДА
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'cicd',
+        cat: 'processes',
+        title: 'CI/CD: путь кода до пользователя',
+        subtitle: 'Как изменения попадают в продакшн — от push до релиза.',
+        date: '16.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">CI / CD</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Автоматизация доставки кода</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;justify-content:center;">
+                <span style="background:#90caf9;padding:2px 6px;border-radius:4px;color:#0d47a1;font-weight:700;">CI</span>
+                <span style="background:#a5d6a7;padding:2px 6px;border-radius:4px;color:#1a4a1a;font-weight:700;">CD</span>
+            </div>
+            <p style="font-size:0.38rem;color:#6a8aaa;margin:6px 0 0 0;text-align:center;font-family:monospace;">push → build → test → package → registry → staging → prod</p>
+        `,
+        sections: [
+            {
+                id: 'cicd-main',
+                title: 'CI/CD в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+
+                    // ═══ АНИМАЦИЯ ПАЙПЛАЙНА ═══
+                    {
+                        label: 'Анимация',
+                        title: 'Путь кода от разработчика до пользователя',
+                        subtitle: '🎬 Запустите анимацию — увидите все 7 стадий пайплайна.',
+                        animatedFlow: {
+                            title: 'CI/CD Pipeline',
+                            hint: '🎬 push → build → test → package → registry → staging → production',
+                            stepDelay: 4000,
+                            nodes: [
+                                {
+                                    label: 'push',
+                                    x: 7, y: 50,
+                                    detail: 'Разработчик отправляет код в репозиторий командой <code>git push origin main</code>. CI-система (GitHub Actions, GitLab CI, Jenkins) видит пуш и запускает пайплайн.',
+                                    example: 'Разработчик фиксит баг «сумма в корзине» → <code>git commit -m "fix: сумма в корзине"</code> → <code>git push origin main</code>. Автоматически стартует пайплайн <strong>#483</strong>.',
+                                    qa: 'QA тоже пушит в репозиторий: тест-кейсы, автотесты, документацию. Пайплайн может запускаться и на Pull Request — тогда он проверяет код <strong>до</strong> merge.',
+                                    extra: 'Триггеры пайплайна: push, pull_request, schedule (по расписанию), manual.'
+                                },
+                                {
+                                    label: 'build',
+                                    x: 20, y: 50,
+                                    detail: 'CI-система <strong>компилирует код</strong> в исполняемый файл или артефакт. Для Go — <code>go build</code>. Для Java — <code>mvn package</code>. Для Python — подготовка окружения.',
+                                    example: 'Из четырёх файлов <code>main.go</code>, <code>cart.go</code>, <code>pay.go</code>, <code>api.go</code> создаётся один бинарник <code>shop</code>.',
+                                    qa: 'QA не участвует в сборке напрямую, но должен понимать: если билд упал — нужно смотреть логи. Ошибка компиляции = дальше идти нельзя.',
+                                    extra: 'В билде могут участвовать линтеры, компиляторы, транспиллеры (TypeScript → JavaScript).'
+                                },
+                                {
+                                    label: 'test',
+                                    x: 34, y: 50,
+                                    detail: 'Запускаются <strong>автоматические тесты</strong>: unit-тесты, интеграционные, линтеры. Если хотя бы один упал — пайплайн останавливается.',
+                                    example: '<code>go test ./...</code> — 95 тестов прошло, 1 упал: <code>FAIL: TestCartTotal want 1 990 ₽, got 0 ₽</code>. Пайплайн остановлен, разработчик чинит баг.',
+                                    qa: 'Это <strong>ключевая стадия для QA</strong>! Именно здесь работают автотесты. Тестировщик пишет их в сотрудничестве с разработчиками, следит за покрытием.',
+                                    extra: 'Автотесты <strong>защищают</strong> от попадания багов в прод. Чем больше покрытие — тем спокойнее релиз.'
+                                },
+                                {
+                                    label: 'package',
+                                    x: 48, y: 50,
+                                    detail: 'Готовый артефакт <strong>упаковывается в Docker-образ</strong>. Внутрь кладут бинарник, конфиги, сертификаты и базовый образ.',
+                                    example: 'Docker-образ для <code>shop</code> содержит:<ul><li><code>config.yaml</code> — настройки</li><li><code>/app/shop</code> — бинарник</li><li><code>ca-certificates</code> — сертификаты</li><li><code>alpine 3.20</code> — база (лёгкий Linux)</li></ul>',
+                                    qa: 'QA может смотреть на теги образов: <code>shop:v1.4.2</code> — это версия, которую будут тестировать. Разные теги = разные версии.',
+                                    extra: 'Docker-образ — «коробка» с приложением. Где угодно запустится одинаково.'
+                                },
+                                {
+                                    label: 'registry',
+                                    x: 62, y: 50,
+                                    detail: 'Docker-образ <strong>отправляется в реестр</strong> — хранилище образов (Docker Hub, GitLab Registry, Nexus).',
+                                    example: 'Образ <code>shop:v1.4.2</code> пушится в registry. Теперь его можно скачать на любой сервер одной командой <code>docker pull</code>.',
+                                    qa: 'QA может скачать образ из registry и запустить локально для тестирования — не нужно ждать, пока развернут staging.',
+                                    extra: 'Теги позволяют <strong>откатываться</strong> на предыдущую версию: <code>shop:v1.4.1</code>. Это спасает при критичном баге в проде.'
+                                },
+                                {
+                                    label: 'staging',
+                                    x: 76, y: 50,
+                                    detail: 'CI-система <strong>автоматически разворачивает образ</strong> на тестовом стенде — staging. Здесь QA тестирует новую версию.',
+                                    example: 'На staging развёрнут <code>shop:v1.4.2</code>. Рядом — <code>shop:v1.4.1</code> (старая версия для сравнения). QA видит обновление.',
+                                    qa: 'Это <strong>ваша сцена</strong>! QA тестирует функционал на staging, находит баги, заводит баг-репорты. Именно здесь проходит основное тестирование.',
+                                    extra: 'Staging максимально похож на прод, но с <strong>тестовыми данными</strong>. Живых пользователей здесь нет — можно ломать.'
+                                },
+                                {
+                                    label: 'production',
+                                    x: 90, y: 50,
+                                    detail: 'После успешного тестирования версия идёт на прод. Здесь <strong>два пути</strong>: Continuous Delivery (ждёт нажатия кнопки) и Continuous Deployment (всё автоматически).',
+                                    example: '<strong>Continuous Delivery:</strong> в GitHub появляется кнопка «Approve and deploy» — релиз-менеджер нажимает.<br><br><strong>Continuous Deployment:</strong> кнопки нет, релиз идёт сам.',
+                                    qa: 'QA подтверждает готовность релиза на staging. После релиза — <strong>smoke-тест на проде</strong> (работает ли основное?).',
+                                    extra: 'На проде работают <strong>живые пользователи</strong>. Любой баг = потеря денег и репутации. Поэтому Delivery безопаснее для крупных систем.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 7,  y: 50, w: 12 },
+                                { from: 1, to: 2, x: 20, y: 50, w: 12 },
+                                { from: 2, to: 3, x: 34, y: 50, w: 12 },
+                                { from: 3, to: 4, x: 48, y: 50, w: 12 },
+                                { from: 4, to: 5, x: 62, y: 50, w: 12 },
+                                { from: 5, to: 6, x: 76, y: 50, w: 12 }
+                            ]
+                        }
+                    },
+
+                    // ═══ СТАДИИ ═══
+                    {
+                        label: 'Стадии',
+                        title: 'Что происходит на каждой стадии',
+                        subtitle: 'Раскрывайте по одной — узнаете цель, пример и задачу QA.',
+                        accordion: [
+                            {
+                                title: '1️⃣ push — ты пушишь код',
+                                body: '<p><strong>Что происходит:</strong> разработчик отправляет изменения в удалённый репозиторий.</p><p><strong>Команда:</strong> <code>git push origin main</code></p><p><strong>Триггер:</strong> CI-система <em>видит</em> пуш и запускает пайплайн. В логах: <code>pipeline #482 запущен · on: push · branch main</code>.</p><p><strong>Что делает QA:</strong> тоже пушит тест-кейсы и автотесты в репозиторий. Пайплайн может запускаться и на Pull Request — тогда он проверяет код <strong>до</strong> merge.</p>'
+                            },
+                            {
+                                title: '2️⃣ build — сборка приложения',
+                                body: '<p><strong>Что происходит:</strong> CI-система компилирует исходники в исполняемый артефакт.</p><p><strong>Пример:</strong> из файлов <code>main.go</code>, <code>cart.go</code>, <code>pay.go</code>, <code>api.go</code> создаётся один бинарник <code>shop</code>.</p><p><strong>Что делает QA:</strong> если билд падает — смотрит логи, помогает сформулировать баг. Ошибка компиляции = дальше идти нельзя.</p>'
+                            },
+                            {
+                                title: '3️⃣ test — автоматические тесты',
+                                body: '<p><strong>Что происходит:</strong> запускаются unit-, интеграционные тесты и линтеры. Если хотя бы один упал — пайплайн останавливается.</p><p><strong>Пример:</strong> <code>go test ./... → passed 95, failed 1</code>. Тест <code>TestCartTotal</code> упал: ожидалось 1 990 ₽, получили 0 ₽.</p><p><strong>Что делает QA:</strong> пишет автотесты, следит за покрытием. Это <strong>ключевая стадия для QA</strong> в пайплайне.</p>'
+                            },
+                            {
+                                title: '4️⃣ package — упаковка в Docker-образ',
+                                body: '<p><strong>Что происходит:</strong> артефакт упаковывается в Docker-образ.</p><p><strong>Состав образа:</strong></p><ul><li><code>config.yaml</code> — настройки</li><li><code>/app/shop</code> — бинарник</li><li><code>ca-certificates</code> — сертификаты</li><li><code>alpine 3.20</code> — база (лёгкий Linux)</li></ul><p><strong>Что делает QA:</strong> смотрит на теги образов (<code>shop:v1.4.2</code>) — понимает, какую версию будут тестировать.</p>'
+                            },
+                            {
+                                title: '5️⃣ registry — реестр образов',
+                                body: '<p><strong>Что происходит:</strong> Docker-образ пушится в реестр (Docker Hub, GitLab Registry, Nexus).</p><p><strong>Зачем:</strong> образ доступен на любом сервере одной командой <code>docker pull</code>.</p><p><strong>Что делает QA:</strong> может скачать образ локально и тестировать без ожидания staging.</p><p><strong>Плюс:</strong> теги позволяют <strong>откатываться</strong> на предыдущую версию при инциденте.</p>'
+                            },
+                            {
+                                title: '6️⃣ staging — тестовый стенд',
+                                body: '<p><strong>Что происходит:</strong> CI-система автоматически разворачивает образ на staging.</p><p><strong>Что делает QA:</strong> <strong>основное тестирование</strong> здесь. Находит баги, заводит баг-репорты, проверяет соответствие требованиям.</p><p><strong>Отличие от прода:</strong> staging похож на прод, но с <strong>тестовыми данными</strong>. Живых пользователей здесь нет — можно ломать и экспериментировать.</p>'
+                            },
+                            {
+                                title: '7️⃣ production — прод, живые пользователи',
+                                body: '<p><strong>Что происходит:</strong> релиз уходит пользователям. Здесь два пути:</p><ul><li><strong>Continuous Delivery</strong> — ждёт кнопку «Approve and deploy»</li><li><strong>Continuous Deployment</strong> — релиз автоматический</li></ul><p><strong>Что делает QA:</strong> подтверждает готовность на staging → после релиза делает <strong>smoke-тест на проде</strong> (работает ли основное?).</p><p><strong>Важно:</strong> на проде живые пользователи. Любой баг = потеря денег и репутации. Поэтому Continuous Delivery безопаснее для крупных систем.</p>'
+                            }
+                        ]
+                    },
+
+                    // ═══ CI vs CD vs CD ═══
+                    {
+                        label: 'CI vs CD vs CD',
+                        title: 'Три «непрерывности»',
+                        subtitle: 'Кликните на карточку — увидите разницу.',
+                        compare: [
+                            {
+                                title: 'CI — Continuous Integration',
+                                question: 'Непрерывная интеграция',
+                                text: 'Разработчики <strong>часто</strong> сливают свой код в общую ветку. Каждый merge автоматически собирается и тестируется.<br><br><strong>Цель:</strong> ловить конфликты и баги на раннем этапе.<br><br><strong>Инструменты:</strong> GitHub Actions, GitLab CI, Jenkins, CircleCI.<br><br><strong>Что делает QA:</strong> пишет автотесты, которые запускаются при каждом merge.'
+                            },
+                            {
+                                title: 'CD — Continuous Delivery',
+                                question: 'Непрерывная доставка',
+                                text: 'После CI <strong>автоматически деплоит</strong> на staging. Но на прод — <strong>только после нажатия кнопки</strong> человеком.<br><br><strong>Флоу:</strong> staging → [Review pending deployments] → Approve and deploy → prod.<br><br><strong>Зачем кнопка:</strong> релиз-менеджер решает, когда выпускать.<br><br><strong>Что делает QA:</strong> валидирует на staging, готовит отчёт.'
+                            },
+                            {
+                                title: 'CD — Continuous Deployment',
+                                question: 'Непрерывное развёртывание',
+                                text: 'Релиз идёт на прод <strong>полностью автоматически</strong>. Кнопки «Approve» нет.<br><br><strong>Флоу:</strong> staging → prod. Всё.<br><br><strong>Где применяют:</strong> SaaS-продукты, стартапы, мобильные бэкенды — где недопустимо долгое ожидание.<br><br><strong>Что делает QA:</strong> автотесты = защита. Ошибка в них = баг у пользователей.'
+                            }
+                        ]
+                    },
+
+                    // ═══ ЗАДАЧИ QA НА КАЖДОЙ СТАДИИ ═══
+                    {
+                        label: 'Что делает QA',
+                        title: 'Роль QA на каждой стадии пайплайна',
+                        subtitle: 'Кликните на карточку, чтобы подсветить.',
+                        cards: [
+                            {
+                                icon: '',
+                                title: 'push',
+                                text: 'QA коммитит тест-кейсы, автотесты и документацию в репозиторий. Пайплайн на Pull Request помогает поймать баг <strong>до</strong> merge.'
+                            },
+                            {
+                                icon: '',
+                                title: 'build',
+                                text: 'QA смотрит логи при падении билда, помогает сформулировать проблему. Ошибка компиляции блокирует всё дальше.'
+                            },
+                            {
+                                icon: '',
+                                title: 'test',
+                                text: '<strong>Главная стадия QA.</strong> Пишутся и поддерживаются автотесты. Покрытие растёт — релиз становится безопаснее.'
+                            },
+                            {
+                                icon: '',
+                                title: 'package',
+                                text: 'QA проверяет, какие версии образов собираются. Понимает, какую версию будет тестировать на staging.'
+                            },
+                            {
+                                icon: '',
+                                title: 'registry',
+                                text: 'QA может скачать образ локально для тестирования — не дожидаясь развёртывания staging.'
+                            },
+                            {
+                                icon: '',
+                                title: 'staging',
+                                text: '<strong>Основное ручное тестирование.</strong> Функциональные проверки, регрессия, exploratory. Найденные баги идут в Bug Triage.'
+                            },
+                            {
+                                icon: '',
+                                title: 'production',
+                                text: 'После релиза — <strong>smoke-тест на проде</strong> (работает ли основное?). Мониторинг метрик 24 часа.'
+                            }
+                        ]
+                    },
+
+                    // ═══ ПРОВЕРЬ СЕБЯ ═══
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-тест по CI/CD',
+                        subtitle: 'Выберите правильный ответ.',
+                        quiz: {
+                            question: 'Чем Continuous Delivery отличается от Continuous Deployment?',
+                            options: [
+                                {
+                                    text: 'Ничем, это синонимы',
+                                    correct: false,
+                                    explain: 'Нет, это разные практики. Разница — в наличии кнопки «Approve» перед релизом на прод.'
+                                },
+                                {
+                                    text: 'Delivery требует ручного подтверждения перед продом, Deployment — нет',
+                                    correct: true,
+                                    explain: 'Правильно! В Delivery после staging появляется кнопка «Approve and deploy», которую нажимает человек. В Deployment релиз идёт полностью автоматически.'
+                                },
+                                {
+                                    text: 'Delivery — про мобильные приложения, Deployment — про веб',
+                                    correct: false,
+                                    explain: 'Нет. Обе практики применимы к любым типам приложений. Разница — в наличии ручного шага.'
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
     {
         id: 'scrum',
         cat: 'processes',
@@ -17350,6 +17589,372 @@ const CHEATSHEETS = [
         ]
     },
 
+    // ═══════════════════════════════════════════════════════
+    //  API И POSTMAN
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'api-postman',
+        cat: 'web',
+        title: 'API и Postman для тестировщика',
+        subtitle: 'Как проверять API руками — от документации до автотестов.',
+        date: '16.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">API + Postman</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Запрос → Ответ → Проверка</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;flex-wrap:wrap;justify-content:center;font-family:monospace;">
+                <span style="background:#4caf50;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">GET</span>
+                <span style="background:#ff9800;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">POST</span>
+                <span style="background:#2196f3;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">PUT</span>
+                <span style="background:#f44336;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">DELETE</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'api-postman-main',
+                title: 'API в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+
+                    // ═══ АНИМАЦИЯ ═══
+                    {
+                        label: 'Анимация',
+                        title: 'Путь API-запроса',
+                        subtitle: '🎬 Запустите анимацию — увидите весь цикл тестирования API.',
+                        animatedFlow: {
+                            title: 'API Testing Flow',
+                            hint: '🎬 Документация → Collection → Request → Response → Tests → Automation',
+                            stepDelay: 4000,
+                            nodes: [
+                                {
+                                    label: 'Документация',
+                                    x: 7, y: 50,
+                                    detail: 'Первый шаг — получить <strong>описание API</strong>. Для REST это обычно <strong>Swagger</strong> или <strong>OpenAPI</strong>, для SOAP — <strong>WSDL</strong>. Документация показывает: какие эндпоинты есть, какие параметры, какие статус-коды.',
+                                    example: 'Открыли Swagger UI. Видим: <code>GET /users</code>, <code>POST /users</code>, <code>PUT /users/{id}</code>. У каждого — параметры, примеры запроса и ответа.',
+                                    qa: 'Если документации нет — создаём сами: перехватываем трафик через Charles или DevTools, выписываем эндпоинты в Confluence или Postman.',
+                                    extra: 'Плохая документация = потерянное время. Хорошая документация = половина тестирования сделана.'
+                                },
+                                {
+                                    label: 'Collection',
+                                    x: 22, y: 50,
+                                    detail: 'Создаём <strong>коллекцию в Postman</strong> — набор запросов для тестирования. Группируем по модулям: Users, Auth, Orders.',
+                                    example: 'Создали коллекцию <code>Shopping API</code>. Внутри папки: <code>Auth</code> (login, register), <code>Users</code> (get, update), <code>Orders</code> (create, list).',
+                                    qa: 'Коллекция — это <strong>тест-набор</strong>. Её можно шарить с командой, гонять автоматически через Runner или Newman.',
+                                    extra: 'В Postman есть <strong>переменные</strong> (Environment, Collection). Храните токен, URL, ID — не дублируйте.'
+                                },
+                                {
+                                    label: 'Request',
+                                    x: 38, y: 50,
+                                    detail: 'Формируем запрос: <strong>метод</strong> (GET/POST/PUT/DELETE), <strong>URL</strong>, <strong>Headers</strong> (Content-Type, Authorization), <strong>Body</strong> (для POST/PUT — JSON).',
+                                    example: '<code>POST /api/users</code><br>Headers: <code>Content-Type: application/json</code><br>Body: <code>{"name": "Alex", "email": "alex@mail.ru"}</code>',
+                                    qa: 'Проверяем <strong>обязательные поля</strong>, <strong>типы данных</strong>, <strong>валидацию</strong>. Отправляем и <strong>валидные</strong>, и <strong>невалидные</strong> данные.',
+                                    extra: 'Позитивный тест: валидные данные → 201 Created. Негативный: без email → 400 Bad Request.'
+                                },
+                                {
+                                    label: 'Response',
+                                    x: 54, y: 50,
+                                    detail: 'Получаем ответ от сервера. Смотрим: <strong>статус-код</strong>, <strong>заголовки</strong>, <strong>тело ответа</strong>. Сравниваем с ожидаемым.',
+                                    example: '<code>201 Created</code><br><code>Time: 124 ms</code><br><code>Size: 245 B</code><br>Body: <code>{"id": 42, "name": "Alex"}</code>',
+                                    qa: 'Проверяем: статус-код соответствует, поля в ответе правильные, время ответа адекватное, нет лишних данных.',
+                                    extra: 'В Postman можно <strong>сохранять</strong> примеры ответов — это Examples. Полезно для документации.'
+                                },
+                                {
+                                    label: 'Tests',
+                                    x: 70, y: 50,
+                                    detail: 'Пишем <strong>автопроверки</strong> на JavaScript прямо в Postman. Они запускаются после получения ответа и проверяют: статус, поля, типы, время.',
+                                    example: '<code>pm.test("Status 201", () => {<br>&nbsp;&nbsp;pm.response.to.have.status(201);<br>});</code>',
+                                    qa: 'Автотесты в Postman = <strong>быстрая регрессия</strong>. Прогнали 50 запросов — получили отчёт за минуту.',
+                                    extra: 'Postman показывает <strong>зелёные галочки</strong> для прошедших проверок и красные крестики — для упавших.'
+                                },
+                                {
+                                    label: 'Automation',
+                                    x: 90, y: 50,
+                                    detail: 'Запускаем всю коллекцию через <strong>Collection Runner</strong> или <strong>Newman</strong> (CLI). Newman легко встроить в <strong>CI/CD</strong> — и API-тесты будут гоняться на каждый пуш.',
+                                    example: 'В CI: <code>newman run shopping-api.json -e staging.json</code>. Падает — пайплайн останавливается.',
+                                    qa: 'Идеал: <strong>API-тесты в CI/CD</strong>. Каждый push автоматически проверяет API на соответствие.',
+                                    extra: 'Postman также умеет <strong>мониторы</strong> — запуск коллекции по расписанию (например, каждые 15 минут).'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 7,  y: 50, w: 13 },
+                                { from: 1, to: 2, x: 22, y: 50, w: 14 },
+                                { from: 2, to: 3, x: 38, y: 50, w: 14 },
+                                { from: 3, to: 4, x: 54, y: 50, w: 14 },
+                                { from: 4, to: 5, x: 70, y: 50, w: 18 }
+                            ]
+                        }
+                    },
+
+                    // ═══ POSTMAN СИМУЛЯТОР ═══
+                    {
+                        label: 'Postman',
+                        title: 'Интерактивный симулятор Postman',
+                        subtitle: 'Нажимайте на запросы в левой панели — смотрите, как меняется запрос и ответ.',
+                        postmanSim: {
+                            collections: [
+                                {
+                                    id: 'auth',
+                                    title: 'Auth',
+                                    requests: [
+                                        { id: 'login',  method: 'POST',   label: 'Login',   url: '/api/auth/login' },
+                                        { id: 'logout', method: 'POST',   label: 'Logout',  url: '/api/auth/logout' }
+                                    ]
+                                },
+                                {
+                                    id: 'users',
+                                    title: 'Users',
+                                    requests: [
+                                        { id: 'getUser',    method: 'GET',    label: 'Get User',    url: '/api/users/42' },
+                                        { id: 'createUser', method: 'POST',   label: 'Create User', url: '/api/users' },
+                                        { id: 'updateUser', method: 'PUT',    label: 'Update User', url: '/api/users/42' },
+                                        { id: 'deleteUser', method: 'DELETE', label: 'Delete User', url: '/api/users/42' }
+                                    ]
+                                }
+                            ],
+                            defaultRequest: 'getUser',
+
+                            // ═══ Состояния для каждого запроса ═══
+                            states: {
+                                getUser: {
+                                    method: 'GET',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [
+                                        { key: 'include', value: 'orders', enabled: true }
+                                    ],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true },
+                                        { key: 'Accept',        value: 'application/json',   enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '124 ms',
+                                        size: '312 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Cache-Control', value: 'no-cache' }
+                                        ],
+                                        body: `{
+  "id": 42,
+  "name": "Alex Ivanov",
+  "email": "alex@example.com",
+  "createdAt": "2026-01-15T10:00:00Z",
+  "orders": [
+    { "id": 1, "total": 1990 },
+    { "id": 2, "total": 750 }
+  ]
+}`
+                                    },
+                                    explanation: '✅ <strong>GET</strong> — читаем пользователя. Статус <code>200 OK</code>, поля правильные, есть вложенный массив <code>orders</code> — потому что передали <code>include=orders</code>.'
+                                },
+
+                                login: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/auth/login',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json', enabled: true }
+                                    ],
+                                    body: `{
+  "email": "alex@example.com",
+  "password": "Password123"
+}`,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '256 ms',
+                                        size: '178 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Set-Cookie',   value: 'session=abc123; HttpOnly; Secure' }
+                                        ],
+                                        body: `{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresIn": 3600,
+  "user": {
+    "id": 42,
+    "name": "Alex Ivanov"
+  }
+}`
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — логин. Сервер вернул токен и <code>Set-Cookie</code> с флагом <code>HttpOnly; Secure</code>. Это правильно.'
+                                },
+
+                                logout: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/auth/logout',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 204,
+                                        statusText: 'No Content',
+                                        time: '89 ms',
+                                        size: '0 B',
+                                        headers: [
+                                            { key: 'Set-Cookie', value: 'session=; Max-Age=0; HttpOnly' }
+                                        ],
+                                        body: null
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — logout. Статус <code>204 No Content</code> — правильный ответ на logout. Cookie удалена через <code>Max-Age=0</code>.'
+                                },
+
+                                createUser: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/users',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json',  enabled: true },
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: `{
+  "name": "Maria Petrova",
+  "email": "maria@example.com",
+  "password": "SecurePass456"
+}`,
+                                    response: {
+                                        status: 201,
+                                        statusText: 'Created',
+                                        time: '185 ms',
+                                        size: '145 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Location',     value: '/api/users/43' }
+                                        ],
+                                        body: `{
+  "id": 43,
+  "name": "Maria Petrova",
+  "email": "maria@example.com",
+  "createdAt": "2026-10-16T11:22:00Z"
+}`
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — создание. Статус <code>201 Created</code>, заголовок <code>Location</code> указывает на нового пользователя. Пароль в ответе <strong>не возвращается</strong> — правильно.'
+                                },
+
+                                updateUser: {
+                                    method: 'PUT',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json',  enabled: true },
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: `{
+  "name": "Alex Ivanov",
+  "email": "new-alex@example.com"
+}`,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '142 ms',
+                                        size: '156 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' }
+                                        ],
+                                        body: `{
+  "id": 42,
+  "name": "Alex Ivanov",
+  "email": "new-alex@example.com",
+  "updatedAt": "2026-10-16T11:25:00Z"
+}`
+                                    },
+                                    explanation: '✅ <strong>PUT</strong> — полное обновление. Email изменился, добавлено поле <code>updatedAt</code>. Так и должно быть.'
+                                },
+
+                                deleteUser: {
+                                    method: 'DELETE',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 204,
+                                        statusText: 'No Content',
+                                        time: '98 ms',
+                                        size: '0 B',
+                                        headers: [],
+                                        body: null
+                                    },
+                                    explanation: '✅ <strong>DELETE</strong> — удаление. Статус <code>204 No Content</code> — тело отсутствует. Повторный DELETE вернёт <code>404 Not Found</code> или <code>204</code> (идемпотентность).'
+                                }
+                            }
+                        }
+                    },
+
+                    // ═══ ТЕОРИЯ — АККОРДЕОН ═══
+                    {
+                        label: 'Теория',
+                        title: 'Основы API',
+                        subtitle: 'Раскрывайте по одному.',
+                        accordion: [
+                            {
+                                title: 'Что такое API и веб-сервис',
+                                body: '<p><strong>API</strong> (Application Programming Interface) — интерфейс, через который программы общаются друг с другом.</p><p><strong>Веб-сервис</strong> — реализация API, работающая по сети (обычно через HTTP).</p><p><strong>REST</strong> — архитектурный стиль, где всё строится на HTTP-методах и URL. Самый популярный.</p><p><strong>SOAP</strong> — старый протокол с XML, ещё жив в банках и госсекторе.</p>'
+                            },
+                            {
+                                title: 'HTTP-методы',
+                                body: '<ul><li><strong>GET</strong> — читать данные (идемпотентный, безопасный)</li><li><strong>POST</strong> — создать ресурс (НЕ идемпотентный)</li><li><strong>PUT</strong> — полностью обновить (идемпотентный)</li><li><strong>PATCH</strong> — частично обновить (не идемпотентный)</li><li><strong>DELETE</strong> — удалить (идемпотентный)</li></ul><p><strong>Идемпотентный</strong> = повторный вызов даёт тот же результат. DELETE два раза подряд — со второго раза вернёт 404/204, но состояние системы то же.</p>'
+                            },
+                            {
+                                title: 'Статус-коды',
+                                body: '<ul><li><strong>1xx</strong> — информация (редко встречаются)</li><li><strong>2xx</strong> — успех: 200 OK, 201 Created, 204 No Content</li><li><strong>3xx</strong> — редирект: 301, 302, 304 Not Modified</li><li><strong>4xx</strong> — ошибка клиента: 400, 401, 403, 404, 422</li><li><strong>5xx</strong> — ошибка сервера: 500, 502, 503, 504</li></ul><p><strong>401 vs 403:</strong> 401 — «ты не авторизован» (нет токена), 403 — «ты авторизован, но не имеешь прав».</p>'
+                            },
+                            {
+                                title: 'JSON — основной формат',
+                                body: '<p><strong>JSON</strong> — текстовый формат обмена данными. Состоит из:</p><ul><li>Объект: <code>{ "key": "value" }</code></li><li>Массив: <code>[1, 2, 3]</code></li><li>Строки — только в двойных кавычках</li><li>Числа — без кавычек</li><li>true / false / null</li></ul><p><strong>Частые ошибки:</strong> одинарные кавычки, лишние запятые, комментарии (их нет в JSON).</p>'
+                            },
+                            {
+                                title: 'Аутентификация vs Авторизация',
+                                body: '<ul><li><strong>Идентификация</strong> — «я кто?» (логин или ID)</li><li><strong>Аутентификация</strong> — «докажи» (пароль, токен) → <code>401</code> при ошибке</li><li><strong>Авторизация</strong> — «что мне можно?» → <code>403</code> при недостатке прав</li></ul><p><strong>Пример:</strong> обычный юзер пытается удалить чужой пост. Токен валиден (аутентификация пройдена), но прав нет (авторизация отклонена). Ответ — <code>403 Forbidden</code>.</p>'
+                            },
+                            {
+                                title: 'Что тестирует QA в API',
+                                body: '<ul><li>✅ <strong>Позитивные</strong> — валидные данные → 200/201/204</li><li>❌ <strong>Негативные</strong> — пустые поля, невалидные типы → 400</li><li>🔒 <strong>Авторизация</strong> — без токена → 401, чужой токен → 401</li><li>🛡 <strong>Права</strong> — юзер делает админское действие → 403</li><li>⏱ <strong>Время ответа</strong> — не больше N секунд</li><li>📝 <strong>Формат ответа</strong> — все поля, правильные типы</li><li>🌐 <strong>Граничные значения</strong> — макс. длина строки, 0, -1</li></ul>'
+                            }
+                        ]
+                    },
+
+                    // ═══ ШПАРГАЛКА ПО POSTMAN ═══
+                    {
+                        label: 'Шпаргалка',
+                        title: 'Горячие клавиши и трюки Postman',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        cards: [
+                            { icon: '⌨️', title: 'Ctrl + Enter',  text: 'Отправить запрос (не убирая руки с клавиатуры).' },
+                            { icon: '📁', title: 'Ctrl + S',      text: 'Сохранить запрос в коллекцию. Не забудьте указать папку!' },
+                            { icon: '🔁', title: 'Ctrl + Alt + R', text: 'Открыть Collection Runner. Запуск всех запросов разом.' },
+                            { icon: '🌍', title: 'Environments',   text: 'Храните {{baseUrl}}, {{token}} в переменных. Меняйте одну переменную — меняется весь сценарий.' },
+                            { icon: '🧪', title: 'Tests',          text: 'Пишите JS-проверки: pm.test("Status 200", () => pm.response.to.have.status(200));' },
+                            { icon: '📥', title: 'Examples',       text: 'Сохраняйте примеры ответов. Полезно для документации и команды.' },
+                            { icon: '🧑‍💼', title: 'Pre-request',   text: 'JS, который выполняется ДО запроса. Можно генерировать timestamp или подпись.' },
+                            { icon: '🔄', title: 'Newman',         text: 'CLI-версия Postman. Запускается в CI/CD: newman run collection.json' }
+                        ]
+                    },
+
+                    // ═══ QUIZ ═══
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-тест по API',
+                        subtitle: 'Выберите правильный ответ.',
+                        quiz: {
+                            question: 'Какой статус-код должен вернуть API, если пользователь пытается удалить чужой пост без прав?',
+                            options: [
+                                { text: '400 Bad Request', correct: false, explain: '400 — синтаксическая ошибка в запросе. Тут запрос корректен, просто нет прав.' },
+                                { text: '401 Unauthorized', correct: false, explain: '401 — нет или неверный токен. Здесь токен валидный, но прав недостаточно.' },
+                                { text: '403 Forbidden', correct: true, explain: 'Правильно! 403 — пользователь авторизован, но не имеет прав на действие. Это ключевое отличие от 401.' },
+                                { text: '404 Not Found', correct: false, explain: '404 — ресурс не найден. Здесь ресурс есть, просто нет прав.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
     {
         id: 'web-page-structure',
         cat: 'web',
@@ -17716,7 +18321,7 @@ const CHEATSHEETS = [
                                         expiresIn: '3595 сек',
                                         etag: '"abc123"'
                                     },
-                                    explanation: '✅ Второй запрос: браузер отправил If-None-Match с ETag. Сервер вернул 304 Not Modified — тело ответа НЕ передавалось. Экономия трафика и времени!'
+                                    explanation: 'Второй запрос: браузер отправил If-None-Match с ETag. Сервер вернул 304 Not Modified — тело ответа НЕ передавалось. Экономия трафика и времени!'
                                 },
                                 invalidate: {
                                     cacheStatus: 'empty',
@@ -17728,7 +18333,7 @@ const CHEATSHEETS = [
                                         expiresIn: '—',
                                         etag: '—'
                                     },
-                                    explanation: '⚠️ Кэш инвалидирован (например, задеплоили новую версию). При следующем запросе сервер вернёт свежий файл со статусом 200.'
+                                    explanation: 'Кэш инвалидирован (например, задеплоили новую версию). При следующем запросе сервер вернёт свежий файл со статусом 200.'
                                 }
                             }
                         }
@@ -17817,7 +18422,7 @@ const CHEATSHEETS = [
                             },
                             {
                                 title: 'Что можно кэшировать?',
-                                body: '<p><strong>✅ Можно:</strong><ul><li>Статические ресурсы (картинки, CSS, шрифты)</li><li>Публичные данные (справочники, курсы валют)</li></ul><strong>❌ НЕЛЬЗЯ:</strong><ul><li>Персональные данные (номера карт, паспорта)</li><li>Токены и пароли</li><li>Приватные страницы (личный кабинет)</li></ul><strong>Проверка:</strong> после logout персональные данные не должны остаться в кэше.</p>'
+                                body: '<p><strong>Можно:</strong><ul><li>Статические ресурсы (картинки, CSS, шрифты)</li><li>Публичные данные (справочники, курсы валют)</li></ul><strong>❌ НЕЛЬЗЯ:</strong><ul><li>Персональные данные (номера карт, паспорта)</li><li>Токены и пароли</li><li>Приватные страницы (личный кабинет)</li></ul><strong>Проверка:</strong> после logout персональные данные не должны остаться в кэше.</p>'
                             }
                         ]
                     },
@@ -19890,6 +20495,161 @@ function initCsSectionHandlers(content, section) {
 function initTabContent(panel, tabData) {
     if (!panel) return;
 
+    // ═══ POSTMAN SIMULATOR — интерактивность ═══
+    panel.querySelectorAll('.postman-sim').forEach(pmEl => {
+        if (pmEl._tabInit) return;
+        pmEl._tabInit = true;
+
+        const sim = tabData && tabData.postmanSim;
+        if (!sim) return;
+
+        // ─── Ссылки на DOM ───
+        const requestBtns       = pmEl.querySelectorAll('.postman-request');
+        const methodBadge       = pmEl.querySelector('#postmanMethodBadge');
+        const urlInput          = pmEl.querySelector('#postmanUrl');
+        const sendBtn           = pmEl.querySelector('#postmanSendBtn');
+        const paramsBox         = pmEl.querySelector('#postmanParams');
+        const headersBox        = pmEl.querySelector('#postmanHeaders');
+        const bodyBox           = pmEl.querySelector('#postmanBody');
+        const responseMeta      = pmEl.querySelector('#postmanResponseMeta');
+        const responseBodyBox   = pmEl.querySelector('#postmanResponseBody');
+        const responseHeadersBox = pmEl.querySelector('#postmanResponseHeaders');
+        const explanation       = pmEl.querySelector('#postmanExplanation');
+
+        // ─── Вкладки запроса ───
+        const reqTabs = pmEl.querySelectorAll('[data-postman-tab]');
+        reqTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const id = this.dataset.postmanTab;
+                pmEl.querySelectorAll('[data-postman-tab]').forEach(t => t.classList.remove('active'));
+                pmEl.querySelectorAll('[data-postman-panel]').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panelEl = pmEl.querySelector(`[data-postman-panel="${id}"]`);
+                if (panelEl) panelEl.classList.add('active');
+            });
+        });
+
+        // ─── Вкладки ответа ───
+        const resTabs = pmEl.querySelectorAll('[data-postman-tab-res]');
+        resTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const id = this.dataset.postmanTabRes;
+                pmEl.querySelectorAll('[data-postman-tab-res]').forEach(t => t.classList.remove('active'));
+                pmEl.querySelectorAll('[data-postman-panel-res]').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panelEl = pmEl.querySelector(`[data-postman-panel-res="${id}"]`);
+                if (panelEl) panelEl.classList.add('active');
+            });
+        });
+
+        // ─── Функция рендера состояния ───
+        function renderState(stateKey) {
+            const st = sim.states[stateKey];
+            if (!st) return;
+
+            // Method + URL
+            methodBadge.textContent = st.method;
+            methodBadge.className = 'postman-method-badge postman-method-badge--' + st.method.toLowerCase();
+            urlInput.value = st.url;
+
+            // Params
+            if (st.params && st.params.length) {
+                paramsBox.innerHTML = st.params.map(p => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(p.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(p.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                paramsBox.innerHTML = '<div class="postman-kv__empty">Нет query-параметров</div>';
+            }
+
+            // Headers
+            if (st.headers && st.headers.length) {
+                headersBox.innerHTML = st.headers.map(h => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(h.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(h.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                headersBox.innerHTML = '<div class="postman-kv__empty">Нет заголовков</div>';
+            }
+
+            // Body
+            if (st.body) {
+                bodyBox.textContent = st.body;
+                bodyBox.style.display = 'block';
+            } else {
+                bodyBox.textContent = '';
+                bodyBox.innerHTML = '<span class="postman-kv__empty">У этого запроса нет body</span>';
+            }
+
+            // Response meta
+            const res = st.response;
+            const statusClass = res.status >= 200 && res.status < 300 ? 'ok'
+                              : res.status >= 400 && res.status < 500 ? 'warn'
+                              : 'error';
+            responseMeta.innerHTML = `
+                <span class="postman-response__status postman-response__status--${statusClass}">
+                    ${res.status} ${escapeHtml(res.statusText)}
+                </span>
+                <span class="postman-response__time">Time: ${escapeHtml(res.time)}</span>
+                <span class="postman-response__size">Size: ${escapeHtml(res.size)}</span>
+            `;
+
+            // Response body
+            if (res.body) {
+                responseBodyBox.textContent = res.body;
+            } else {
+                responseBodyBox.innerHTML = '<span class="postman-kv__empty">Тело ответа отсутствует (204 No Content)</span>';
+            }
+
+            // Response headers
+            if (res.headers && res.headers.length) {
+                responseHeadersBox.innerHTML = res.headers.map(h => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(h.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(h.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                responseHeadersBox.innerHTML = '<div class="postman-kv__empty">Нет заголовков</div>';
+            }
+
+            // Объяснение
+            explanation.innerHTML = st.explanation;
+        }
+
+        // ─── Клик по запросу в левой панели ───
+        requestBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reqId = this.dataset.reqId;
+                requestBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                renderState(reqId);
+            });
+        });
+
+        // ─── Кнопка Send — имитация отправки ───
+        sendBtn.addEventListener('click', function() {
+            const originalText = this.textContent;
+            this.textContent = '⏳ Sending...';
+            this.disabled = true;
+
+            setTimeout(() => {
+                this.textContent = originalText;
+                this.disabled = false;
+                // Подсветим response на секунду
+                responseMeta.classList.add('postman-flash');
+                setTimeout(() => responseMeta.classList.remove('postman-flash'), 600);
+            }, 400);
+        });
+
+        // ─── Первичный рендер ───
+        renderState(sim.defaultRequest);
+    });
+
     // ─── PYRAMID ───
     panel.querySelectorAll('.cs-pyramid').forEach(pyrEl => {
         if (pyrEl._tabInit) return;
@@ -20020,7 +20780,7 @@ function initTabContent(panel, tabData) {
         if (cacheEl._tabInit) return;
         cacheEl._tabInit = true;
 
-        const sim = tabData.cacheSim;
+        const sim = tabData && tabData.cacheSim;
         if (!sim) return;
 
         const buttons = cacheEl.querySelectorAll('.cs-cache-btn');
@@ -20029,7 +20789,6 @@ function initTabContent(panel, tabData) {
         const responseBox = cacheEl.querySelector('#cacheResponse');
         const explanation = cacheEl.querySelector('#cacheExplanation');
 
-        let currentStateKey = 'initial';
         let isCacheFilled = false;
 
         function renderState(stateKey) {
@@ -20039,16 +20798,16 @@ function initTabContent(panel, tabData) {
             // ─── Статус кэша ───
             const ci = state.cacheInfo;
             if (ci) {
-                let statusIcon = '📭';
+                let statusIcon = '';
                 let statusText = 'Пусто';
                 let statusClass = 'empty';
 
                 if (ci.status === 'filled') {
-                    statusIcon = '📦';
+                    statusIcon = '';
                     statusText = 'Заполнен';
                     statusClass = 'filled';
                 } else if (ci.status === 'valid') {
-                    statusIcon = '✅';
+                    statusIcon = '';
                     statusText = 'Актуален (304)';
                     statusClass = 'valid';
                 }
@@ -20131,7 +20890,7 @@ function initTabContent(panel, tabData) {
 
             // ─── Объяснение ───
             explanation.innerHTML = `
-                <div class="cs-cache__explanation-title">💡 Что происходит</div>
+                <div class="cs-cache__explanation-title">Что происходит</div>
                 <div class="cs-cache__explanation-text">${state.explanation}</div>
             `;
         }
@@ -20143,14 +20902,12 @@ function initTabContent(panel, tabData) {
                 const action = this.dataset.action;
 
                 if (action === 'reset') {
-                    currentStateKey = 'initial';
                     isCacheFilled = false;
                     renderState('initial');
                     return;
                 }
 
                 if (action === 'request1') {
-                    currentStateKey = 'request1';
                     isCacheFilled = true;
                     renderState('request1');
                     return;
@@ -20160,7 +20917,7 @@ function initTabContent(panel, tabData) {
                     if (!isCacheFilled) {
                         explanation.innerHTML = `
                             <div class="cs-cache__explanation-title" style="color:#e65100;">
-                                ⚠️ Сначала сделайте «Запрос 1»
+                                Сначала сделайте «Запрос 1»
                             </div>
                             <div class="cs-cache__explanation-text">
                                 Кэш пуст — браузеру нечего использовать. Сначала заполните кэш первым запросом.
@@ -20168,13 +20925,11 @@ function initTabContent(panel, tabData) {
                         `;
                         return;
                     }
-                    currentStateKey = 'request2';
                     renderState('request2');
                     return;
                 }
 
                 if (action === 'invalidate') {
-                    currentStateKey = 'invalidate';
                     isCacheFilled = false;
                     renderState('invalidate');
                     return;
@@ -21308,6 +22063,110 @@ function initAnimatedFlow(container, data) {
 function renderTabContent(tab) {
     let html = '';
 
+    // ═══ POSTMAN SIMULATOR ═══
+    if (tab.postmanSim) {
+        const ps = tab.postmanSim;
+
+        // ─── Левая панель: коллекции ───
+        const collectionsHtml = ps.collections.map(col => `
+            <div class="postman-collection" data-col-id="${col.id}">
+                <div class="postman-collection__title">
+                    <span class="postman-collection__folder">📁</span>
+                    ${escapeHtml(col.title)}
+                </div>
+                <div class="postman-collection__requests">
+                    ${col.requests.map(req => `
+                        <div class="postman-request${req.id === ps.defaultRequest ? ' active' : ''}"
+                             data-req-id="${req.id}">
+                            <span class="postman-method postman-method--${req.method.toLowerCase()}">
+                                ${req.method}
+                            </span>
+                            <span class="postman-request__label">${escapeHtml(req.label)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        html += `
+            <div class="postman-sim">
+                <div class="postman-sim__layout">
+
+                    <!-- ═══ ЛЕВАЯ ПАНЕЛЬ: Коллекции ═══ -->
+                    <aside class="postman-sidebar">
+                        <div class="postman-sidebar__header">
+                            <span>📚 Коллекции</span>
+                        </div>
+                        <div class="postman-sidebar__body">
+                            ${collectionsHtml}
+                        </div>
+                    </aside>
+
+                    <!-- ═══ ПРАВАЯ ПАНЕЛЬ: Запрос / Ответ ═══ -->
+                    <section class="postman-main">
+
+                        <!-- Строка запроса -->
+                        <div class="postman-request-bar">
+                            <span class="postman-method-badge" id="postmanMethodBadge">GET</span>
+                            <input class="postman-url-input" id="postmanUrl" type="text" readonly value="">
+                            <button class="postman-send-btn" id="postmanSendBtn" type="button">
+                                Send ▸
+                            </button>
+                        </div>
+
+                        <!-- Вкладки запроса -->
+                        <div class="postman-tabs">
+                            <button class="postman-tab active" data-postman-tab="params">Params</button>
+                            <button class="postman-tab" data-postman-tab="headers">Headers</button>
+                            <button class="postman-tab" data-postman-tab="body">Body</button>
+                        </div>
+
+                        <!-- Панели запроса -->
+                        <div class="postman-tab-panel active" data-postman-panel="params">
+                            <div class="postman-kv" id="postmanParams"></div>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel="headers">
+                            <div class="postman-kv" id="postmanHeaders"></div>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel="body">
+                            <pre class="postman-body" id="postmanBody"></pre>
+                        </div>
+
+                        <!-- Разделитель -->
+                        <div class="postman-divider">
+                            <span class="postman-divider__label">Response</span>
+                        </div>
+
+                        <!-- Статус ответа -->
+                        <div class="postman-response-meta" id="postmanResponseMeta">
+                            <span class="postman-response__status">—</span>
+                            <span class="postman-response__time">Time: —</span>
+                            <span class="postman-response__size">Size: —</span>
+                        </div>
+
+                        <!-- Вкладки ответа -->
+                        <div class="postman-tabs">
+                            <button class="postman-tab active" data-postman-tab-res="body">Body</button>
+                            <button class="postman-tab" data-postman-tab-res="headers">Headers</button>
+                        </div>
+
+                        <div class="postman-tab-panel active" data-postman-panel-res="body">
+                            <pre class="postman-response-body" id="postmanResponseBody"></pre>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel-res="headers">
+                            <div class="postman-kv" id="postmanResponseHeaders"></div>
+                        </div>
+
+                    </section>
+                </div>
+
+                <div class="postman-explanation" id="postmanExplanation">
+                    💡 Нажмите на запрос в левой панели — увидите его содержимое и ответ.
+                </div>
+            </div>
+        `;
+    }
+
     // ═══════════════════════════════════════════════════════
     //  WEB PAGE SIMULATOR
     // ═══════════════════════════════════════════════════════
@@ -21687,108 +22546,78 @@ function renderTabContent(tab) {
         `;
     }
 
-    // ═══ COOKIES SIMULATOR ═══
-    if (tab.cookiesSim) {
-        const cs = tab.cookiesSim;
 
-        // ─── Левая панель: флаги + статус безопасности ───
-        let flagsHtml = cs.flags.map((flag, i) => `
-            <div class="cs-cookie-flag" data-flag-id="${flag.id}" data-flag-idx="${i}">
-                <label class="cs-cookie-flag__toggle">
-                    <input type="checkbox"
-                        class="cs-cookie-flag__input"
-                        data-flag-id="${flag.id}"
-                        ${flag.default ? 'checked' : ''}>
-                    <span class="cs-cookie-flag__slider"></span>
-                </label>
-                <div class="cs-cookie-flag__info">
-                    <div class="cs-cookie-flag__name">
-                        <span class="cs-cookie-flag__icon">${flag.icon}</span>
-                        ${escapeHtml(flag.label)}
-                    </div>
-                    <div class="cs-cookie-flag__desc">${escapeHtml(flag.desc)}</div>
-                </div>
-            </div>
-        `).join('');
+    // ═══ CACHE SIMULATOR ═══
+    if (tab.cacheSim) {
+        const cs = tab.cacheSim;
 
-        // ─── Правая панель: Cookie Inspector ───
-        let threatsHtml = cs.threats.map(t => `
-            <div class="cs-cookie-threat" data-threat-id="${t.id}">
-                <span class="cs-cookie-threat__icon">${t.icon}</span>
-                <span class="cs-cookie-threat__name">${escapeHtml(t.name)}</span>
-                <span class="cs-cookie-threat__status">—</span>
-            </div>
+        // ─── Левая панель: кнопки + статус кэша ───
+        const buttonsHtml = cs.buttons.map(btn => `
+            <button class="cs-cache-btn"
+                    data-action="${btn.id}"
+                    style="background:${btn.color};">
+                ${btn.label}
+            </button>
         `).join('');
 
         html += `
-            <div class="cs-cookies">
-                <div class="cs-cookies__header">
-                    <h3 class="cs-cookies__title">${escapeHtml(tab.title)}</h3>
-                    <p class="cs-cookies__subtitle">${escapeHtml(tab.subtitle)}</p>
+            <div class="cs-cache">
+                <div class="cs-cache__header">
+                    <h3 class="cs-cache__title">${escapeHtml(tab.title)}</h3>
+                    <p class="cs-cache__subtitle">${escapeHtml(tab.subtitle)}</p>
                 </div>
 
-                <div class="cs-cookies__layout">
+                <div class="cs-cache__layout">
 
-                    <!-- ═══ ЛЕВАЯ ПАНЕЛЬ: управление флагами ═══ -->
-                    <div class="cs-cookies__left">
-                        <div class="cs-cookies__section-title">
-                            <span>🔧</span> Флаги Cookie
+                    <!-- ═══ ЛЕВАЯ ПАНЕЛЬ: кнопки + статус кэша ═══ -->
+                    <div class="cs-cache__left">
+                        <div class="cs-cache__section-title">
+                            <span></span> Действия
                         </div>
-                        <div class="cs-cookie-flags">
-                            ${flagsHtml}
+                        <div class="cs-cache__buttons">
+                            ${buttonsHtml}
                         </div>
 
-                        <div class="cs-cookies__section-title" style="margin-top:18px;">
-                            <span>⚠️</span> Статус безопасности
+                        <div class="cs-cache__section-title" style="margin-top:18px;">
+                            <span></span> Состояние кэша
                         </div>
-                        <div class="cs-cookie-threats">
-                            ${threatsHtml}
+                        <div class="cs-cache-status" id="cacheStatus">
+                            <div class="cs-cache__hint">Кэш пуст</div>
                         </div>
                     </div>
 
-                    <!-- ═══ ПРАВАЯ ПАНЕЛЬ: Cookie Inspector ═══ -->
-                    <div class="cs-cookies__right">
+                    <!-- ═══ ПРАВАЯ ПАНЕЛЬ: request / response ═══ -->
+                    <div class="cs-cache__right">
 
-                        <!-- Заголовок окна (как в DevTools) -->
-                        <div class="cs-cookies__panel-header">
-                            <span class="cs-cookies__dot"></span>
-                            <span class="cs-cookies__dot"></span>
-                            <span class="cs-cookies__dot"></span>
-                            <span class="cs-cookies__panel-title">DevTools — Application → Cookies</span>
+                        <div class="cs-cache__panel-header">
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__panel-title">DevTools — Network</span>
                         </div>
 
-                        <!-- Cookie-таблица -->
-                        <div class="cs-cookies__content">
-                            <div class="cs-cookies__section-title-sm">Установленные Cookie</div>
-                            <div class="cs-cookie-table" id="cookieTable">
-                                <!-- Заполняется JS -->
+                        <div class="cs-cache__content">
+                            <div class="cs-cache__section-title-sm">Request</div>
+                            <div class="cs-cache-headers" id="cacheRequest">
+                                <div class="cs-cache__hint">Нажмите кнопку слева, чтобы увидеть запрос.</div>
                             </div>
 
-                            <!-- Request Headers -->
-                            <div class="cs-cookies__section-title-sm" style="margin-top:16px;">
-                                Request Headers
+                            <div class="cs-cache__section-title-sm" style="margin-top:16px;">
+                                Response
                             </div>
-                            <div class="cs-cookie-headers" id="cookieRequestHeaders">
-                                <!-- Заполняется JS -->
-                            </div>
-
-                            <!-- Response Headers -->
-                            <div class="cs-cookies__section-title-sm" style="margin-top:16px;">
-                                Response Headers
-                            </div>
-                            <div class="cs-cookie-headers" id="cookieResponseHeaders">
-                                <!-- Заполняется JS -->
+                            <div class="cs-cache-headers" id="cacheResponse">
+                                <div class="cs-cache__hint">Ответ сервера появится здесь.</div>
                             </div>
                         </div>
 
                     </div>
                 </div>
 
-                <!-- Блок объяснения -->
-                <div class="cs-cookies__explanation" id="cookieExplanation">
-                    <div class="cs-cookies__explanation-title">💡 Что происходит</div>
-                    <div class="cs-cookies__explanation-text">
-                        Включайте и выключайте флаги слева — справа будет меняться состояние Cookie и уровень безопасности.
+                <!-- ═══ Объяснение ═══ -->
+                <div class="cs-cache__explanation" id="cacheExplanation">
+                    <div class="cs-cache__explanation-title">Что происходит</div>
+                    <div class="cs-cache__explanation-text">
+                        Нажимайте кнопки слева, чтобы пошагово увидеть, как работает кэш браузера.
                     </div>
                 </div>
             </div>
