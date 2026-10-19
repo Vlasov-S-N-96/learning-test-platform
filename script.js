@@ -9290,30 +9290,29 @@ updateDashboard();
 // ================================================================
 //  СВОРАЧИВАНИЕ DASHBOARD
 // ================================================================
-(function initDashboardToggle() {
+// ═══════════════════════════════════════════════════════════
+//  СТАТИСТИКА — ВСЕГДА СВЁРНУТА ПРИ ЗАГРУЗКЕ
+// ═══════════════════════════════════════════════════════════
+(function setupDashboardToggle() {
     function setup() {
         var toggle = document.getElementById('dashboardToggle');
         var dashboard = document.getElementById('dashboard');
         if (!toggle || !dashboard) {
-            // Если DOM ещё не готов — пробуем позже
             setTimeout(setup, 100);
             return;
         }
+        if (toggle._init) return;
+        toggle._init = true;
 
-        // Восстанавливаем состояние из localStorage
-        var isCollapsed = localStorage.getItem('dashboardCollapsed') !== 'false';
-        if (isCollapsed) {
-            dashboard.classList.add('dashboard-collapsed');
-            toggle.setAttribute('aria-expanded', 'false');
-        } else {
-            dashboard.classList.remove('dashboard-collapsed');
-            toggle.setAttribute('aria-expanded', 'true');
-        }
+        // ⚡ Всегда сворачиваем при загрузке — НЕ восстанавливаем из localStorage
+        dashboard.classList.add('dashboard-collapsed');
+        toggle.setAttribute('aria-expanded', 'false');
 
-        // Клик по кнопке
+        // Клик по кнопке — переключает
         toggle.addEventListener('click', function() {
             var collapsed = dashboard.classList.toggle('dashboard-collapsed');
             toggle.setAttribute('aria-expanded', String(!collapsed));
+            // Можно сохранять в localStorage, но НЕ восстанавливать
             localStorage.setItem('dashboardCollapsed', String(collapsed));
         });
     }
@@ -12965,6 +12964,144 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     'use strict';
 
     // ═══════════════════════════════════════════════════════════
+    //  ДОСТУП К ДОКУМЕНТАМ
+    // ═══════════════════════════════════════════════════════════
+    const DOCS_PASSWORD_HASH = 'c1541cdc6a01b6b79cd54d2493ee59105c7e4b2c633397a952ef635ae6ae2af8';
+    const DOCS_AUTH_KEY = 'myDocsAuth_v1';
+
+    // Проверка: авторизован ли пользователь в текущей сессии
+    function isDocsAuthorized() {
+        try {
+            return sessionStorage.getItem(DOCS_AUTH_KEY) === 'true';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // Запомнить авторизацию (до закрытия браузера)
+    function setDocsAuthorized() {
+        try {
+            sessionStorage.setItem(DOCS_AUTH_KEY, 'true');
+        } catch (e) {}
+    }
+
+    // Проверка пароля: считаем SHA-256 хэш ввода и сравниваем с сохранённым
+    async function checkDocsPassword(input) {
+        try {
+            const data = new TextEncoder().encode(input);
+            const buffer = await crypto.subtle.digest('SHA-256', data);
+            const hash = Array.from(new Uint8Array(buffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+            return hash === DOCS_PASSWORD_HASH;
+        } catch (e) {
+            console.error('Ошибка проверки пароля:', e);
+            return false;
+        }
+    }
+
+    // Показать модалку с паролем. Возвращает Promise<boolean>
+    function requestDocsPassword() {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.className = 'docs-password-overlay';
+            overlay.innerHTML = `
+                <div class="docs-password-modal" role="dialog" aria-modal="true"
+                    aria-labelledby="docsPassTitle">
+                    <h3 id="docsPassTitle">🔒 Доступ к документам</h3>
+                    <p class="docs-password-modal__sub">
+                        Введите пароль, чтобы открыть раздел с документами
+                    </p>
+                    <input type="password"
+                        class="docs-password-modal__input"
+                        id="docsPassInput"
+                        placeholder="Пароль"
+                        autocomplete="current-password">
+                    <p class="docs-password-modal__error" id="docsPassError">
+                        ❌ Неверный пароль
+                    </p>
+                    <div class="docs-password-modal__actions">
+                        <button class="docs-password-modal__btn docs-password-modal__btn--cancel"
+                                id="docsPassCancel" type="button">Отмена</button>
+                        <button class="docs-password-modal__btn docs-password-modal__btn--ok"
+                                id="docsPassOk" type="button">Войти</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const input = overlay.querySelector('#docsPassInput');
+            const errorEl = overlay.querySelector('#docsPassError');
+            const btnOk = overlay.querySelector('#docsPassOk');
+            const btnCancel = overlay.querySelector('#docsPassCancel');
+
+            // Автофокус на поле ввода
+            setTimeout(() => input.focus(), 50);
+
+            function close(result) {
+                overlay.style.opacity = '0';
+                overlay.style.transition = 'opacity 0.2s ease';
+                setTimeout(() => overlay.remove(), 200);
+                resolve(result);
+            }
+
+            // ⚡ Теперь checkPassword — асинхронная (считает хэш)
+            async function checkPassword() {
+                const value = input.value;
+
+                if (!value) {
+                    // Пустое поле — просто тряхнуть
+                    errorEl.classList.remove('visible');
+                    void errorEl.offsetWidth;
+                    errorEl.classList.add('visible');
+                    input.focus();
+                    return;
+                }
+
+                // ⚡ Блокируем кнопку на время проверки
+                btnOk.disabled = true;
+                btnOk.textContent = '...';
+
+                const isValid = await checkDocsPassword(value);
+
+                btnOk.disabled = false;
+                btnOk.textContent = 'Войти';
+
+                if (isValid) {
+                    setDocsAuthorized();
+                    close(true);
+                } else {
+                    // Ошибка: показать сообщение + shake
+                    errorEl.classList.remove('visible');
+                    void errorEl.offsetWidth;   // reflow для перезапуска анимации
+                    errorEl.classList.add('visible');
+                    input.value = '';
+                    input.focus();
+                }
+            }
+
+            btnOk.addEventListener('click', checkPassword);
+            btnCancel.addEventListener('click', () => close(false));
+
+            // Клик по фону — закрыть
+            overlay.addEventListener('click', e => {
+                if (e.target === overlay) close(false);
+            });
+
+            // Enter — проверить, Esc — отмена
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkPassword();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    close(false);
+                }
+            });
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
     //  КОНСТАНТЫ
     // ═══════════════════════════════════════════════════════════
     const DOC_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'xlsx', 'xls', 'pptx', 'ppt', 'csv', 'zip'];
@@ -13417,7 +13554,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 
             list.innerHTML = `
                 <div class="documents-empty">
-                    <div class="documents-empty__icon">📭</div>
+                    <div class="documents-empty__icon"></div>
                     <p>${msg}</p>
                     <p style="font-size:0.8rem; margin-top:8px;">
                         Нажмите «➕ Добавить ссылку»<br>
@@ -13587,6 +13724,23 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        // ⚡ Собираем все категории: стандартные + кастомные
+        const allCategories = { ...CATEGORIES };
+        try {
+            const customThemes = JSON.parse(localStorage.getItem('myCustomThemes') || '[]');
+            customThemes.forEach(theme => {
+                if (theme.id && theme.label) {
+                    allCategories[theme.id] = theme.label;
+                }
+            });
+        } catch (e) {
+            console.warn('Ошибка загрузки кастомных тем:', e);
+        }
+
+        console.log('🔨 buildCategoryDropdown:', 
+                    Object.keys(allCategories).length, 'категорий',
+                    '(кастомных:', Object.keys(allCategories).length - 18, ')');
+
         container.innerHTML = `
             <div class="cat-dropdown" id="${containerId}_dd">
                 <button type="button" class="cat-toggle" id="${containerId}_toggle">
@@ -13594,7 +13748,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                     <span class="cat-arrow">▼</span>
                 </button>
                 <div class="cat-menu" id="${containerId}_menu">
-                    ${Object.entries(CATEGORIES).map(([key, label]) => `
+                    ${Object.entries(allCategories).map(([key, label]) => `
                         <button type="button" class="cat-option" data-value="${key}">${label}</button>
                     `).join('')}
                 </div>
@@ -13755,9 +13909,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const scrollBtn = document.getElementById('scrollTopBtn');
         if (scrollBtn) scrollBtn.style.setProperty('display', 'none', 'important');
 
-        // ═══════════════════════════════════════════════════════════
-        //  Очистка + дефолт
-        // ═══════════════════════════════════════════════════════════
+        // ═══ Очистка полей ═══
         ['docLinkTitle', 'docLinkUrl', 'docLinkDescription',
         'docFileTitle', 'docFileDescription'].forEach(function(id) {
             const el = document.getElementById(id);
@@ -13766,19 +13918,34 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const fileInput = document.getElementById('docFileInput');
         if (fileInput) fileInput.value = '';
 
+        // ⚡ ШАГ 1: Сначала ПЕРЕСТРАИВАЕМ дропдауны (с кастомными темами)
+        const linkCatContainer = document.getElementById('docLinkCategoryContainer');
+        const fileCatContainer = document.getElementById('docFileCategoryContainer');
+
+        if (linkCatContainer) {
+            buildCategoryDropdown('docLinkCategoryContainer', 'docLinkCategory');
+        }
+        if (fileCatContainer) {
+            buildCategoryDropdown('docFileCategoryContainer', 'docFileCategory');
+        }
+
+        // ⚡ ШАГ 2: ПОТОМ ставим значение по умолчанию
+        const allCategories = getAllCategories();
         const defaultCat = currentDocCategory === 'all' ? 'theory' : currentDocCategory;
+
         const linkHidden = document.getElementById('docLinkCategory');
         const fileHidden = document.getElementById('docFileCategory');
         if (linkHidden) linkHidden.value = defaultCat;
         if (fileHidden) fileHidden.value = defaultCat;
 
         document.querySelectorAll('#docLinkCategoryContainer .cat-label, #docFileCategoryContainer .cat-label').forEach(function(l) {
-            l.textContent = CATEGORIES[defaultCat] || 'Теория';
+            l.textContent = allCategories[defaultCat] || 'Теория';
         });
 
+        // ⚡ ШАГ 3: Переключить на вкладку "Ссылка"
         if (typeof switchDocTab === 'function') switchDocTab('link');
 
-        console.log('✅ openAddForm (' + (isMobile ? 'mobile' : 'desktop') + '), ширина контента:', content.style.width);
+        console.log('✅ openAddForm (' + (isMobile ? 'mobile' : 'desktop') + '), default:', defaultCat);
     }
 
 
@@ -13926,15 +14093,22 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                 console.log('🔗 Всего ссылок:', customLinks.length);
             }
         })();
-        // 1. Кнопка "Документы" — открывает модалку списка
+        // 1. Кнопка "Документы" — открывает модалку списка (с проверкой пароля)
         const btn = document.getElementById('documentsBtn');
         if (btn) {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.stopPropagation();
                 e.preventDefault();
+
+                // ⚡ Проверяем авторизацию
+                if (!isDocsAuthorized()) {
+                    const ok = await requestDocsPassword();
+                    if (!ok) return;         // пользователь отменил — ничего не открываем
+                }
+
                 openDocuments();
             });
-            console.log('✅ Кнопка "Документы" привязана');
+            console.log('✅ Кнопка "Документы" привязана (с паролем)');
         } else {
             console.warn('⚠️ Кнопка #documentsBtn не найдена');
         }
@@ -14182,7 +14356,7 @@ window.exportLinksToFile = function() {
     
     // 1. Читаем из localStorage (гарантированный источник)
     const raw = localStorage.getItem('myDocLinks_v2');
-    console.log('📦 Сырые данные:', raw ? raw.length + ' символов' : 'null');
+    console.log('Сырые данные:', raw ? raw.length + ' символов' : 'null');
     
     if (!raw) {
         alert('❌ Нет ключа myDocLinks_v2 в localStorage.\n\nСначала добавьте ссылку.');
@@ -14573,3 +14747,8301 @@ window.importDocuments = function(file) {
     };
     reader.readAsText(file);
 };
+
+// ═══════════════════════════════════════════════════════════
+//  ШПАРГАЛКИ — данные + каталог + интерактивные подсказки
+// ═══════════════════════════════════════════════════════════
+const CHEATSHEETS = [
+    // ═══════════════════════════════════════════════════════
+    //  КЛАССИФИКАЦИЯ
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'classification',
+        cat: 'classification',
+        title: 'Типы тестирования',
+        subtitle: 'Функциональное, нефункциональное и по другим признакам.',
+        date: '08.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Типы тестирования</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Классификация по целям</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.5rem;">
+                <div style="background:#e0f2f1;padding:4px;border-radius:4px;color:#00897b;text-align:center;"><strong>Функц.</strong></div>
+                <div style="background:#e0f2f1;padding:4px;border-radius:4px;color:#00897b;text-align:center;"><strong>Нефункц.</strong></div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'classification-tabs',
+                title: 'Классификация',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Схема',
+                        title: 'Все типы тестирования',
+                        subtitle: '🎬 Нажмите «Запустить» — увидите классификацию.',
+                        animatedFlow: {
+                            title: 'Классификация тестирования',
+                            hint: '🎬 Пошагово: Функциональное → Нефункциональное → По другим признакам',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Функциональное',
+                                    x: 15, y: 25,
+                                    detail: 'Тестирование, которое проверяет <strong>ЧТО делает система</strong> — какие функции выполняет и соответствуют ли они требованиям.',
+                                    example: 'Пользователь может зарегистрироваться? Добавить товар в корзину? Оформить заказ? Оплатить картой?',
+                                    qa: 'Основной вид тестирования для QA. Проверяем каждый сценарий по требованиям: «должно работать так — работает так?»',
+                                    extra: 'Примерно <strong>70% работы</strong> тестировщика — это функциональное тестирование. Если функция не работает — о качестве говорить бессмысленно.'
+                                },
+                                {
+                                    label: 'Нефункциональное',
+                                    x: 50, y: 25,
+                                    detail: 'Тестирование, которое проверяет <strong>КАК система это делает</strong> — качественные характеристики: скорость, безопасность, удобство, надёжность.',
+                                    example: 'Страница загружается за 2 секунды? Сайт выдержит 10 000 пользователей? Пароль хранится в зашифрованном виде?',
+                                    qa: 'Проверяет не «что», а «как хорошо». Использует специальные инструменты: JMeter, OWASP ZAP, Lighthouse.',
+                                    extra: 'Нефункциональные требования часто забывают в ТЗ — но именно они определяют, будут ли пользователи довольны продуктом.'
+                                },
+                                {
+                                    label: 'По важности',
+                                    x: 85, y: 25,
+                                    detail: 'Классификация по приоритету проверки: что тестировать в первую очередь.',
+                                    example: '<strong>Smoke</strong> — работает ли билд вообще (5 минут). <strong>Critical Path</strong> — работает ли основной сценарий (30 минут). <strong>Extended</strong> — редкие сценарии (часы).',
+                                    qa: 'Использует, когда время ограничено. Сначала проверить самое важное, потом — остальное.',
+                                    extra: 'Если Smoke упал — дальше тестировать бессмысленно. Возвращаем билд разработчикам.'
+                                },
+                                {
+                                    label: 'По изменениям',
+                                    x: 85, y: 70,
+                                    detail: 'Тестирование после изменений в коде: фиксов багов или новых фич.',
+                                    example: '<strong>Re-test</strong> — проверить, что конкретный баг исправлен. <strong>Regression</strong> — проверить, что старое не сломалось.',
+                                    qa: 'Сначала делает Re-test (точечно), потом — Regression (широко). Всегда в таком порядке.',
+                                    extra: 'Регрессия часто автоматизируется — это экономит часы ручной работы на каждом релизе.'
+                                },
+                                {
+                                    label: 'По другим',
+                                    x: 50, y: 70,
+                                    detail: 'Другие классификации: по запуску кода, по автоматизации, по принципу работы, по формализации.',
+                                    example: '<ul><li><strong>Статическое</strong> — ревью кода без запуска</li><li><strong>Динамическое</strong> — с запуском</li><li><strong>Ручное / Авто / Полуавто</strong></li><li><strong>Позитивное / Негативное</strong></li><li><strong>По тест-кейсам / Exploratory / Ad-hoc</strong></li></ul>',
+                                    qa: 'Выбирает подходящий метод под контекст. Для регрессии — авто, для новой фичи — exploratory.',
+                                    extra: 'На практике методы комбинируются. Например: smoke + exploratory + регрессия для одного релиза.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 25, w: 26 },
+                                { from: 1, to: 2, x: 53, y: 25, w: 26 },
+                                { from: 2, to: 3, x: 85, y: 30, w: 0, r: 90 },
+                                { from: 3, to: 4, x: 82, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Функц. vs Нефункц.',
+                        title: 'Базовая классификация',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        compare: [
+                            {
+                                title: 'Функциональное тестирование',
+                                question: 'ЧТО делает система?',
+                                text: 'Проверяет соответствие функций требованиям. Пример: пользователь может зарегистрироваться? Добавить в корзину? Оплатить? Это <strong>70% работы</strong> QA.'
+                            },
+                            {
+                                title: 'Нефункциональное тестирование',
+                                question: 'КАК система это делает?',
+                                text: 'Проверяет качественные характеристики: скорость, безопасность, удобство, надёжность. Пример: страница грузится за 2 секунды? Сайт выдержит 10 000 пользователей?'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'По важности',
+                        title: 'Приоритизация тестов',
+                        subtitle: '🎬 Пошаговый алгоритм.',
+                        steps: {
+                            title: 'Что тестировать первым',
+                            stages: [
+                                {
+                                    title: '1. Smoke Test (5–10 минут)',
+                                    text: '<strong>Зачем:</strong> проверить, что билд вообще «живой» и готов к тестированию.<br><br><strong>Что проверяем:</strong> открывается ли приложение? Можно ли залогиниться? Открывается ли главная страница?<br><br><strong>Если Smoke упал:</strong> дальнейшее тестирование бессмысленно — возвращаем билд разработчикам.'
+                                },
+                                {
+                                    title: '2. Critical Path (30 минут)',
+                                    text: '<strong>Зачем:</strong> проверить основной бизнес-сценарий от начала до конца.<br><br><strong>Пример для интернет-магазина:</strong> выбрать товар → положить в корзину → оформить заказ → оплатить → получить заказ.<br><br><strong>Если Critical Path сломан:</strong> продукт нельзя выпускать.'
+                                },
+                                {
+                                    title: '3. Extended Test (часы–дни)',
+                                    text: '<strong>Зачем:</strong> углублённая проверка редких сценариев, необычных данных, стрессовых ситуаций.<br><br><strong>Что проверяем:</strong> что будет при вводе 10 000 символов? Что если отключить интернет в середине оплаты? Как поведёт себя на старом устройстве?'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Нефункц. типы',
+                        title: 'Атрибуты качества',
+                        subtitle: 'Раскрывайте по одному.',
+                        accordion: [
+                            {
+                                title: 'Производительность',
+                                body: '<p><strong>Что проверяем:</strong> скорость и устойчивость под нагрузкой.</p><p><strong>Виды:</strong></p><ul><li><strong>Load</strong> — ожидаемая нагрузка (1000 пользователей)</li><li><strong>Stress</strong> — экстремальная (100 000), ищем точку отказа</li><li><strong>Volume</strong> — большие объёмы данных</li><li><strong>Scalability</strong> — как система масштабируется</li></ul><p><strong>Инструменты:</strong> JMeter, Gatling, k6.</p>'
+                            },
+                            {
+                                title: 'Удобство (Usability)',
+                                body: '<p><strong>Что проверяем:</strong> насколько понятно и удобно пользователю.</p><p><strong>Метрики:</strong></p><ul><li>Время выполнения типовой задачи</li><li>Количество ошибок у новых пользователей</li><li>Удовлетворённость (опросы)</li></ul><p><strong>Методы:</strong> юзабилити-тесты с реальными пользователями, A/B-тесты, когнитивные прогулки.</p>'
+                            },
+                            {
+                                title: 'Безопасность (Security)',
+                                body: '<p><strong>Что проверяем:</strong> устойчивость к атакам и утечкам данных.</p><p><strong>OWASP Top 10:</strong></p><ul><li>SQL-инъекции</li><li>XSS</li><li>CSRF</li><li>Broken Authentication</li></ul><p><strong>Инструменты:</strong> Burp Suite, OWASP ZAP, Charles Proxy.</p>'
+                            },
+                            {
+                                title: 'Совместимость (Compatibility)',
+                                body: '<p><strong>Что проверяем:</strong> работу на разных устройствах, ОС и браузерах.</p><p><strong>Что тестируем:</strong></p><ul><li>Chrome, Firefox, Safari, Edge</li><li>Windows, macOS, Linux, Android, iOS</li><li>Разные разрешения экранов</li></ul><p><strong>Инструменты:</strong> BrowserStack, Sauce Labs.</p>'
+                            },
+                            {
+                                title: 'Инсталляционное',
+                                body: '<p><strong>Что проверяем:</strong> установку, обновление и удаление приложения.</p><p><strong>Сценарии:</strong></p><ul><li>Чистая установка (fresh install)</li><li>Обновление с предыдущей версии (миграция данных)</li><li>Отмена установки</li><li>Удаление и очистка данных</li></ul>'
+                            },
+                            {
+                                title: 'Доступность (A11Y)',
+                                body: '<p><strong>Что проверяем:</strong> удобство для людей с ограниченными возможностями.</p><p><strong>Стандарт:</strong> WCAG 2.1 (уровни A, AA, AAA).</p><p><strong>Что тестируем:</strong></p><ul><li>Работу со скринридерами (NVDA, VoiceOver)</li><li>Навигацию только с клавиатуры</li><li>Контрастность текста</li><li>Alt-тексты для изображений</li></ul>'
+                            },
+                            {
+                                title: 'Локализация (L10n & I18n)',
+                                body: '<p><strong>L10n</strong> — адаптация под язык и культуру.</p><p><strong>I18n</strong> — архитектурная готовность к переводу.</p><p><strong>Что проверяем:</strong></p><ul><li>Перевод текста (нет опечаток, смысл сохранён)</li><li>Форматы дат, валют, чисел</li><li>Направление текста (LTR для европейских, RTL для арабского)</li></ul>'
+                            },
+                            {
+                                title: 'Надёжность (Reliability)',
+                                body: '<p><strong>Что проверяем:</strong> работу без сбоев и восстановление после падения.</p><p><strong>Reliability:</strong></p><ul><li>Сколько система работает без сбоев</li><li>Утечки памяти</li><li>MTBF (средняя наработка на отказ)</li></ul><p><strong>Recoverability:</strong></p><ul><li>Восстановление после падения сервера</li><li>Резервное копирование</li><li>RTO и RPO</li></ul>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-проверка',
+                        subtitle: 'Выберите правильный ответ.',
+                        quiz: {
+                            question: 'Разработчик исправил баг. Какой тест нужно провести ПЕРВЫМ?',
+                            options: [
+                                { text: 'Регрессия', correct: false, explain: 'Регрессия — проверка, что новое не сломало старое. Она идёт ПОСЛЕ ретеста. Сначала проверяем, что баг действительно исправлен.' },
+                                { text: 'Ретест (Re-test)', correct: true, explain: 'Правильно! Сначала точечно проверяем конкретный баг. Если он исправлен — тогда запускаем регрессию, чтобы убедиться, что фикс не сломал другие функции.' },
+                                { text: 'Нагрузочное', correct: false, explain: 'Нагрузочное тестирование — про производительность. Оно не связано с фиксом конкретного бага.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  БАЗА
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'qa-qc-testing',
+        cat: 'base',
+        title: 'Тестирование, QA, QC. Верификация и валидация',
+        subtitle: 'Разница между QA, QC и тестированием.',
+        date: '21.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">QA, QC, Testing</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Три разных понятия</p>
+            <div style="background:#e0f2f1;padding:6px;border-radius:6px;">
+                <strong style="font-size:0.55rem;color:#00897b;">QA — профилактика</strong>
+                <p style="font-size:0.45rem;color:#4a6a8a;margin:2px 0 0 0;">Чтобы багов не было</p>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'qa-qc-tabs',
+                title: 'QA, QC и Testing',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Анимация',
+                        title: 'Путь от профилактики до проверки',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'QA → QC → Testing',
+                            hint: '🎬 Пошагово: профилактика → разработка → проверка → тесты',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'QA',
+                                    x: 15, y: 30,
+                                    detail: '<strong>QA (Quality Assurance)</strong> — обеспечение качества. Это <strong>профилактика</strong>: внедряем процессы, чтобы баги не появлялись.',
+                                    example: 'Внедряем Code Review (каждый код проверяет коллега). Внедряем TDD (сначала тест, потом код). Аналитик уточняет требования с заказчиком до разработки.',
+                                    qa: 'QA — это про <strong>процессы</strong>. Мы не ищем баги — мы делаем так, чтобы они не появлялись. QA начинается ещё на этапе требований.',
+                                    extra: 'QA — это «голос качества» внутри команды. Не «найти баг», а «сделать так, чтобы багов не было».'
+                                },
+                                {
+                                    label: 'Разработка',
+                                    x: 40, y: 30,
+                                    detail: 'Команда разработчиков пишет код по требованиям, которые прошли <strong>QA-проверку</strong>.',
+                                    example: 'Backend пишет API, frontend — интерфейс. Параллельно пишутся unit-тесты.',
+                                    qa: 'QA может писать тест-кейсы параллельно, чтобы быть готовым к тестированию.',
+                                    extra: 'Хороший QA-процесс = меньше багов на этапе тестирования = быстрее релиз.'
+                                },
+                                {
+                                    label: 'QC',
+                                    x: 65, y: 30,
+                                    detail: '<strong>QC (Quality Control)</strong> — контроль качества. Это <strong>проверка готового продукта</strong>: прогоняем тесты, находим баги, оцениваем качество.',
+                                    example: 'Прогоняем 200 регрессионных тестов. Находим 15 багов. Заводим баг-репорты. Ретестим, регрессируем.',
+                                    qa: 'QC — это про <strong>продукт</strong>. Мы ищем баги, которые уже есть. Основной этап для тестировщика.',
+                                    extra: 'QC отвечает на вопрос: «Что получилось? Соответствует ли качество требованиям?»'
+                                },
+                                {
+                                    label: 'Testing',
+                                    x: 90, y: 30,
+                                    detail: '<strong>Testing</strong> — <strong>выполнение конкретных тестов</strong>. Нажимаем кнопки, вводим данные, сравниваем реальный результат с ожидаемым.',
+                                    example: 'Тест-кейс TC-001: открыть логин → ввести email → ввести пароль → нажать «Войти» → ожидаем главную. Результат — либо Passed, либо Failed.',
+                                    qa: 'Это <strong>действие</strong>. Testing — часть QC. QC — часть QA.',
+                                    extra: 'Testing — это то, что мы делаем каждый день. Но оно встроено в более широкие процессы QA и QC.'
+                                },
+                                {
+                                    label: 'Верификация',
+                                    x: 15, y: 70,
+                                    detail: '<strong>Верификация</strong> отвечает на вопрос: «Делаем ли мы продукт <strong>правильно</strong>?» Проверяем соответствие требованиям и спецификации.',
+                                    example: 'В ТЗ написано: «Должна быть регистрация с email». Проверяем: есть ли она в коде? Реализована ли по спецификации?',
+                                    qa: 'Работает с документацией и кодом. Не с реальными пользователями.',
+                                    extra: 'Верификация — это «делаем по чертежу».'
+                                },
+                                {
+                                    label: 'Валидация',
+                                    x: 50, y: 70,
+                                    detail: '<strong>Валидация</strong> отвечает на вопрос: «Делаем ли мы <strong>правильный</strong> продукт?» Проверяем соответствие ожиданиям пользователя.',
+                                    example: 'ТЗ выполнено, но пользователи жалуются: «Кнопка "Добавить в корзину" слишком маленькая. Не видно статус заказа».',
+                                    qa: 'Работает с реальными пользователями. Проводит юзабилити-тесты, собирает обратную связь.',
+                                    extra: 'Провал валидации = продукт сделан по ТЗ, но пользователям не нужен.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
+                                { from: 0, to: 4, x: 15, y: 34, w: 0, r: 90 },
+                                { from: 2, to: 5, x: 65, y: 34, w: 0, r: 90 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Сравнение',
+                        title: 'QA vs QC vs Testing',
+                        subtitle: 'Кликните на карточку.',
+                        compare: [
+                            {
+                                title: 'QA (Quality Assurance)',
+                                question: 'Профилактика',
+                                text: 'Процессы, которые предотвращают появление багов. Code Review, TDD, работа с требованиями. Ответ на вопрос: «Как мы делаем, чтобы ошибок было меньше?»'
+                            },
+                            {
+                                title: 'QC (Quality Control)',
+                                question: 'Проверка продукта',
+                                text: 'Поиск багов в готовом продукте. Регрессия, баг-репорты, оценка качества. Ответ на вопрос: «Что получилось и можно ли это отдавать пользователям?»'
+                            },
+                            {
+                                title: 'Testing',
+                                question: 'Выполнение тестов',
+                                text: 'Конкретные проверки: нажать кнопку, ввести данные, сравнить результат с ожидаемым. Ответ на вопрос: «Работает ли конкретная функция так, как задумано?»'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-проверка',
+                        subtitle: 'Выберите ответ.',
+                        quiz: {
+                            question: 'Что из перечисленного относится к QA, а не QC?',
+                            options: [
+                                { text: 'Прогнать регрессионные тесты', correct: false, explain: 'Это QC — проверка готового продукта. QA занимается процессами, а не прогоном.' },
+                                { text: 'Внедрить Code Review', correct: true, explain: 'Правильно! Code Review — это процесс, который предотвращает появление багов. Классический QA.' },
+                                { text: 'Найти баг на проде', correct: false, explain: 'Это QC (проверка) + Testing (действие). QA не ищет баги — он делает так, чтобы их не было.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'box-methods',
+        cat: 'methods',
+        title: 'Методы тестирования: чёрный, серый и белый ящик',
+        subtitle: 'На чём основывается проверка: на требованиях или на знании кода.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Методы тестирования</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Black / Gray / White Box</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;">
+                <span style="background:#1a2a3a;color:#fff;padding:3px 6px;border-radius:4px;">?</span>
+                <span style="background:#d0ddea;padding:3px 6px;border-radius:4px;">{ }</span>
+                <span style="background:#fff;border:1px solid #d0ddea;padding:3px 6px;border-radius:4px;">Code</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'box-methods-main',
+                title: 'Методы тестирования',
+                subtitle: 'Наведите курсор на один из "ящиков", чтобы понять суть метода, его цели и практическое применение.',
+                boxMethods: {
+                    title: 'Методы тестирования',
+                    subtitle: 'Методы тестирования ("техники тест-дизайна") определяют, на чём основывается проверка: на требованиях (чёрный ящик) или на знании кода (белый ящик).',
+                    defaultHint: 'Наведите курсор на один из ящиков, чтобы увидеть подробности.',
+                    boxes: [
+                        {
+                            id: 'black',
+                            label: 'Black Box',
+                            icon: '?',
+                            iconStyle: 'dark',
+                            color: '#1a2a3a',
+                            title: 'Чёрный ящик (Black Box)',
+                            short: 'Тестирование без знания кода. Смотрим только на вход и выход.',
+                            detail: 'Тестировщик <strong>не знает внутреннего устройства</strong> программы. Он проверяет поведение системы по требованиям, как обычный пользователь.',
+                            goals: [
+                                'Проверить, что функции работают по требованиям',
+                                'Найти баги с точки зрения пользователя',
+                                'Проверить граничные значения и классы эквивалентности'
+                            ],
+                            examples: [
+                                'Проверка формы логина: ввести email и пароль — увидеть результат',
+                                'Проверка корзины: добавить товар — увидеть сумму',
+                                'Проверка API через Postman: отправить запрос — получить ответ'
+                            ],
+                            qa: 'Основной метод для ручного тестировщика. 70% работы — именно чёрный ящик.',
+                            tools: 'Postman, DevTools, Selenium (для UI)'
+                        },
+                        {
+                            id: 'gray',
+                            label: 'Gray Box',
+                            icon: '{ }',
+                            iconStyle: 'striped',
+                            color: '#4a5a6a',
+                            title: 'Серый ящик (Gray Box)',
+                            short: 'Частичное знание внутреннего устройства. Знаем архитектуру, но не весь код.',
+                            detail: 'Тестировщик <strong>знает часть внутренней структуры</strong>: например, как устроена БД, какие есть API, но не читает код построчно.',
+                            goals: [
+                                'Проверить интеграцию между модулями',
+                                'Проверить правильность данных в БД после операций',
+                                'Комбинировать тестирование UI и API'
+                            ],
+                            examples: [
+                                'Проверить, что при регистрации данные сохраняются в БД в правильном формате',
+                                'Проверить, что после оплаты в БД меняется статус заказа',
+                                'Проверить API, зная структуру запроса и ответа'
+                            ],
+                            qa: 'Используется при тестировании API, интеграций, работы с БД. Хорошо ложится на SQL-проверки.',
+                            tools: 'SQL-клиенты (DBeaver, MySQL Workbench), Postman, Charles Proxy'
+                        },
+                        {
+                            id: 'white',
+                            label: 'White Box',
+                            icon: 'Code',
+                            iconStyle: 'light',
+                            color: '#0a1929',
+                            title: 'Белый ящик (White Box)',
+                            short: 'Полное знание кода. Проверяем внутреннюю логику программы.',
+                            detail: 'Тестировщик <strong>видит исходный код</strong> и проверяет, как именно реализована логика: пути выполнения, условия, циклы.',
+                            goals: [
+                                'Проверить покрытие кода тестами',
+                                'Найти баги в сложной логике (ветвления, циклы)',
+                                'Проверить обработку исключений'
+                            ],
+                            examples: [
+                                'Проверить функцию calculateDiscount() с разными промокодами',
+                                'Проверить покрытие кода unit-тестами (coverage 80%+)',
+                                'Проверить, что все ветки if-else покрыты тестами'
+                            ],
+                            qa: 'Чаще всего это работа разработчиков. QA может смотреть на покрытие кода unit-тестами.',
+                            tools: 'JUnit, pytest, Jest, JaCoCo, SonarQube'
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+
+    {
+        id: 'principles',
+        cat: 'base',
+        title: '7 принципов тестирования',
+        subtitle: 'База, которую спрашивают на собеседовании.',
+        date: '05.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">7 принципов</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Фундамент тестирования</p>
+            <ol style="font-size:0.5rem;color:#4a6a8a;margin:0;padding-left:14px;line-height:1.6;">
+                <li>Тесты показывают наличие дефектов</li>
+                <li>Исчерпывающее тестирование недостижимо</li>
+                <li>Раннее тестирование</li>
+                <li>Кластеризация дефектов</li>
+                <li>Тесты устаревают</li>
+                <li>Зависит от контекста</li>
+                <li>Нет багов ≠ хороший продукт</li>
+            </ol>
+        `,
+        sections: [
+            {
+                id: 'principles-tabs',
+                title: '7 принципов',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Анимация',
+                        title: 'Как принципы работают',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Принципы тестирования',
+                            hint: '🎬 Пошагово: 7 принципов на практике',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Принцип 1',
+                                    x: 15, y: 30,
+                                    detail: 'Тесты показывают <strong>наличие дефектов, а не их отсутствие</strong>. Тесты находят баги, но не гарантируют, что их больше нет.',
+                                    example: 'Протестировали форму на Windows — работает. А на Linux падает. Тесты не гарантировали отсутствие бага.',
+                                    qa: 'Никогда не говорим «багов нет». Говорим «мы не нашли багов в рамках проверки».',
+                                    extra: 'Формулировка важна: «мы не нашли багов», а не «багов нет». Разница принципиальная.'
+                                },
+                                {
+                                    label: 'Принцип 2',
+                                    x: 40, y: 30,
+                                    detail: '<strong>Исчерпывающее тестирование недостижимо</strong>. Невозможно проверить все комбинации входных данных, все сценарии, все устройства.',
+                                    example: 'Форма с 20 полями по 10 значений в каждом — это 10²⁰ = 100 000 000 000 000 000 000 комбинаций. Даже за миллион лет не проверить.',
+                                    qa: 'Использует приоритизацию и тест-дизайн: эквивалентное разбиение, граничные значения, попарное тестирование.',
+                                    extra: 'Цель — не «протестировать всё», а «протестировать самое важное и рисковое».'
+                                },
+                                {
+                                    label: 'Принцип 3',
+                                    x: 65, y: 30,
+                                    detail: '<strong>Раннее тестирование экономит время и деньги</strong>. Чем раньше нашли ошибку — тем дешевле её исправить.',
+                                    example: 'Ошибка в требованиях: исправить — 5 минут. Ошибка в коде: 1 час. Ошибка в продакшене: 2 дня + репутация + потеря клиентов.',
+                                    qa: 'Подключается с этапа требований. Проверяет ТЗ на полноту и непротиворечивость.',
+                                    extra: 'Принцип Shift Left Testing: сдвигаем тестирование влево по временной шкале.'
+                                },
+                                {
+                                    label: 'Принцип 4',
+                                    x: 90, y: 30,
+                                    detail: '<strong>Кластеризация дефектов</strong>. Большинство багов сосредоточено в небольшом количестве модулей. Правило 80/20.',
+                                    example: 'В приложении 20 модулей. 80% багов находятся в 4 из них (оплата, авторизация, корзина, поиск).',
+                                    qa: 'Обращает внимание на «горячие точки» — где чаще всего находят баги. Там тестирует глубже.',
+                                    extra: 'В Jira можно посмотреть статистику: где больше всего открытых багов.'
+                                },
+                                {
+                                    label: 'Принцип 5',
+                                    x: 90, y: 70,
+                                    detail: '<strong>Тесты устаревают</strong> (парадокс пестицида). Повторение одних и тех же тестов со временем перестаёт находить новые баги.',
+                                    example: 'Гоняем один и тот же набор тестов полгода. Перестали находить баги. Не потому что их нет — а потому что тесты устарели.',
+                                    qa: 'Обновляет тесты, меняет данные, добавляет сценарии. Не полагается только на старые тесты.',
+                                    extra: 'Название от пестицидов: если долго использовать один и тот же пестицид — насекомые привыкают.'
+                                },
+                                {
+                                    label: 'Принцип 6',
+                                    x: 65, y: 70,
+                                    detail: '<strong>Тестирование зависит от контекста</strong>. Банк и игра тестируются по-разному. Нет универсального подхода.',
+                                    example: 'Банк: безопасность критична, скорость не так важна. Игра: скорость критична, безопасность — вторична.',
+                                    qa: 'Выбирает подход в зависимости от проекта, продукта, рисков, пользователей.',
+                                    extra: 'Что критично для одного продукта — неважно для другого.'
+                                },
+                                {
+                                    label: 'Принцип 7',
+                                    x: 40, y: 70,
+                                    detail: '<strong>Заблуждение об отсутствии ошибок</strong>. Отсутствие багов не означает, что продукт полезен.',
+                                    example: 'Приложение работает без багов, но пользователи не понимают интерфейс. Все тесты зелёные, а продукт никому не нужен.',
+                                    qa: 'Помнит, что цель — не «зелёные тесты», а решение задач пользователя.',
+                                    extra: 'Идеальное приложение без багов ≠ хорошее приложение.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 90, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 87, y: 70, w: 0, r: 180 },
+                                { from: 5, to: 6, x: 62, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Список',
+                        title: 'Классический список из ISTQB',
+                        subtitle: 'Раскрывайте по одному.',
+                        accordion: [
+                            {
+                                title: '1. Тестирование показывает наличие дефектов, а не их отсутствие',
+                                body: '<p>Тесты находят баги, но не гарантируют, что их больше нет.</p><p><strong>Пример:</strong> протестировали на Windows — работает. На Linux падает.</p><p><strong>Вывод:</strong> никогда не говорим «багов нет», говорим «мы не нашли багов».</p>'
+                            },
+                            {
+                                title: '2. Исчерпывающее тестирование недостижимо',
+                                body: '<p>Невозможно проверить все комбинации входных данных и сценариев.</p><p><strong>Пример:</strong> 20 полей × 10 значений = 10²⁰ комбинаций.</p><p><strong>Что делаем:</strong> приоритизация, эквивалентное разбиение, граничные значения.</p>'
+                            },
+                            {
+                                title: '3. Раннее тестирование экономит время и деньги',
+                                body: '<p>Чем раньше нашли ошибку — тем дешевле её исправить.</p><p><strong>Стоимость ошибки:</strong></p><ul><li>В требованиях: 5 минут</li><li>В коде: 1 час</li><li>В продакшене: 2 дня + репутация</li></ul><p><strong>Принцип:</strong> Shift Left Testing.</p>'
+                            },
+                            {
+                                title: '4. Кластеризация дефектов',
+                                body: '<p>Большинство багов сосредоточено в небольшом количестве модулей.</p><p><strong>Правило 80/20:</strong> 80% багов в 20% модулей.</p><p><strong>Пример:</strong> 4 модуля из 20 дают 80% багов.</p><p><strong>Что делаем:</strong> обращаем внимание на «горячие точки».</p>'
+                            },
+                            {
+                                title: '5. Тесты устаревают (парадокс пестицида)',
+                                body: '<p>Повторение одних и тех же тестов со временем перестаёт находить новые баги.</p><p><strong>Пример:</strong> гоняем один набор тестов полгода — баги не находим.</p><p><strong>Что делаем:</strong> обновляем тесты, меняем данные, добавляем сценарии.</p>'
+                            },
+                            {
+                                title: '6. Тестирование зависит от контекста',
+                                body: '<p>Банк и игра тестируются по-разному. Нет универсального подхода.</p><p><strong>Банк:</strong> безопасность критична.</p><p><strong>Игра:</strong> скорость критична.</p><p><strong>Что делаем:</strong> выбираем подход под контекст.</p>'
+                            },
+                            {
+                                title: '7. Заблуждение об отсутствии ошибок',
+                                body: '<p>Отсутствие багов не означает, что продукт полезен.</p><p><strong>Пример:</strong> приложение работает без багов, но пользователи не понимают интерфейс.</p><p><strong>Что делаем:</strong> помним, что цель — решение задач пользователя, а не «зелёные тесты».</p>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-проверка',
+                        subtitle: 'Выберите ответ.',
+                        quiz: {
+                            question: 'Вы гоняете одни и те же тесты полгода. Они перестали находить баги. Какой принцип нарушен?',
+                            options: [
+                                { text: 'Раннее тестирование', correct: false, explain: 'Раннее тестирование — про начало проверок как можно раньше. Здесь не про это.' },
+                                { text: 'Парадокс пестицида (тесты устаревают)', correct: true, explain: 'Именно! Тесты устарели. Нужно обновлять данные, менять сценарии, добавлять новые проверки.' },
+                                { text: 'Кластеризация дефектов', correct: false, explain: 'Кластеризация — про то, что 80% багов в 20% модулей. Не то.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'sdlc-stlc',
+        cat: 'base',
+        title: 'SDLC и STLC для тестировщика',
+        subtitle: 'Жизненные циклы разработки и тестирования.',
+        date: '06.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">SDLC и STLC</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Два жизненных цикла</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                <div style="background:#e3f2fd;padding:6px;border-radius:6px;">
+                    <strong style="font-size:0.55rem;color:#1565c0;">SDLC</strong>
+                    <p style="font-size:0.45rem;color:#4a6a8a;margin:2px 0 0 0;">Разработка</p>
+                </div>
+                <div style="background:#e8f5e9;padding:6px;border-radius:6px;">
+                    <strong style="font-size:0.55rem;color:#2e7d32;">STLC</strong>
+                    <p style="font-size:0.45rem;color:#4a6a8a;margin:2px 0 0 0;">Тестирование</p>
+                </div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'sdlc-tabs',
+                title: 'Жизненные циклы',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'SDLC',
+                        title: 'Жизненный цикл разработки',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'SDLC',
+                            hint: '🎬 Анализ → Дизайн → Разработка → Тест → Релиз → Поддержка',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Анализ',
+                                    x: 12, y: 30,
+                                    detail: 'Первый этап жизненного цикла. Собираются требования от заказчика, создаётся документ <strong>SRS</strong> (Software Requirements Specification).',
+                                    example: 'Аналитик встречается с заказчиком:<ul><li>Сколько пицц в меню?</li><li>Как принимать оплату (карта, наличные)?</li><li>Как считать доставку?</li></ul>Результат — SRS-документ со всеми требованиями.',
+                                    qa: 'Проверяет требования на: <ul><li><strong>Полноту</strong> — все сценарии описаны</li><li><strong>Непротиворечивость</strong> — нет конфликтов</li><li><strong>Тестируемость</strong> — можно ли проверить</li></ul>',
+                                    extra: 'Ошибка в требованиях стоит копейки. Ошибка в продакшене — тысячи. Поэтому QA подключается с самого начала.'
+                                },
+                                {
+                                    label: 'Дизайн',
+                                    x: 37, y: 30,
+                                    detail: 'Архитекторы проектируют структуру системы, базу данных, интерфейсы. Дизайнеры рисуют макеты в Figma.',
+                                    example: 'Архитектор решает: «Данные храним в PostgreSQL, фронт на React, API на Node.js».<br>Дизайнер рисует макет: где кнопки, какого цвета, какие размеры.',
+                                    qa: 'Проверяет макеты на соответствие гайдлайнам (Material Design / HIG), на доступность (контраст, размеры), на тестируемость.',
+                                    extra: 'Хороший макет = понятный UI. QA сравнивает готовую вёрстку с макетом попиксельно.'
+                                },
+                                {
+                                    label: 'Разработка',
+                                    x: 62, y: 30,
+                                    detail: 'Программисты пишут код по спецификации. Параллельно могут писаться unit-тесты.',
+                                    example: 'Backend-разработчик пишет <code>POST /api/login</code>. Frontend — форму логина. Параллельно пишутся unit-тесты.',
+                                    qa: 'Пишет тест-кейсы и чек-листы. Может проверять unit-тесты разработчиков на покрытие (coverage).',
+                                    extra: 'В Scrum разработка идёт спринтами, в Kanban — непрерывным потоком.'
+                                },
+                                {
+                                    label: 'Тестирование',
+                                    x: 87, y: 30,
+                                    detail: 'Основной этап для QA. Проверяем функциональность, безопасность, производительность, удобство.',
+                                    example: 'QA-команда прогоняет 200 тест-кейсов, находит 15 багов, заводит баг-репорты, делает ретест и регрессию.',
+                                    qa: 'Это <strong>главный этап</strong> для тестировщика. Все виды тестирования: функциональное, регрессия, exploratory.',
+                                    extra: 'Обычно занимает 30–50% времени всего проекта.'
+                                },
+                                {
+                                    label: 'Релиз',
+                                    x: 87, y: 70,
+                                    detail: 'Продукт выкатывается в продакшн. Может быть поэтапный rollout (5% → 50% → 100%).',
+                                    example: 'Сначала релиз на 5% пользователей. Смотрим метрики: падает ли, тормозит ли. Если всё ок — на 50%, потом на 100%.',
+                                    qa: 'Smoke-тест на проде: работает ли основное? Мониторинг метрик: ошибки, скорость, доступность.',
+                                    extra: 'Если в проде критический баг — быстрый откат (rollback) до предыдущей версии или хотфикс.'
+                                },
+                                {
+                                    label: 'Поддержка',
+                                    x: 62, y: 70,
+                                    detail: 'Исправление багов, обновления, улучшения. Продукт живёт годами.',
+                                    example: 'Пользователи жалуются на медленную загрузку — команда оптимизирует. Появляются новые фичи — снова цикл.',
+                                    qa: 'Тестирует хотфиксы, регрессию, обновления. Следит за метриками.',
+                                    extra: 'Метрики: uptime (время работы), MTTR (среднее время восстановления), количество инцидентов.'
+                                },
+                                {
+                                    label: 'Вывод',
+                                    x: 37, y: 70,
+                                    detail: 'Устаревший продукт заменяется новым. Данные архивируются или мигрируются.',
+                                    example: 'Компания переходит на новую платформу. Старое приложение отключается через 3 месяца.',
+                                    qa: 'Проверяет миграцию данных: всё ли перенесено? Ничего не потерялось?',
+                                    extra: 'Редкий этап. Часто продукт живёт «вечно» с мелкими обновлениями.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 15, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 40, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 65, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 87, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 84, y: 70, w: 0, r: 180 },
+                                { from: 5, to: 6, x: 59, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'STLC',
+                        title: 'Жизненный цикл тестирования',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: '6 фаз STLC',
+                            hint: '🎬 Анализ → План → Кейсы → Среда → Прогон → Отчёт',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Анализ',
+                                    x: 15, y: 25,
+                                    detail: 'QA изучает требования, макеты, спецификации. Определяет, что и как тестировать.',
+                                    example: 'QA читает требование: «Пользователь может восстановить пароль по email». Что нужно проверить? Весь сценарий восстановления.',
+                                    qa: 'Формулирует <strong>тестовые условия</strong>: «Проверить восстановление пароля через email».',
+                                    extra: 'Результат: понимание объёма тестирования. Сколько кейсов, какие сценарии.'
+                                },
+                                {
+                                    label: 'План',
+                                    x: 50, y: 25,
+                                    detail: 'Составляется тест-план: стратегия, ресурсы, сроки, критерии входа/выхода, риски.',
+                                    example: '«Тестируем 5 дней, 2 тестировщика. Инструменты: Jira, TestRail, Postman. Критерий выхода — 0 Critical багов, 95% passed».',
+                                    qa: 'Пишет тест-план совместно с лидом. Определяет scope и подход.',
+                                    extra: 'Без плана — хаос: непонятно, что, когда и кем делается.'
+                                },
+                                {
+                                    label: 'Кейсы',
+                                    x: 85, y: 25,
+                                    detail: 'Пишутся тест-кейсы, чек-листы, матрицы трассировки. Определяются приоритеты.',
+                                    example: '<strong>TC-001:</strong> открыть логин → ввести email → ввести пароль → нажать «Войти» → ожидаем главную.<br><strong>TC-002:</strong> ввести неверный пароль → ожидаем ошибку.',
+                                    qa: 'Основная работа — написать 100+ тест-кейсов, сгруппировать в сьюты, задать приоритеты.',
+                                    extra: 'Тест-кейсы бывают детальные (для новичков) и чек-листы (для опытных).'
+                                },
+                                {
+                                    label: 'Среда',
+                                    x: 85, y: 65,
+                                    detail: 'Подготовка окружения: серверы, БД, тестовые данные, браузеры, инструменты.',
+                                    example: 'Развернули dev-среду, залили тестовые данные: 10 пользователей, 50 заказов, 100 товаров.',
+                                    qa: 'Проверяет: среда максимально похожа на продакшн? Есть ли доступ к БД? Работают ли инструменты?',
+                                    extra: 'Если среда «сломана» — тесты бессмысленны. QA участвует в настройке.'
+                                },
+                                {
+                                    label: 'Прогон',
+                                    x: 50, y: 65,
+                                    detail: 'Выполняются тесты: находим баги, заводим баг-репорты, ретестим, регрессируем.',
+                                    example: 'Прогнали 200 тестов. 190 прошло, 10 упало. Завели 10 баг-репортов. После фиксов — ретест + регрессия.',
+                                    qa: 'Основной этап. Работа в Jira/TestRail. Ежедневно отчёт: сколько прошло, сколько багов.',
+                                    extra: 'Метрики: pass rate, количество найденных багов, среднее время на баг.'
+                                },
+                                {
+                                    label: 'Отчёт',
+                                    x: 15, y: 65,
+                                    detail: 'Готовится Test Summary Report: сколько тестов, сколько багов, рекомендации.',
+                                    example: '«150 тестов, 140 passed, 10 failed. 25 багов: 2 Critical, 8 Major, 15 Minor. Рекомендация: релиз после фикса Critical».',
+                                    qa: 'Финальный документ для заказчика и менеджмента.',
+                                    extra: 'Решение: релизить или нет. На основе отчёта принимается решение.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 25, w: 26 },
+                                { from: 1, to: 2, x: 53, y: 25, w: 28 },
+                                { from: 2, to: 3, x: 85, y: 28, w: 0, r: 90 },
+                                { from: 3, to: 4, x: 82, y: 65, w: 0, r: 180 },
+                                { from: 4, to: 5, x: 47, y: 65, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'STLC — фазы',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Что происходит на этапе «Разработка тест-кейсов» в STLC?',
+                            options: [
+                                { text: 'Пишутся тест-кейсы и чек-листы', correct: true, explain: 'Верно! На этом этапе мы превращаем тестовые условия в конкретные тест-кейсы с шагами и ожидаемыми результатами.' },
+                                { text: 'Запускаются автотесты', correct: false, explain: 'Автотесты запускаются на этапе «Выполнение тестов».' },
+                                { text: 'Готовится отчёт о тестировании', correct: false, explain: 'Отчёт — на этапе «Завершение тестирования».' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+        // ═══════════════════════════════════════════════════════
+    //  ПИРАМИДА ТЕСТИРОВАНИЯ
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'piramida',
+        cat: 'classification',
+        title: 'Пирамида тестирования',
+        subtitle: 'Сколько тестов на каждом уровне нужно.',
+        date: '18.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Пирамида тестирования</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Сколько тестов на каждом уровне</p>
+            <div style="background:linear-gradient(to top,#a5d6a7 0% 40%,#fff59d 40% 70%,#ef9a9a 70% 100%);height:60px;border-radius:6px;position:relative;">
+                <span style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%);font-size:0.4rem;color:#1a4a1a;font-weight:700;">Unit</span>
+                <span style="position:absolute;top:35%;left:50%;transform:translateX(-50%);font-size:0.4rem;color:#6a3a1a;font-weight:700;">Integration</span>
+                <span style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:0.4rem;color:#6a1a1a;font-weight:700;">E2E</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'pyramid-tabs',
+                title: 'Пирамида в деталях',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Классический вид',
+                        title: 'Пирамида тестирования',
+                        subtitle: 'Наведите курсор на уровень — увидите его цели, особенности и место в процессе разработки.',
+                        pyramid: {
+                            infoTitle: 'Уровни тестирования',
+                            infoText: 'Пирамида тестов — это модель, которая показывает, как распределять усилия по разным уровням тестирования для достижения максимальной эффективности. Чем ниже уровень, тем больше тестов, и тем они быстрее и дешевле.',
+                            infoHint: 'Наведите курсор на один из уровней, чтобы увидеть подробности.',
+                            axis: [
+                                { label: 'Стоимость', arrow: '↑' },
+                                { label: 'Сложность', arrow: '↑' },
+                                { label: 'Скорость',  arrow: '↓' }
+                            ],
+                            levels: [
+                                {
+                                    id: 'uat',
+                                    label: 'UAT',
+                                    color: '#ef9a9a',
+                                    textColor: '#6a1a1a',
+                                    title: 'UAT (User Acceptance Testing)',
+                                    detail: 'Приёмочное тестирование. Проводят <strong>реальные пользователи</strong> или заказчик, чтобы убедиться, что продукт решает их задачи.',
+                                    features: [
+                                        'Проверяют бизнес-сценарии целиком, от начала до конца',
+                                        'Самый дорогой уровень — ошибку здесь найти и исправить сложнее всего',
+                                        'Тестов мало — только критичные для бизнеса сценарии',
+                                        'Проводится на реальных данных или максимально приближенных к ним'
+                                    ],
+                                    goal: 'Убедиться, что продукт соответствует ожиданиям заказчика и готов к использованию.'
+                                },
+                                {
+                                    id: 'system',
+                                    label: 'System',
+                                    color: '#fff59d',
+                                    textColor: '#6a3a1a',
+                                    title: 'System (Системное тестирование)',
+                                    detail: 'Проверка <strong>всей системы целиком</strong> как единого целого. Эмулируем реальные сценарии использования.',
+                                    features: [
+                                        'End-to-End сценарии: от входа до выхода',
+                                        'Функциональное + нефункциональное тестирование',
+                                        'Проверка требований и бизнес-логики',
+                                        'Проверка взаимодействия с внешними системами'
+                                    ],
+                                    goal: 'Убедиться, что система работает как ожидается, в условиях, близких к продакшену.'
+                                },
+                                {
+                                    id: 'integration',
+                                    label: 'Integration',
+                                    color: '#e0e0e0',
+                                    textColor: '#3a3a3a',
+                                    title: 'Integration (Интеграционное тестирование)',
+                                    detail: 'Проверка <strong>взаимодействия между модулями</strong>: API, база данных, внешние сервисы.',
+                                    features: [
+                                        'Проверка API-контрактов между сервисами',
+                                        'Проверка форматов данных и их корректности',
+                                        'Подходы: Big Bang, Top-Down, Bottom-Up, Sandwich',
+                                        'Тестов больше, чем на System, но меньше, чем на Unit'
+                                    ],
+                                    goal: 'Убедиться, что модули «договариваются» друг с другом и данные передаются без искажений.'
+                                },
+                                {
+                                    id: 'unit',
+                                    label: 'Unit',
+                                    color: '#a5d6a7',
+                                    textColor: '#1a4a1a',
+                                    title: 'Unit (Модульное тестирование)',
+                                    detail: 'Проверка <strong>отдельных функций и классов</strong>. Основание пирамиды.',
+                                    features: [
+                                        'Пишут разработчики вместе с кодом',
+                                        'Быстрые — выполняются за миллисекунды',
+                                        'Дешёвые — не требуют окружения и данных',
+                                        'Их должно быть БОЛЬШЕ ВСЕГО — 70-80% всех тестов'
+                                    ],
+                                    goal: 'Поймать баги как можно раньше и дешевле, до того как код попадёт в интеграцию.'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Что в основании?',
+                        subtitle: 'Проверьте себя.',
+                        quiz: {
+                            question: 'Что должно быть в основании пирамиды тестирования?',
+                            options: [
+                                { text: 'E2E-тесты', correct: false, explain: 'E2E — на вершине пирамиды. Их мало.' },
+                                { text: 'Unit-тесты', correct: true, explain: 'Правильно! Unit-тестов должно быть больше всего. Они быстрые, дешёвые, стабильные.' },
+                                { text: 'Ручные тесты', correct: false, explain: 'Ручные тесты не входят в классическую пирамиду.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    
+
+    {
+        id: 'box-methods',
+        cat: 'classification',
+        title: 'Методы тестирования: чёрный, серый и белый ящик',
+        subtitle: 'На чём основывается проверка: на требованиях или на знании кода.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Методы тестирования</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Black / Gray / White Box</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;">
+                <span style="background:#1a2a3a;color:#fff;padding:3px 6px;border-radius:4px;">?</span>
+                <span style="background:#d0ddea;padding:3px 6px;border-radius:4px;">{ }</span>
+                <span style="background:#fff;border:1px solid #d0ddea;padding:3px 6px;border-radius:4px;">Code</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'box-methods-main',
+                title: 'Методы тестирования',
+                subtitle: 'Наведите курсор на один из "ящиков", чтобы понять суть метода, его цели и практическое применение.',
+                boxMethods: {
+                    title: 'Методы тестирования',
+                    subtitle: 'Методы тестирования ("техники тест-дизайна") определяют, на чём основывается проверка: на требованиях (чёрный ящик) или на знании кода (белый ящик).',
+                    defaultHint: 'Наведите курсор на один из ящиков, чтобы увидеть подробности.',
+                    boxes: [
+                        {
+                            id: 'black',
+                            label: 'Black Box',
+                            icon: '?',
+                            iconStyle: 'dark',
+                            color: '#1a2a3a',
+                            title: 'Чёрный ящик (Black Box)',
+                            short: 'Тестирование без знания кода. Смотрим только на вход и выход.',
+                            detail: 'Тестировщик <strong>не знает внутреннего устройства</strong> программы. Он проверяет поведение системы по требованиям, как обычный пользователь.',
+                            goals: [
+                                'Проверить, что функции работают по требованиям',
+                                'Найти баги с точки зрения пользователя',
+                                'Проверить граничные значения и классы эквивалентности'
+                            ],
+                            examples: [
+                                'Проверка формы логина: ввести email и пароль — увидеть результат',
+                                'Проверка корзины: добавить товар — увидеть сумму',
+                                'Проверка API через Postman: отправить запрос — получить ответ'
+                            ],
+                            qa: 'Основной метод для ручного тестировщика. 70% работы — именно чёрный ящик.',
+                            tools: 'Postman, DevTools, Selenium (для UI)'
+                        },
+                        {
+                            id: 'gray',
+                            label: 'Gray Box',
+                            icon: '{ }',
+                            iconStyle: 'striped',
+                            color: '#4a5a6a',
+                            title: 'Серый ящик (Gray Box)',
+                            short: 'Частичное знание внутреннего устройства. Знаем архитектуру, но не весь код.',
+                            detail: 'Тестировщик <strong>знает часть внутренней структуры</strong>: например, как устроена БД, какие есть API, но не читает код построчно.',
+                            goals: [
+                                'Проверить интеграцию между модулями',
+                                'Проверить правильность данных в БД после операций',
+                                'Комбинировать тестирование UI и API'
+                            ],
+                            examples: [
+                                'Проверить, что при регистрации данные сохраняются в БД в правильном формате',
+                                'Проверить, что после оплаты в БД меняется статус заказа',
+                                'Проверить API, зная структуру запроса и ответа'
+                            ],
+                            qa: 'Используется при тестировании API, интеграций, работы с БД. Хорошо ложится на SQL-проверки.',
+                            tools: 'SQL-клиенты (DBeaver, MySQL Workbench), Postman, Charles Proxy'
+                        },
+                        {
+                            id: 'white',
+                            label: 'White Box',
+                            icon: 'Code',
+                            iconStyle: 'light',
+                            color: '#0a1929',
+                            title: 'Белый ящик (White Box)',
+                            short: 'Полное знание кода. Проверяем внутреннюю логику программы.',
+                            detail: 'Тестировщик <strong>видит исходный код</strong> и проверяет, как именно реализована логика: пути выполнения, условия, циклы.',
+                            goals: [
+                                'Проверить покрытие кода тестами',
+                                'Найти баги в сложной логике (ветвления, циклы)',
+                                'Проверить обработку исключений'
+                            ],
+                            examples: [
+                                'Проверить функцию calculateDiscount() с разными промокодами',
+                                'Проверить покрытие кода unit-тестами (coverage 80%+)',
+                                'Проверить, что все ветки if-else покрыты тестами'
+                            ],
+                            qa: 'Чаще всего это работа разработчиков. QA может смотреть на покрытие кода unit-тестами.',
+                            tools: 'JUnit, pytest, Jest, JaCoCo, SonarQube'
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+
+
+
+    {
+        id: 'testing-stages',
+        cat: 'classification',
+        title: 'Этапы тестирования',
+        subtitle: 'Хронология от получения билда до релиза.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Этапы тестирования</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">6 этапов</p>
+            <div style="display:flex;gap:2px;font-size:0.4rem;flex-wrap:wrap;">
+                <span style="background:#c5d8ef;padding:2px 4px;border-radius:3px;">Билд</span>
+                <span style="background:#c5d8ef;padding:2px 4px;border-radius:3px;">Тест</span>
+                <span style="background:#c5d8ef;padding:2px 4px;border-radius:3px;">Фикс</span>
+                <span style="background:#c5d8ef;padding:2px 4px;border-radius:3px;">Регресс</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'stages-main',
+                title: 'Этапы тестирования',
+                subtitle: 'Выберите этап.',
+                stages: {
+                    title: 'Этапы тестирования',
+                    subtitle: 'Нажмите на этап, чтобы узнать его цель, особенности и результат.',
+                    infoTitle: 'Хронология тестирования',
+                    infoText: 'Это упрощенная схема жизненного цикла тестирования от момента получения новой версии до ее выпуска. Каждый этап имеет свою цель и результат.',
+                    defaultHint: 'Нажмите на этап слева, чтобы увидеть подробности.',
+                    steps: [
+                        {
+                            id: 'build',
+                            label: 'Готовая сборка',
+                            title: 'Готовая сборка',
+                            goal: 'Получить новую версию продукта для тестирования.',
+                            features: [
+                                'Разработчики завершили работу над задачами спринта',
+                                'Билд собран и выложен на тестовое окружение',
+                                'QA получает уведомление и релизные заметки'
+                            ],
+                            result: 'Билд доступен для тестирования, известно, что изменилось.'
+                        },
+                        {
+                            id: 'certification',
+                            label: 'Сертификация билда',
+                            title: 'Сертификация билда (Smoke Test)',
+                            goal: 'Убедиться, что билд пригоден для дальнейшего тестирования.',
+                            features: [
+                                'Проверяются критически важные функции',
+                                'Занимает 5–10 минут',
+                                'Если Smoke упал — билд возвращается разработчикам'
+                            ],
+                            result: 'Билд либо принят в тестирование, либо возвращён.'
+                        },
+                        {
+                            id: 'testing',
+                            label: 'Тестирование',
+                            title: 'Тестирование новой функциональности',
+                            goal: 'Проверить новую или изменённую функциональность.',
+                            features: [
+                                'Функциональное тестирование',
+                                'Проверка критического пути (critical path testing)',
+                                'Тестирование новых фич по тест-кейсам'
+                            ],
+                            result: 'Список найденных дефектов, переданный команде разработки.'
+                        },
+                        {
+                            id: 'fix',
+                            label: 'Исправление и ретест',
+                            title: 'Исправление дефектов и ретест',
+                            goal: 'Убедиться, что найденные баги исправлены.',
+                            features: [
+                                'Разработчики исправляют баги',
+                                'QA делает ретест (проверка конкретного бага)',
+                                'Если баг воспроизводится — возврат разработчику'
+                            ],
+                            result: 'Баги исправлены или возвращены с деталями.'
+                        },
+                        {
+                            id: 'regression',
+                            label: 'Регрессия',
+                            title: 'Регрессионное тестирование',
+                            goal: 'Убедиться, что фиксы не сломали старое.',
+                            features: [
+                                'Прогон всего регрессионного набора',
+                                'Часто автоматизировано',
+                                'Проверяются связанные функции'
+                            ],
+                            result: 'Продукт готов к релизу, нет критических багов.'
+                        },
+                        {
+                            id: 'release',
+                            label: 'Релиз',
+                            title: 'Релиз в продакшн',
+                            goal: 'Выпустить продукт пользователям.',
+                            features: [
+                                'Деплой на прод',
+                                'Smoke-тест после релиза',
+                                'Мониторинг метрик 24 часа'
+                            ],
+                            result: 'Продукт работает в продакшене, метрики в норме.'
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+    {
+        id: 'bug-lifecycle-diagram',
+        cat: 'documentation',
+        title: 'Жизненный цикл дефекта',
+        subtitle: 'Путь бага от обнаружения до закрытия.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Жизненный цикл</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">New → Closed</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;flex-wrap:wrap;">
+                <span style="background:#ef9a9a;padding:3px 6px;border-radius:4px;">New</span>
+                <span>→</span>
+                <span style="background:#fff59d;padding:3px 6px;border-radius:4px;">Fixed</span>
+                <span>→</span>
+                <span style="background:#a5d6a7;padding:3px 6px;border-radius:4px;">Closed</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'bug-lifecycle-main',
+                title: 'Жизненный цикл дефекта',
+                subtitle: 'Нажмите на статус в схеме, чтобы узнать его значение и возможные дальнейшие шаги.',
+                bugLifecycle: {
+                    title: 'Жизненный цикл дефекта',
+                    subtitle: 'Это путь, который проходит баг от обнаружения до полного закрытия. Кликните по статусу, чтобы увидеть детали.',
+                    defaultHint: 'Нажмите на статус, чтобы увидеть детали.',
+                    statuses: [
+                        // ─── Верхний ряд ───
+                        { id: 'new',         label: 'New',         color: '#c5d8ef', textColor: '#1a3a5a', x: 8,  y: 15, title: 'New (Новый)',         desc: 'Тестировщик создал баг-репорт. Баг ждёт подтверждения от разработчика или менеджера.', who: 'QA создал — ждёт реакции', next: 'Разработчик смотрит на баг и либо подтверждает (Open), либо отклоняет (Rejected).' },
+                        { id: 'open',        label: 'Open',        color: '#fff',    textColor: '#0a1929', x: 25, y: 15, title: 'Open (Открыт)',        desc: 'Разработчик подтвердил баг и принял в работу. Баг получил исполнителя.',                who: 'Разработчик подтвердил',  next: 'Разработчик берёт баг в работу (In Progress) или откладывает.' },
+                        { id: 'in-progress', label: 'In Progress', color: '#fff',    textColor: '#0a1929', x: 46, y: 15, title: 'In Progress (В работе)', desc: 'Разработчик изучает причину и исправляет баг. Может занять время.',                     who: 'Разработчик исправляет',  next: 'После фикса — статус Fixed или Reopened (если фикс не помог).' },
+                        
+                        // ─── Средний ряд ───
+                        { id: 'rejected',    label: 'Rejected',    color: '#fce4ec', textColor: '#6a1a1a', x: 30, y: 45, title: 'Rejected (Отклонён)',  desc: 'Баг отклонён — либо не воспроизводится, либо команда решила не исправлять.',             who: 'Разработчик или менеджер отклонил', next: 'QA может переоткрыть (Reopened) с дополнительными доказательствами.' },
+                        { id: 'reopened',    label: 'Reopened',    color: '#fff3e0', textColor: '#6a3a1a', x: 46, y: 45, title: 'Reopened (Переоткрыт)', desc: 'Баг вернулся в работу. Фикс не помог, или баг снова воспроизводится.',                  who: 'QA переоткрыл',           next: 'Разработчик снова берёт в работу.' },
+                        
+                        // ─── Нижний ряд ───
+                        { id: 'fixed',       label: 'Fixed',       color: '#fff',    textColor: '#0a1929', x: 8,  y: 78, title: 'Fixed (Исправлен)',    desc: 'Разработчик закончил правку. Код задеплоен на тестовое окружение.',                       who: 'Разработчик исправил',   next: 'QA делает ретест → если ок, статус Verified.' },
+                        { id: 'verified',    label: 'Verified',    color: '#fff',    textColor: '#0a1929', x: 25, y: 78, title: 'Verified (Проверен)',  desc: 'QA выполнил ретест: баг больше не воспроизводится.',                                     who: 'QA подтвердил фикс',     next: 'Запускается регрессия. Если ок — Closed.' },
+                        { id: 'closed',      label: 'Closed',      color: '#a5d6a7', textColor: '#1a4a1a', x: 46, y: 78, title: 'Closed (Закрыт)',      desc: 'Баг закрыт. Цикл завершён. Информация сохранена в трекере.',                             who: 'QA закрыл',              next: 'Информация сохраняется для аналитики (горячие точки, метрики).' }
+                    ],
+                    arrows: [
+                        { from: 'new',         to: 'open' },
+                        { from: 'open',        to: 'in-progress' },
+                        { from: 'in-progress', to: 'fixed',      curve: 'left-down' },
+                        { from: 'fixed',       to: 'verified' },
+                        { from: 'verified',    to: 'closed' },
+                        { from: 'in-progress', to: 'reopened',   color: '#e65100' },
+                        { from: 'reopened',    to: 'in-progress', color: '#e65100' },
+                        { from: 'open',        to: 'rejected',   color: '#c62828' }
+                    ]
+                }
+            }
+        ]
+    },
+
+    {
+        id: 'requirements-testing',
+        cat: 'documentation',
+        title: 'Тестирование требований',
+        subtitle: 'Уровни, свойства, документирование и работа с требованиями.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Тестирование требований</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">5 подтем</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;">
+                <span style="background:#e0f2f1;padding:3px 6px;border-radius:4px;color:#00897b;">Уровни</span>
+                <span style="background:#e0f2f1;padding:3px 6px;border-radius:4px;color:#00897b;">Свойства</span>
+                <span style="background:#e0f2f1;padding:3px 6px;border-radius:4px;color:#00897b;">+3</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'req-testing-main',
+                title: 'Тестирование требований для тестировщика',
+                subtitle: 'Выберите подтему слева.',
+                reqSidebar: {
+                    items: [
+                        {
+                            id: 'levels',
+                            label: 'Уровни требований',
+                            title: 'Уровни требований',
+                            subtitle: 'Требования делятся на уровни: от общей бизнес-цели до конкретных действий системы. Понимание этой иерархии помогает тестировщику задавать правильные вопросы.',
+                            cards: [
+                                {
+                                    title: 'Бизнес-требования (Зачем?)',
+                                    color: '#00897b',
+                                    desc: 'Верхний уровень, отвечающий на вопрос о цели продукта. Какую проблему бизнеса он решает?',
+                                    bullets: [
+                                        'Повысить количество заявок на 20%.',
+                                        'Обеспечить круглосуточный доступ к курсам валют.'
+                                    ]
+                                },
+                                {
+                                    title: 'Пользовательские требования (Что?)',
+                                    color: '#00897b',
+                                    desc: 'Описывают, что пользователь может делать с системой для достижения своих целей. Часто оформляются в виде User Stories.',
+                                    bullets: [
+                                        'Пользователь может войти в систему по логину и паролю.',
+                                        'Администратор может просматривать список активных пользователей.'
+                                    ]
+                                },
+                                {
+                                    title: 'Функциональные требования (Как?)',
+                                    color: '#00897b',
+                                    desc: 'Конкретизируют, как именно система должна себя вести. Описывают логику, реакции на действия и внутренние процессы.',
+                                    bullets: [
+                                        'Система должна проверять email на валидность формата.',
+                                        'При неверном пароле система должна выводить ошибку "Неверный email или пароль".'
+                                    ]
+                                },
+                                {
+                                    title: 'Нефункциональные требования (Насколько хорошо?)',
+                                    color: '#00897b',
+                                    desc: 'Определяют качественные атрибуты системы: скорость, безопасность, надежность, удобство использования.',
+                                    bullets: [
+                                        'Страница должна загружаться не более 2 секунд.',
+                                        'Система должна выдерживать одновременную нагрузку в 1000 пользователей.'
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'quality',
+                            label: 'Свойства качества',
+                            title: 'Свойства качественных требований',
+                            subtitle: 'Хорошо написанное требование — залог успеха проекта. Нажмите на свойство, чтобы увидеть его описание и примеры.',
+                            properties: [
+                                { id: 'completeness', label: 'Завершенность', title: 'Завершенность', desc: 'Требование содержит всю необходимую информацию для реализации.', example: 'Плохо: "Система должна экспортировать данные". Хорошо: "Система должна экспортировать данные в форматах PDF и PNG".' },
+                                { id: 'atomicity', label: 'Атомарность', title: 'Атомарность', desc: 'Требование описывает только одну функцию или одно поведение.', example: 'Плохо: "Система должна экспортировать в PDF и отправлять по email". Хорошо: два отдельных требования.' },
+                                { id: 'consistency', label: 'Непротиворечивость', title: 'Непротиворечивость', desc: 'Требования не должны противоречить друг другу.', example: 'Плохой пример: "Кнопка Close всегда синяя" и "Кнопка Close всегда красная" в одном документе.' },
+                                { id: 'unambiguity', label: 'Недвусмысленность', title: 'Недвусмысленность', desc: 'Требование нельзя понять по-разному.', example: 'Плохо: "Система должна работать быстро". Хорошо: "Страница должна загружаться не более 2 секунд".' },
+                                { id: 'feasibility', label: 'Выполнимость', title: 'Выполнимость', desc: 'Требование можно реализовать технически и в рамках бюджета.', example: 'Плохо: "Приложение должно работать без интернета и без локального хранилища".' },
+                                { id: 'necessity', label: 'Обязательность', title: 'Обязательность', desc: 'Требование действительно нужно для решения задачи.', example: 'Плохо: "Кнопка с анимацией бабочки" — если это не нужно клиенту.' },
+                                { id: 'traceability', label: 'Прослеживаемость', title: 'Прослеживаемость', desc: 'Можно отследить, откуда требование появилось и где реализовано.', example: 'Требование REQ-02 → тест-кейс TC-005 → баг BUG-123.' },
+                                { id: 'modifiability', label: 'Модифицируемость', title: 'Модифицируемость', desc: 'Требование можно изменить без больших переделок.', example: 'Плохо: "Размер кнопки ровно 100×50 пикселей". Хорошо: "Кнопка не менее 44×44 пикселей".' },
+                                { id: 'prioritization', label: 'Проранжированность', title: 'Проранжированность', desc: 'Требования имеют приоритеты.', example: 'High: оплата. Medium: история заказов. Low: темная тема.' },
+                                { id: 'testability', label: 'Проверяемость', title: 'Проверяемость', desc: 'По требованию можно составить тест-кейс с объективным результатом.', example: 'Плохо: "Интерфейс удобный". Хорошо: "Пользователь выполняет целевое действие за 3 клика".' }
+                            ]
+                        },
+                        {
+                            id: 'documenting',
+                            label: 'Документирование',
+                            title: 'Документирование требований',
+                            subtitle: 'Требования нужно где-то фиксировать. На современных проектах чаще всего используются Пользовательские истории (User Stories).',
+                            cards: [
+                                {
+                                    icon: '',
+                                    title: 'Пользовательская история (User Story)',
+                                    color: '#00897b',
+                                    desc: 'Это краткое описание функции от лица пользователя, которое объясняет, что он хочет сделать и зачем.',
+                                    code: `ID: US-001
+                                            Название: Аутентификация пользователя
+
+                                            Как: зарегистрированный пользователь
+                                            Я хочу: ввести email и пароль на странице входа
+                                            Чтобы: получить доступ к личному кабинету
+
+                                            Acceptance Criteria (Критерии приёмки):
+                                            - На странице есть поля Email, Пароль и кнопка "Войти".
+                                            - При верных данных - переход на главную страницу.
+                                            - При неверных данных - сообщение об ошибке.
+                                            - Email валидируется на корректный формат.
+                                            - Кнопка "Войти" неактивна, если поля пустые.`
+                                },
+                                {
+                                    icon: '',
+                                    title: 'Варианты использования (Use Cases)',
+                                    color: '#00897b',
+                                    desc: 'Это более формальный способ описания взаимодействия пользователя (актора) с системой для достижения цели. Часто изображается в виде диаграммы.'
+                                },
+                                {
+                                    icon: '',
+                                    title: 'Макет (Mockup)',
+                                    color: '#00897b',
+                                    desc: 'Реалистичная визуальная модель интерфейса. Тестировщики используют макеты для проверки frontend: расположения элементов, их стилей и размеров.'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'process',
+                            label: 'Процесс работы',
+                            title: 'Алгоритм работы с требованиями',
+                            subtitle: 'Процесс работы с требованиями может быть идеальным или... реальным. Вот как это выглядит на практике.',
+                            processBlocks: [
+                                {
+                                    title: 'Идеальный процесс',
+                                    icon: '✅',
+                                    color: '#2e7d32',
+                                    bgColor: '#e8f5e9',
+                                    items: [
+                                        'Аналитики создают требования с макетами.',
+                                        'Тестировщик проверяет их на качество и полноту.',
+                                        'Неточности отправляются на доработку.',
+                                        'После согласования требования берутся в разработку.',
+                                        'Тест-кейсы пишутся до начала кодирования.',
+                                        'Требования в спринте не меняются.'
+                                    ]
+                                },
+                                {
+                                    title: 'Неидеальный (но частый) процесс',
+                                    icon: '⚠️',
+                                    color: '#e65100',
+                                    bgColor: '#fff8e1',
+                                    items: [
+                                        'Требования уточняются уже в процессе разработки.',
+                                        'Тестовая документация пишется после того, как код готов.',
+                                        'Требования могут вообще не документироваться и существовать только в устной форме или в чатах.'
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'implicit',
+                            label: 'Неявные требования',
+                            title: 'Неявные требования',
+                            subtitle: 'Не все требования записаны в документах. Опытный тестировщик умеет находить их в других источниках, чтобы обеспечить полное покрытие.',
+                            implicitRequirements: {
+                                title: 'Где искать неявные требования?',
+                                items: [
+                                    'Законы и регламенты',
+                                    'Рекламные материалы',
+                                    'Дизайн-макеты и прототипы',
+                                    'Существующие баг-репорты',
+                                    'Интервью с командой',
+                                    'Анализ конкурентов',
+                                    'Руководства пользователя',
+                                    'Email-переписка и чаты',
+                                    'Личный пользовательский опыт'
+                                ]
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+        // ═══════════════════════════════════════════════════════
+    //  ДОКУМЕНТАЦИЯ
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'testcase-structure',
+        cat: 'documentation',
+        title: 'Структура тест-кейса',
+        subtitle: 'Из каких полей состоит правильный тест-кейс.',
+        date: '17.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Тест-кейс</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Обязательные поля</p>
+            <div style="background:#e3f2fd;padding:6px;border-radius:6px;font-family:monospace;font-size:0.45rem;color:#1565c0;">
+                ID: TC-AUTH-01<br>Priority: High<br>Steps: 1,2,3<br>Expected: Главная
+            </div>
+        `,
+        sections: [
+            {
+                id: 'testcase-tabs',
+                title: 'Тест-кейс в деталях',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Пример тест-кейса',
+                        title: 'Структура тест-кейса',
+                        subtitle: 'Нажмите на любой атрибут, чтобы увидеть его описание.',
+                        testCase: {
+                            // Заголовок карточки
+                            id: 'TC-AUTH-01',
+                            title: 'Успешная авторизация',
+                            
+                            // Метаданные (3 колонки сверху)
+                            meta: [
+                                { label: 'Priority', value: 'High', field: 'priority' },
+                                { label: 'Requirement', value: 'REQ-02', field: 'requirement' },
+                                { label: 'Module', value: 'Аутентификация', field: 'module' }
+                            ],
+                            
+                            // Предусловия
+                            preconditions: {
+                                label: 'Preconditions:',
+                                text: 'Пользователь с email "test@test.com" и паролем "Password123" существует в системе. Пользователь не авторизован.',
+                                field: 'preconditions'
+                            },
+                            
+                            // Таблица Шагов и Результатов
+                            table: {
+                                stepsTitle: 'Шаги (Steps)',
+                                expectedTitle: 'Ожидаемый результат (Expected Result)',
+                                steps: [
+                                    '1. Открыть страницу входа.',
+                                    '2. Ввести "test@test.com" в поле Email.',
+                                    '3. Ввести "Password123" в поле Пароль.',
+                                    '4. Нажать кнопку "Войти".'
+                                ],
+                                expected: [
+                                    '1. Открылась страница с формой входа.',
+                                    '2. Поле заполнено.',
+                                    '3. Поле заполнено.',
+                                    '4. Пользователь перенаправлен на главную страницу. В правом верхнем углу отображается имя пользователя.'
+                                ],
+                                field: 'table'
+                            },
+                            
+                            // Постусловия
+                            postconditions: {
+                                label: 'Postconditions:',
+                                text: 'Выйти из системы. Тестовый пользователь удален.',
+                                field: 'postconditions'
+                            },
+                            
+                            // Пояснения для правой панели (по клику)
+                            info: {
+                                default: {
+                                    title: 'Шаги (Steps)',
+                                    text: 'Четкая последовательность действий, которую нужно выполнить, чтобы воспроизвести тестовый сценарий. Шаги должны быть атомарными и понятными.'
+                                },
+                                priority: {
+                                    title: 'Priority (Приоритет)',
+                                    text: 'Важность тест-кейса. <strong>High</strong> — критично, выполняется всегда. <strong>Medium</strong> — важно, но можно пропустить. <strong>Low</strong> — можно пропустить при нехватке времени.'
+                                },
+                                requirement: {
+                                    title: 'Requirement (Требование)',
+                                    text: 'Ссылка на требование, которое проверяет тест-кейс. Помогает отслеживать покрытие требований тестами (traceability).'
+                                },
+                                module: {
+                                    title: 'Module (Модуль)',
+                                    text: 'Функциональный модуль системы, к которому относится тест-кейс. Помогает организовать тесты по группам.'
+                                },
+                                preconditions: {
+                                    title: 'Preconditions (Предусловия)',
+                                    text: 'Состояние системы ДО выполнения теста. Что должно быть настроено, чтобы тест можно было воспроизвести? Например: «Пользователь зарегистрирован», «Корзина пуста».'
+                                },
+                                table: {
+                                    title: 'Шаги и Ожидаемый результат',
+                                    text: '<strong>Шаги</strong> — пошаговая инструкция: что именно делает тестировщик. Каждый шаг — одно конкретное действие.<br><br><strong>Ожидаемый результат</strong> — что ДОЛЖНО произойти, если всё работает правильно. Должен быть проверяемым.'
+                                },
+                                postconditions: {
+                                    title: 'Postconditions (Постусловия)',
+                                    text: 'Что нужно сделать ПОСЛЕ выполнения теста. Например: «Удалить тестового пользователя», «Очистить корзину». Позволяет вернуть систему в исходное состояние.'
+                                }
+                            }
+                        }
+                    },
+                    {
+                        label: 'Обязательные поля',
+                        title: 'Обязательные поля',
+                        subtitle: 'Кликните по каждому, чтобы узнать подробнее.',
+                        accordion: [
+                            {
+                                title: 'ID — уникальный идентификатор',
+                                body: '<p><strong>Что это:</strong> уникальный номер тест-кейса.</p><p><strong>Формат:</strong> <code>TC-001</code>, <code>TC-AUTH-01</code>.</p><p><strong>Зачем:</strong> по ID удобно ссылаться из баг-репортов, автотестов, отчётов.</p>'
+                            },
+                            {
+                                title: 'Summary — краткое описание',
+                                body: '<p><strong>Что это:</strong> одна строка, описывающая, что проверяем.</p><p><strong>Хорошо:</strong> «Проверка авторизации с валидными данными».</p><p><strong>Плохо:</strong> «Тест логина» — непонятно, что именно проверяем.</p>'
+                            },
+                            {
+                                title: 'Preconditions — предусловия',
+                                body: '<p><strong>Что это:</strong> состояние системы ДО выполнения теста.</p><p><strong>Примеры:</strong> «Пользователь зарегистрирован», «Корзина пуста», «Открыта главная страница».</p>'
+                            },
+                            {
+                                title: 'Test Steps — шаги теста',
+                                body: '<p><strong>Что это:</strong> пошаговая инструкция.</p><p><strong>Правило:</strong> каждый шаг — одно конкретное действие. Не «заполнить форму», а «ввести email», «ввести пароль».</p>'
+                            },
+                            {
+                                title: 'Expected Result — ожидаемый результат',
+                                body: '<p><strong>Что это:</strong> что ДОЛЖНО произойти, если всё работает правильно.</p><p><strong>Правило:</strong> результат должен быть проверяемым — либо виден, либо измерим.</p>'
+                            },
+                            {
+                                title: 'Postconditions — постусловия',
+                                body: '<p><strong>Что это:</strong> что нужно сделать ПОСЛЕ теста.</p><p><strong>Опционально:</strong> если ничего не нужно — не пишут.</p>'
+                            },
+                            {
+                                title: 'Priority — приоритет',
+                                body: '<p><strong>Что это:</strong> важность теста.</p><p><strong>Уровни:</strong> High / Medium / Low.</p><p><strong>Зачем:</strong> когда время ограничено — сначала High.</p>'
+                            },
+                            {
+                                title: 'Status — статус',
+                                body: '<p><strong>Что это:</strong> результат последнего запуска.</p><p><strong>Значения:</strong> Passed, Failed, Skipped, Blocked.</p>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Что проверяет кейс?',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Тест-кейс: «Проверить авторизацию с пустым паролем. Ожидаем сообщение об ошибке». Какой это тип теста?',
+                            options: [
+                                { text: 'Позитивный', correct: false, explain: 'Позитивный — с валидными данными. Здесь пустой пароль — невалидные данные.' },
+                                { text: 'Негативный', correct: true, explain: 'Правильно! Негативный тест проверяет обработку ошибок при некорректных данных.' },
+                                { text: 'Деструктивный', correct: false, explain: 'Деструктивный — когда мы «ломаем» систему. Пустой пароль — просто негативный сценарий.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'testcase-lifecycle',
+        cat: 'documentation',
+        title: 'Жизненный цикл тест-кейса',
+        subtitle: 'Путь тест-кейса от создания до устаревания.',
+        date: '20.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Жизненный цикл</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Draft → Obsolete</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;">
+                <span style="background:#c5d8ef;padding:3px 6px;border-radius:4px;">Draft</span>
+                <span>→</span>
+                <span style="background:#b8d9c8;padding:3px 6px;border-radius:4px;">Ready</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'testcase-lifecycle-main',
+                title: 'Жизненный цикл тест-кейса',
+                subtitle: 'Нажмите на статус в схеме, чтобы узнать его значение и возможные дальнейшие шаги.',
+                tcLifecycle: {
+                    title: 'Жизненный цикл тест-кейса',
+                    subtitle: 'Это путь, который проходит тест-кейс от идеи до момента, когда он становится готовым к работе или устаревает.',
+                    defaultHint: 'Нажмите на статус, чтобы увидеть детали.',
+                    diagram1: {
+                        title: 'Создание тест-кейса',
+                        description: 'Это путь, который проходит тест-кейс от идеи до момента, когда он становится готовым к работе или устаревает.',
+                        statuses: [
+                            { id: 'draft', label: 'Draft', color: '#c5d8ef', textColor: '#1a3a5a', x: 8, y: 20, title: 'Draft (Черновик)', desc: 'Тест-кейс создан, но ещё не проверен командой. Может меняться.', who: 'QA-инженер', next: 'Отправка на ревью — In Review.' },
+                            { id: 'in-review', label: 'In Review', color: '#fff', textColor: '#0a1929', x: 32, y: 20, title: 'In Review (На ревью)', desc: 'Коллеги проверяют тест-кейс: понятны ли шаги, все ли сценарии покрыты.', who: 'QA-лид, коллеги', next: 'Одобрен → Ready. Или возврат → Draft.' },
+                            { id: 'ready', label: 'Ready', color: '#b8d9c8', textColor: '#1a4a3a', x: 58, y: 20, title: 'Ready (Готов)', desc: 'Утверждён командой. По нему можно выполнять проверки.', who: 'Команда утвердила', next: 'Используется в тест-ранах. Может стать Obsolete.' },
+                            { id: 'blocked', label: 'Blocked', color: '#fce4ec', textColor: '#6a1a1a', x: 32, y: 55, title: 'Blocked (Заблокирован)', desc: 'Тест-кейс нельзя выполнить: среда не готова, баг блокирует и т.п.', who: 'QA отметил блокировку', next: 'После решения проблемы — обратно в Ready.' },
+                            { id: 'obsolete', label: 'Obsolete', color: '#e0e0e0', textColor: '#3a3a3a', x: 32, y: 85, title: 'Obsolete (Устарел)', desc: 'Функциональность изменилась или удалена. Тест-кейс больше не актуален.', who: 'QA устарел', next: 'Обновление или удаление тест-кейса.' }
+                        ],
+                        arrows: [
+                            { from: 'draft', to: 'in-review' },
+                            { from: 'in-review', to: 'ready' },
+                            { from: 'in-review', to: 'blocked', color: '#c62828' },
+                            { from: 'blocked', to: 'obsolete' }
+                        ]
+                    },
+                    diagram2: {
+                        title: 'Статусы в тест-ране',
+                        description: 'Это статусы, которые присваиваются тест-кейсу в процессе его выполнения в рамках тестового прогона (Test Run).',
+                        statuses: [
+                            { id: 'untested', label: 'Untested', color: '#fff', textColor: '#0a1929', x: 8, y: 20, title: 'Untested (Не выполнен)', desc: 'Тест-кейс ещё не запускался в этом тест-ране.', who: 'По умолчанию', next: 'Начать выполнение → In Progress.' },
+                            { id: 'skipped', label: 'Skipped', color: '#e0e0e0', textColor: '#3a3a3a', x: 32, y: 20, title: 'Skipped (Пропущен)', desc: 'Тест-кейс пропущен: не хватило времени, не подходит к текущей версии.', who: 'QA пропустил', next: 'Вернуться к нему позже или закрыть.' },
+                            { id: 'in-progress-tc', label: 'In Progress', color: '#fff', textColor: '#0a1929', x: 8, y: 50, title: 'In Progress (В процессе)', desc: 'Тест-кейс выполняется прямо сейчас.', who: 'QA выполняет', next: 'Passed, Failed или Blocked.' },
+                            { id: 'blocked-tc', label: 'Blocked', color: '#fff3e0', textColor: '#6a3a1a', x: 32, y: 50, title: 'Blocked (Заблокирован)', desc: 'Нельзя выполнить из-за внешних причин: среда лежит, нет данных.', who: 'QA отметил', next: 'После решения — снова выполнить.' },
+                            { id: 'passed', label: 'Passed', color: '#b8d9c8', textColor: '#1a4a3a', x: 8, y: 80, title: 'Passed (Пройден)', desc: 'Все шаги выполнены, результат совпадает с ожидаемым.', who: 'QA подтвердил', next: 'Ничего. Тест-кейс успешно завершён.' },
+                            { id: 'failed', label: 'Failed', color: '#fce4ec', textColor: '#6a1a1a', x: 32, y: 80, title: 'Failed (Не пройден)', desc: 'Результат не совпадает с ожидаемым. Найден баг.', who: 'QA зафиксировал', next: 'Создание баг-репорта и дальнейшая работа с багом.' }
+                        ],
+                        arrows: [
+                            { from: 'untested', to: 'skipped' },
+                            { from: 'untested', to: 'in-progress-tc', color: '#2e7d32' },
+                            { from: 'in-progress-tc', to: 'blocked-tc', color: '#e65100' },
+                            { from: 'in-progress-tc', to: 'passed', color: '#2e7d32' },
+                            { from: 'in-progress-tc', to: 'failed', color: '#c62828' }
+                        ]
+                    }
+                }
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  ПРОЦЕССЫ
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'kanban',
+        cat: 'processes',
+        title: 'Kanban для тестировщика',
+        subtitle: 'Доска, WIP-лимиты, метрики и роли.',
+        date: '14.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Kanban</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Поток + WIP-лимиты</p>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;">
+                <div style="background:#e3f2fd;padding:3px;border-radius:4px;font-size:0.4rem;color:#1565c0;text-align:center;font-weight:700;">To Do</div>
+                <div style="background:#fff59d;padding:3px;border-radius:4px;font-size:0.4rem;color:#6a3a1a;text-align:center;font-weight:700;">In Prog</div>
+                <div style="background:#ffe0b2;padding:3px;border-radius:4px;font-size:0.4rem;color:#6a3a1a;text-align:center;font-weight:700;">Review</div>
+                <div style="background:#a5d6a7;padding:3px;border-radius:4px;font-size:0.4rem;color:#1a4a1a;text-align:center;font-weight:700;">Done</div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'kanban-main',
+                title: 'Kanban в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Доска',
+                        title: 'Как движется задача',
+                        subtitle: 'Кликните на задачу — она подсветится.',
+                        kanban: {
+                            columns: [
+                                { title: 'To Do', wip: '5', tasks: ['Обновить документацию', 'Исправить опечатки', 'Написать тест-кейсы'] },
+                                { title: 'In Progress', wip: '3', tasks: ['Верстка главной', 'API авторизации'] },
+                                { title: 'Review', wip: '2', tasks: ['Страница логина'] },
+                                { title: 'Done', wip: '—', tasks: ['Настройка проекта', 'Дизайн-макеты', 'Регистрация'] }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Цикл задачи',
+                        title: 'Движение задачи по доске',
+                        subtitle: '🎬 Нажмите «Запустить анимацию».',
+                        animatedFlow: {
+                            title: 'Kanban-доска',
+                            hint: '🎬 To Do → In Progress → Review → Testing → Done → Релиз',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'To Do',
+                                    x: 12, y: 30,
+                                    detail: '<strong>To Do (Сделать).</strong> Задача попадает в бэклог. Ещё никто не начал работу.',
+                                    example: 'Product Owner добавил задачу «Система лояльности». Она в колонке To Do. Есть WIP-лимит: не более 5 задач.',
+                                    qa: 'Оценивает задачу на планировании: насколько тестируема, какие вопросы по требованиям.',
+                                    extra: 'WIP-лимит ограничивает количество задач, чтобы команда не перегружалась.'
+                                },
+                                {
+                                    label: 'In Progress',
+                                    x: 37, y: 30,
+                                    detail: '<strong>In Progress (В работе).</strong> Разработчик берёт задачу и пишет код.',
+                                    example: 'Backend-разработчик пишет API для системы лояльности. В колонке уже 2 задачи — можно брать ещё (WIP: 3).',
+                                    qa: 'Может писать тест-кейсы параллельно. Готовит окружение для тестирования.',
+                                    extra: 'Если WIP-лимит достигнут — новая задача не берётся, пока не завершится текущая.'
+                                },
+                                {
+                                    label: 'Review',
+                                    x: 62, y: 30,
+                                    detail: '<strong>Review (Проверка).</strong> Код-ревью коллегами, проверка линтерами, тестирование на dev-стенде.',
+                                    example: 'Другой разработчик проверяет код. CI/CD прогоняет автотесты. QA смотрит на API — работает ли.',
+                                    qa: 'Проводит smoke-тест, делает ретест функционала. Если баги — задача возвращается в In Progress.',
+                                    extra: 'Ревью — обязательный этап. Не пропускаем даже мелкие задачи.'
+                                },
+                                {
+                                    label: 'Testing',
+                                    x: 87, y: 30,
+                                    detail: '<strong>Testing (Тестирование).</strong> Отдельная колонка для QA. Функциональное, регрессионное, исследовательское тестирование.',
+                                    example: 'QA прогоняет 20 тест-кейсов для системы лояльности. Находит 3 бага, заводит баг-репорты.',
+                                    qa: 'Основной этап. Если баг — задача возвращается в In Progress.',
+                                    extra: 'Может быть отдельная колонка или часть Review — зависит от команды.'
+                                },
+                                {
+                                    label: 'Done',
+                                    x: 87, y: 70,
+                                    detail: '<strong>Done (Готово).</strong> Задача прошла все проверки, соответствует Definition of Done.',
+                                    example: 'Задача «Система лояльности» завершена. Все баги закрыты. Проверено на dev, staging, готово к релизу.',
+                                    qa: 'Проверяет соответствие DoD. Если всё ок — задача переходит в Done.',
+                                    extra: 'Метрика: Cycle Time — время от To Do до Done. Чем меньше — тем эффективнее команда.'
+                                },
+                                {
+                                    label: 'Релиз',
+                                    x: 50, y: 70,
+                                    detail: '<strong>Релиз (Deploy).</strong> Задачи из Done собираются в релиз и выкатываются в продакшн.',
+                                    example: 'Все задачи в Done собрали в релиз v1.5. Выкатили на 5%, потом на 100%. Метрики в норме.',
+                                    qa: 'Smoke-тест на проде после релиза. Мониторинг метрик: ошибки, скорость.',
+                                    extra: 'Lead Time — время от запроса клиента до релиза.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 15, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 40, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 65, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 87, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 84, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'WIP-лимиты',
+                        title: 'Ограничения незавершённой работы',
+                        subtitle: 'Раскрывайте.',
+                        reveal: [
+                            {
+                                question: 'Что такое WIP-лимит?',
+                                answer: '<strong>WIP (Work In Progress)</strong> — ограничение на количество задач, которые могут находиться в одной колонке одновременно.<br><br><strong>Пример:</strong> в колонке «In Progress» — не больше 3 задач.<br><br><strong>Зачем:</strong> если 3 — команда сначала завершает текущие, потом берёт новые.'
+                            },
+                            {
+                                question: 'Зачем нужен WIP-лимит?',
+                                answer: 'Помогает команде <strong>не распыляться</strong>.<br><br><strong>Проблема без лимита:</strong> у человека 5 задач одновременно. Он переключается между ними, ни одну не доводит до конца. Все «в работе», ничего не готово.<br><br><strong>С лимитом:</strong> 3 задачи — фокус. Завершаем одну — берём новую.'
+                            },
+                            {
+                                question: 'Что такое Pull-система?',
+                                answer: 'Задачи <strong>«вытягиваются»</strong> по мере готовности, а не «проталкиваются» сверху.<br><br><strong>Пример:</strong> разработчик закончил задачу → перевёл в «Review» → освободилось место в «In Progress» → он берёт следующую из «To Do».<br><br><strong>Не «начальник дал 5 задач»</strong>, а «команда берёт по одной, когда готова».'
+                            },
+                            {
+                                question: 'Что будет, если не соблюдать WIP-лимит?',
+                                answer: 'Команда начнёт много задач одновременно, но ни одну не завершит. Появятся <strong>«застои»</strong> в середине доски.<br><br><strong>Результат:</strong> метрики испортятся, релизы задерживаются, качество падает.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Метрики',
+                        title: 'Как измерять поток',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            {
+                                title: 'Lead Time',
+                                text: 'Время от запроса клиента до поставки готового результата. Показывает общую эффективность процесса. Чем меньше — тем лучше.'
+                            },
+                            {
+                                title: 'Customer Lead Time',
+                                text: 'Время ожидания клиента с момента отправки запроса до получения ответа. Важный показатель удовлетворённости.'
+                            },
+                            {
+                                title: 'Cycle Time',
+                                text: 'Время выполнения одной конкретной задачи — от взятия в работу до завершения. Показывает эффективность команды.'
+                            },
+                            {
+                                title: 'Delivery Rate',
+                                text: 'Сколько задач команда реально завершает за период. Например, 10 задач в неделю. Используется для прогнозирования.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Роли',
+                        title: 'Роли в Kanban',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            {
+                                title: 'Менеджер Запросов (SRM)',
+                                text: 'Service Request Manager. Отвечает за «что» мы делаем. Управляет приоритетами, общается с заказчиком. Аналог Product Owner в Scrum.'
+                            },
+                            {
+                                title: 'Менеджер Поставки (SDM)',
+                                text: 'Service Delivery Manager. Отвечает за «как» мы делаем. Следит за потоком, WIP-лимитами, устраняет препятствия. Аналог Scrum Master.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Kanban vs Scrum',
+                        title: 'В чём разница',
+                        subtitle: 'Раскрывайте.',
+                        accordion: [
+                            {
+                                title: 'Время: спринты vs поток',
+                                body: '<p><strong>Scrum:</strong> фиксированные спринты (1–4 недели). Задачи нельзя менять в спринте.</p><p><strong>Kanban:</strong> непрерывный поток задач. Приоритеты можно менять в любой момент.</p><p><strong>Что выбрать:</strong> Scrum для продуктовой разработки, Kanban — для поддержки.</p>'
+                            },
+                            {
+                                title: 'Изменения: заморозка vs гибкость',
+                                body: '<p><strong>Scrum:</strong> в течение спринта задачи менять нельзя. Только через договорённость.</p><p><strong>Kanban:</strong> приоритеты можно менять в любой момент.</p><p><strong>Пример:</strong> в Scrum, если появилась срочная задача — либо ждём спринта, либо нарушаем процесс.</p>'
+                            },
+                            {
+                                title: 'Роли: жёсткие vs гибкие',
+                                body: '<p><strong>Scrum:</strong> PO, SM, Developers — обязательны.</p><p><strong>Kanban:</strong> SRM и SDM — опциональны. Часто их вообще нет.</p>'
+                            },
+                            {
+                                title: 'WIP-лимиты: нет vs есть',
+                                body: '<p><strong>Scrum:</strong> WIP-лимитов нет.</p><p><strong>Kanban:</strong> WIP-лимиты — основа метода. Без них Kanban не работает.</p>'
+                            },
+                            {
+                                title: 'Метрики: Velocity vs Lead Time',
+                                body: '<p><strong>Scrum:</strong> Velocity (Story Points за спринт).</p><p><strong>Kanban:</strong> Lead Time, Cycle Time, Delivery Rate.</p>'
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  CI/CD — ПАЙПЛАЙН ОТ КОДА ДО ПРОДА
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'cicd',
+        cat: 'processes',
+        title: 'CI/CD: путь кода до пользователя',
+        subtitle: 'Как изменения попадают в продакшн — от push до релиза.',
+        date: '16.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">CI / CD</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Автоматизация доставки кода</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;justify-content:center;">
+                <span style="background:#90caf9;padding:2px 6px;border-radius:4px;color:#0d47a1;font-weight:700;">CI</span>
+                <span style="background:#a5d6a7;padding:2px 6px;border-radius:4px;color:#1a4a1a;font-weight:700;">CD</span>
+            </div>
+            <p style="font-size:0.38rem;color:#6a8aaa;margin:6px 0 0 0;text-align:center;font-family:monospace;">push → build → test → package → registry → staging → prod</p>
+        `,
+        sections: [
+            {
+                id: 'cicd-main',
+                title: 'CI/CD в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+
+                    // ═══ АНИМАЦИЯ ПАЙПЛАЙНА ═══
+                    {
+                        label: 'Анимация',
+                        title: 'Путь кода от разработчика до пользователя',
+                        subtitle: '🎬 Запустите анимацию — увидите все 7 стадий пайплайна.',
+                        animatedFlow: {
+                            title: 'CI/CD Pipeline',
+                            hint: '🎬 push → build → test → package → registry → staging → production',
+                            stepDelay: 4000,
+                            nodes: [
+                                {
+                                    label: 'push',
+                                    x: 7, y: 50,
+                                    detail: 'Разработчик отправляет код в репозиторий командой <code>git push origin main</code>. CI-система (GitHub Actions, GitLab CI, Jenkins) видит пуш и запускает пайплайн.',
+                                    example: 'Разработчик фиксит баг «сумма в корзине» → <code>git commit -m "fix: сумма в корзине"</code> → <code>git push origin main</code>. Автоматически стартует пайплайн <strong>#483</strong>.',
+                                    qa: 'QA тоже пушит в репозиторий: тест-кейсы, автотесты, документацию. Пайплайн может запускаться и на Pull Request — тогда он проверяет код <strong>до</strong> merge.',
+                                    extra: 'Триггеры пайплайна: push, pull_request, schedule (по расписанию), manual.'
+                                },
+                                {
+                                    label: 'build',
+                                    x: 20, y: 50,
+                                    detail: 'CI-система <strong>компилирует код</strong> в исполняемый файл или артефакт. Для Go — <code>go build</code>. Для Java — <code>mvn package</code>. Для Python — подготовка окружения.',
+                                    example: 'Из четырёх файлов <code>main.go</code>, <code>cart.go</code>, <code>pay.go</code>, <code>api.go</code> создаётся один бинарник <code>shop</code>.',
+                                    qa: 'QA не участвует в сборке напрямую, но должен понимать: если билд упал — нужно смотреть логи. Ошибка компиляции = дальше идти нельзя.',
+                                    extra: 'В билде могут участвовать линтеры, компиляторы, транспиллеры (TypeScript → JavaScript).'
+                                },
+                                {
+                                    label: 'test',
+                                    x: 34, y: 50,
+                                    detail: 'Запускаются <strong>автоматические тесты</strong>: unit-тесты, интеграционные, линтеры. Если хотя бы один упал — пайплайн останавливается.',
+                                    example: '<code>go test ./...</code> — 95 тестов прошло, 1 упал: <code>FAIL: TestCartTotal want 1 990 ₽, got 0 ₽</code>. Пайплайн остановлен, разработчик чинит баг.',
+                                    qa: 'Это <strong>ключевая стадия для QA</strong>! Именно здесь работают автотесты. Тестировщик пишет их в сотрудничестве с разработчиками, следит за покрытием.',
+                                    extra: 'Автотесты <strong>защищают</strong> от попадания багов в прод. Чем больше покрытие — тем спокойнее релиз.'
+                                },
+                                {
+                                    label: 'package',
+                                    x: 48, y: 50,
+                                    detail: 'Готовый артефакт <strong>упаковывается в Docker-образ</strong>. Внутрь кладут бинарник, конфиги, сертификаты и базовый образ.',
+                                    example: 'Docker-образ для <code>shop</code> содержит:<ul><li><code>config.yaml</code> — настройки</li><li><code>/app/shop</code> — бинарник</li><li><code>ca-certificates</code> — сертификаты</li><li><code>alpine 3.20</code> — база (лёгкий Linux)</li></ul>',
+                                    qa: 'QA может смотреть на теги образов: <code>shop:v1.4.2</code> — это версия, которую будут тестировать. Разные теги = разные версии.',
+                                    extra: 'Docker-образ — «коробка» с приложением. Где угодно запустится одинаково.'
+                                },
+                                {
+                                    label: 'registry',
+                                    x: 62, y: 50,
+                                    detail: 'Docker-образ <strong>отправляется в реестр</strong> — хранилище образов (Docker Hub, GitLab Registry, Nexus).',
+                                    example: 'Образ <code>shop:v1.4.2</code> пушится в registry. Теперь его можно скачать на любой сервер одной командой <code>docker pull</code>.',
+                                    qa: 'QA может скачать образ из registry и запустить локально для тестирования — не нужно ждать, пока развернут staging.',
+                                    extra: 'Теги позволяют <strong>откатываться</strong> на предыдущую версию: <code>shop:v1.4.1</code>. Это спасает при критичном баге в проде.'
+                                },
+                                {
+                                    label: 'staging',
+                                    x: 76, y: 50,
+                                    detail: 'CI-система <strong>автоматически разворачивает образ</strong> на тестовом стенде — staging. Здесь QA тестирует новую версию.',
+                                    example: 'На staging развёрнут <code>shop:v1.4.2</code>. Рядом — <code>shop:v1.4.1</code> (старая версия для сравнения). QA видит обновление.',
+                                    qa: 'Это <strong>ваша сцена</strong>! QA тестирует функционал на staging, находит баги, заводит баг-репорты. Именно здесь проходит основное тестирование.',
+                                    extra: 'Staging максимально похож на прод, но с <strong>тестовыми данными</strong>. Живых пользователей здесь нет — можно ломать.'
+                                },
+                                {
+                                    label: 'production',
+                                    x: 90, y: 50,
+                                    detail: 'После успешного тестирования версия идёт на прод. Здесь <strong>два пути</strong>: Continuous Delivery (ждёт нажатия кнопки) и Continuous Deployment (всё автоматически).',
+                                    example: '<strong>Continuous Delivery:</strong> в GitHub появляется кнопка «Approve and deploy» — релиз-менеджер нажимает.<br><br><strong>Continuous Deployment:</strong> кнопки нет, релиз идёт сам.',
+                                    qa: 'QA подтверждает готовность релиза на staging. После релиза — <strong>smoke-тест на проде</strong> (работает ли основное?).',
+                                    extra: 'На проде работают <strong>живые пользователи</strong>. Любой баг = потеря денег и репутации. Поэтому Delivery безопаснее для крупных систем.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 7,  y: 50, w: 12 },
+                                { from: 1, to: 2, x: 20, y: 50, w: 12 },
+                                { from: 2, to: 3, x: 34, y: 50, w: 12 },
+                                { from: 3, to: 4, x: 48, y: 50, w: 12 },
+                                { from: 4, to: 5, x: 62, y: 50, w: 12 },
+                                { from: 5, to: 6, x: 76, y: 50, w: 12 }
+                            ]
+                        }
+                    },
+
+                    // ═══ СТАДИИ ═══
+                    {
+                        label: 'Стадии',
+                        title: 'Что происходит на каждой стадии',
+                        subtitle: 'Раскрывайте по одной — узнаете цель, пример и задачу QA.',
+                        accordion: [
+                            {
+                                title: '1️⃣ push — ты пушишь код',
+                                body: '<p><strong>Что происходит:</strong> разработчик отправляет изменения в удалённый репозиторий.</p><p><strong>Команда:</strong> <code>git push origin main</code></p><p><strong>Триггер:</strong> CI-система <em>видит</em> пуш и запускает пайплайн. В логах: <code>pipeline #482 запущен · on: push · branch main</code>.</p><p><strong>Что делает QA:</strong> тоже пушит тест-кейсы и автотесты в репозиторий. Пайплайн может запускаться и на Pull Request — тогда он проверяет код <strong>до</strong> merge.</p>'
+                            },
+                            {
+                                title: '2️⃣ build — сборка приложения',
+                                body: '<p><strong>Что происходит:</strong> CI-система компилирует исходники в исполняемый артефакт.</p><p><strong>Пример:</strong> из файлов <code>main.go</code>, <code>cart.go</code>, <code>pay.go</code>, <code>api.go</code> создаётся один бинарник <code>shop</code>.</p><p><strong>Что делает QA:</strong> если билд падает — смотрит логи, помогает сформулировать баг. Ошибка компиляции = дальше идти нельзя.</p>'
+                            },
+                            {
+                                title: '3️⃣ test — автоматические тесты',
+                                body: '<p><strong>Что происходит:</strong> запускаются unit-, интеграционные тесты и линтеры. Если хотя бы один упал — пайплайн останавливается.</p><p><strong>Пример:</strong> <code>go test ./... → passed 95, failed 1</code>. Тест <code>TestCartTotal</code> упал: ожидалось 1 990 ₽, получили 0 ₽.</p><p><strong>Что делает QA:</strong> пишет автотесты, следит за покрытием. Это <strong>ключевая стадия для QA</strong> в пайплайне.</p>'
+                            },
+                            {
+                                title: '4️⃣ package — упаковка в Docker-образ',
+                                body: '<p><strong>Что происходит:</strong> артефакт упаковывается в Docker-образ.</p><p><strong>Состав образа:</strong></p><ul><li><code>config.yaml</code> — настройки</li><li><code>/app/shop</code> — бинарник</li><li><code>ca-certificates</code> — сертификаты</li><li><code>alpine 3.20</code> — база (лёгкий Linux)</li></ul><p><strong>Что делает QA:</strong> смотрит на теги образов (<code>shop:v1.4.2</code>) — понимает, какую версию будут тестировать.</p>'
+                            },
+                            {
+                                title: '5️⃣ registry — реестр образов',
+                                body: '<p><strong>Что происходит:</strong> Docker-образ пушится в реестр (Docker Hub, GitLab Registry, Nexus).</p><p><strong>Зачем:</strong> образ доступен на любом сервере одной командой <code>docker pull</code>.</p><p><strong>Что делает QA:</strong> может скачать образ локально и тестировать без ожидания staging.</p><p><strong>Плюс:</strong> теги позволяют <strong>откатываться</strong> на предыдущую версию при инциденте.</p>'
+                            },
+                            {
+                                title: '6️⃣ staging — тестовый стенд',
+                                body: '<p><strong>Что происходит:</strong> CI-система автоматически разворачивает образ на staging.</p><p><strong>Что делает QA:</strong> <strong>основное тестирование</strong> здесь. Находит баги, заводит баг-репорты, проверяет соответствие требованиям.</p><p><strong>Отличие от прода:</strong> staging похож на прод, но с <strong>тестовыми данными</strong>. Живых пользователей здесь нет — можно ломать и экспериментировать.</p>'
+                            },
+                            {
+                                title: '7️⃣ production — прод, живые пользователи',
+                                body: '<p><strong>Что происходит:</strong> релиз уходит пользователям. Здесь два пути:</p><ul><li><strong>Continuous Delivery</strong> — ждёт кнопку «Approve and deploy»</li><li><strong>Continuous Deployment</strong> — релиз автоматический</li></ul><p><strong>Что делает QA:</strong> подтверждает готовность на staging → после релиза делает <strong>smoke-тест на проде</strong> (работает ли основное?).</p><p><strong>Важно:</strong> на проде живые пользователи. Любой баг = потеря денег и репутации. Поэтому Continuous Delivery безопаснее для крупных систем.</p>'
+                            }
+                        ]
+                    },
+
+                    // ═══ CI vs CD vs CD ═══
+                    {
+                        label: 'CI vs CD vs CD',
+                        title: 'Три «непрерывности»',
+                        subtitle: 'Кликните на карточку — увидите разницу.',
+                        compare: [
+                            {
+                                title: 'CI — Continuous Integration',
+                                question: 'Непрерывная интеграция',
+                                text: 'Разработчики <strong>часто</strong> сливают свой код в общую ветку. Каждый merge автоматически собирается и тестируется.<br><br><strong>Цель:</strong> ловить конфликты и баги на раннем этапе.<br><br><strong>Инструменты:</strong> GitHub Actions, GitLab CI, Jenkins, CircleCI.<br><br><strong>Что делает QA:</strong> пишет автотесты, которые запускаются при каждом merge.'
+                            },
+                            {
+                                title: 'CD — Continuous Delivery',
+                                question: 'Непрерывная доставка',
+                                text: 'После CI <strong>автоматически деплоит</strong> на staging. Но на прод — <strong>только после нажатия кнопки</strong> человеком.<br><br><strong>Флоу:</strong> staging → [Review pending deployments] → Approve and deploy → prod.<br><br><strong>Зачем кнопка:</strong> релиз-менеджер решает, когда выпускать.<br><br><strong>Что делает QA:</strong> валидирует на staging, готовит отчёт.'
+                            },
+                            {
+                                title: 'CD — Continuous Deployment',
+                                question: 'Непрерывное развёртывание',
+                                text: 'Релиз идёт на прод <strong>полностью автоматически</strong>. Кнопки «Approve» нет.<br><br><strong>Флоу:</strong> staging → prod. Всё.<br><br><strong>Где применяют:</strong> SaaS-продукты, стартапы, мобильные бэкенды — где недопустимо долгое ожидание.<br><br><strong>Что делает QA:</strong> автотесты = защита. Ошибка в них = баг у пользователей.'
+                            }
+                        ]
+                    },
+
+                    // ═══ ЗАДАЧИ QA НА КАЖДОЙ СТАДИИ ═══
+                    {
+                        label: 'Что делает QA',
+                        title: 'Роль QA на каждой стадии пайплайна',
+                        subtitle: 'Кликните на карточку, чтобы подсветить.',
+                        cards: [
+                            {
+                                icon: '',
+                                title: 'push',
+                                text: 'QA коммитит тест-кейсы, автотесты и документацию в репозиторий. Пайплайн на Pull Request помогает поймать баг <strong>до</strong> merge.'
+                            },
+                            {
+                                icon: '',
+                                title: 'build',
+                                text: 'QA смотрит логи при падении билда, помогает сформулировать проблему. Ошибка компиляции блокирует всё дальше.'
+                            },
+                            {
+                                icon: '',
+                                title: 'test',
+                                text: '<strong>Главная стадия QA.</strong> Пишутся и поддерживаются автотесты. Покрытие растёт — релиз становится безопаснее.'
+                            },
+                            {
+                                icon: '',
+                                title: 'package',
+                                text: 'QA проверяет, какие версии образов собираются. Понимает, какую версию будет тестировать на staging.'
+                            },
+                            {
+                                icon: '',
+                                title: 'registry',
+                                text: 'QA может скачать образ локально для тестирования — не дожидаясь развёртывания staging.'
+                            },
+                            {
+                                icon: '',
+                                title: 'staging',
+                                text: '<strong>Основное ручное тестирование.</strong> Функциональные проверки, регрессия, exploratory. Найденные баги идут в Bug Triage.'
+                            },
+                            {
+                                icon: '',
+                                title: 'production',
+                                text: 'После релиза — <strong>smoke-тест на проде</strong> (работает ли основное?). Мониторинг метрик 24 часа.'
+                            }
+                        ]
+                    },
+
+                    // ═══ ПРОВЕРЬ СЕБЯ ═══
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-тест по CI/CD',
+                        subtitle: 'Выберите правильный ответ.',
+                        quiz: {
+                            question: 'Чем Continuous Delivery отличается от Continuous Deployment?',
+                            options: [
+                                {
+                                    text: 'Ничем, это синонимы',
+                                    correct: false,
+                                    explain: 'Нет, это разные практики. Разница — в наличии кнопки «Approve» перед релизом на прод.'
+                                },
+                                {
+                                    text: 'Delivery требует ручного подтверждения перед продом, Deployment — нет',
+                                    correct: true,
+                                    explain: 'Правильно! В Delivery после staging появляется кнопка «Approve and deploy», которую нажимает человек. В Deployment релиз идёт полностью автоматически.'
+                                },
+                                {
+                                    text: 'Delivery — про мобильные приложения, Deployment — про веб',
+                                    correct: false,
+                                    explain: 'Нет. Обе практики применимы к любым типам приложений. Разница — в наличии ручного шага.'
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'scrum',
+        cat: 'processes',
+        title: 'Scrum для тестировщика',
+        subtitle: 'Роли, артефакты, события и спринт в действии.',
+        date: '22.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Scrum</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Роли, события, артефакты</p>
+            <div style="display:flex;gap:3px;font-size:0.4rem;flex-wrap:wrap;">
+                <span style="background:#ffb74d;padding:2px 5px;border-radius:4px;color:#4a2400;">Основы</span>
+                <span style="background:#c5d8ef;padding:2px 5px;border-radius:4px;color:#1a3a5a;">Роли</span>
+                <span style="background:#ce93d8;padding:2px 5px;border-radius:4px;color:#4a1a5a;">События</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'scrum-tabs',
+                title: 'Scrum в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Основы',
+                        title: 'Что такое Scrum',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        cards: [
+                            {
+                                title: 'Приверженность',
+                                text: 'Команда берёт ответственность за результат. Если взял задачу — доводишь до конца. Не «моя часть сделана», а «продукт готов».'
+                            },
+                            {
+                                title: 'Фокус',
+                                text: 'Команда концентрируется на целях спринта. Не отвлекается на посторонние задачи. Всё, что не в спринте — потом.'
+                            },
+                            {
+                                title: 'Открытость',
+                                text: 'Честно говорим о проблемах. Не скрываем баги и препятствия. Лучше рано признать проблему, чем поздно.'
+                            },
+                            {
+                                title: 'Уважение',
+                                text: 'Каждый важен. Не «ты написал плохой код», а «давай разберёмся вместе». QA и разработчик — партнёры.'
+                            },
+                            {
+                                title: 'Смелость',
+                                text: 'Не боимся браться за сложные задачи и задавать неудобные вопросы. «Это требование непонятное» — нормально.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Роли',
+                        title: 'Три роли в Scrum',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            {
+                                title: 'Product Owner (PO)',
+                                text: 'Отвечает за «что» и «почему». Управляет Product Backlog, расставляет приоритеты, общается с заказчиками. Голос бизнеса внутри команды.<br><br><strong>Пример:</strong> «В этом спринте делаем систему лояльности — маркетинг запускает акцию через месяц».'
+                            },
+                            {
+                                title: 'Scrum Master (SM)',
+                                text: 'Отвечает за процесс. Убирает препятствия, следит за церемониями, обучает команду Scrum. Фасилитатор, а не менеджер.<br><br><strong>Пример:</strong> «Daily Scrum длится 40 минут — давай сократим до 15».'
+                            },
+                            {
+                                title: 'Developers (Команда)',
+                                text: 'Создают продукт. Включает разработчиков, тестировщиков, аналитиков, дизайнеров. Самоорганизуются и несут коллективную ответственность.<br><br><strong>Особенность:</strong> не «разработчики» и «тестировщики» отдельно — а одна команда.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'События',
+                        title: 'События Scrum',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            {
+                                title: 'Sprint Planning',
+                                text: 'В начале спринта (2–4 часа). Команда выбирает задачи из Product Backlog, оценивает их в Story Points, формирует Sprint Backlog и Sprint Goal.<br><br><strong>QA участвует:</strong> оценивает тестируемость, задаёт вопросы.'
+                            },
+                            {
+                                title: 'Daily Scrum',
+                                text: 'Каждый день 15 минут. Три вопроса:<ul><li>Что сделал вчера?</li><li>Что сделаю сегодня?</li><li>Какие препятствия?</li></ul>Это не отчёт менеджеру, а синхронизация команды.<br><br><strong>QA участвует:</strong> рапортует о багах, блокерах.'
+                            },
+                            {
+                                title: 'Sprint Review',
+                                text: 'В конце спринта. Демонстрация инкремента стейкхолдерам, сбор обратной связи. Участвуют заказчики.<br><br><strong>QA участвует:</strong> показывает результат тестирования, отвечает на вопросы.'
+                            },
+                            {
+                                title: 'Sprint Retrospective',
+                                text: 'После Review. Только для команды. Обсуждают процесс: что хорошо, что улучшить. Выбирают 1–2 улучшения на следующий спринт.<br><br><strong>QA участвует:</strong> предлагает улучшения процесса тестирования.'
+                            },
+                            {
+                                title: 'Backlog Refinement',
+                                text: 'Регулярная встреча. Уточняем требования, оцениваем задачи, пересматриваем приоритеты. Готовит бэклог к следующему спринту.<br><br><strong>QA участвует:</strong> оценивает задачи, задаёт вопросы по требованиям.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Артефакты',
+                        title: 'Три артефакта Scrum',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            {
+                                title: 'Product Backlog',
+                                text: 'Главный список всех задач, идей, требований. Управляется PO. Отсортирован по приоритету. Может меняться в любое время.<br><br><strong>Пример:</strong> «Система лояльности» (приоритет 1), «Интеграция с 1С» (приоритет 5).'
+                            },
+                            {
+                                title: 'Sprint Backlog',
+                                text: 'Задачи на текущий спринт. Создаётся на Planning. Принадлежит команде. В течение спринта задачи можно двигать, но не менять цель.<br><br><strong>Пример:</strong> в спринте 5 задач: сверстать форму, написать API, написать тесты, протестировать, задеплоить.'
+                            },
+                            {
+                                title: 'Increment',
+                                text: 'Готовая, протестированная часть продукта. Соответствует Definition of Done. Готова к релизу. Дополняет предыдущие инкременты.<br><br><strong>Пример:</strong> в конце спринта — работающая страница логина, протестированная, готовая к релизу.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Оценка',
+                        title: 'Как оценивать задачи',
+                        subtitle: 'Раскрывайте.',
+                        accordion: [
+                            {
+                                title: 'Покер-планирование',
+                                body: '<p><strong>Что это:</strong> техника оценки задач командой.</p><p><strong>Как работает:</strong></p><ol><li>Обсуждаем задачу</li><li>Каждый выбирает карту с числом (1, 2, 3, 5, 8, 13, 21)</li><li>Одновременно показываем</li><li>Если расхождение — обсуждаем и голосуем снова</li></ol><p><strong>Пример:</strong> разработчик оценил 8, тестировщик 13 (много сценариев). Обсудили — остановились на 8.</p>'
+                            },
+                            {
+                                title: 'Story Points',
+                                body: '<p><strong>Что это:</strong> абстрактные единицы оценки сложности.</p><p><strong>НЕ привязаны ко времени:</strong> задача на 5 SP не значит 5 часов.</p><p><strong>Числа Фибоначчи:</strong> 1, 2, 3, 5, 8, 13, 21.</p><p><strong>Пример:</strong> задача на 5 SP в 2.5 раза сложнее задачи на 2 SP.</p>'
+                            },
+                            {
+                                title: 'Velocity (Скорость)',
+                                body: '<p><strong>Что это:</strong> сколько Story Points команда в среднем делает за спринт.</p><p><strong>ФАКТ, а не прогноз:</strong> измеряется в конце спринта.</p><p><strong>Пример:</strong> если средняя скорость 20 SP, не берём задач больше 20 SP.</p>'
+                            },
+                            {
+                                title: 'Capacity (Вместимость)',
+                                body: '<p><strong>Что это:</strong> прогноз того, сколько работы команда может взять в спринте.</p><p><strong>Учитывает:</strong> отпуска, праздники, больничные.</p><p><strong>Пример:</strong> один из 5 человек в отпуске — берём задач на 80% от обычного.</p>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Спринт в действии',
+                        title: 'Пример спринта на 2 недели',
+                        subtitle: 'Календарь событий.',
+                        sprintCalendar: {
+                            weeks: [
+                                [
+                                    { num: 'Пн 1', events: [{ label: 'Планирование', type: 'planning' }] },
+                                    { num: 'Вт 2', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Ср 3', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Чт 4', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Пт 5', events: [{ label: 'Daily Scrum', type: 'daily' }, { label: 'Груминг', type: 'grooming' }] },
+                                    { num: 'Сб 6', events: [] },
+                                    { num: 'Вс 7', events: [] }
+                                ],
+                                [
+                                    { num: 'Пн 8', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Вт 9', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Ср 10', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Чт 11', events: [{ label: 'Daily Scrum', type: 'daily' }] },
+                                    { num: 'Пт 12', events: [{ label: 'Daily Scrum', type: 'daily' }, { label: 'Review', type: 'review' }, { label: 'Ретро', type: 'retro' }] },
+                                    { num: 'Сб 13', events: [] },
+                                    { num: 'Вс 14', events: [] }
+                                ]
+                            ],
+                            legend: [
+                                { type: 'planning', label: 'Sprint Planning' },
+                                { type: 'daily', label: 'Daily Scrum (15 мин)' },
+                                { type: 'grooming', label: 'Backlog Refinement' },
+                                { type: 'review', label: 'Sprint Review' },
+                                { type: 'retro', label: 'Sprint Retrospective' }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Цикл спринта',
+                        title: 'Полный цикл спринта',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Две недели работы',
+                            hint: '🎬 Backlog → Sprint → Review → Retro → Increment',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Product Backlog',
+                                    x: 12, y: 30,
+                                    detail: '<strong>Product Backlog.</strong> Главный список всех задач. Управляет Product Owner.',
+                                    example: 'В бэклоге 50 задач. PO расставил приоритеты: «Система лояльности» — 1, «Интеграция с 1С» — 5.',
+                                    qa: 'Участвует в Refinement: оценивает тестируемость задач, задаёт вопросы по требованиям.',
+                                    extra: 'Бэклог постоянно меняется: добавляются задачи, меняются приоритеты.'
+                                },
+                                {
+                                    label: 'Sprint Planning',
+                                    x: 37, y: 30,
+                                    detail: '<strong>Sprint Planning.</strong> Команда выбирает задачи и формирует Sprint Backlog и Sprint Goal.',
+                                    example: 'В спринте берём 5 задач: сверстать форму, API, тесты, тестирование, деплой. Sprint Goal: «Работающая форма логина».',
+                                    qa: 'Оценивает задачи, поднимает вопросы по тестированию. Может запросить больше времени на сложную фичу.',
+                                    extra: 'Длительность: 2-4 часа. Все обязаны участвовать.'
+                                },
+                                {
+                                    label: 'Daily Scrum',
+                                    x: 62, y: 30,
+                                    detail: '<strong>Daily Scrum.</strong> 15 минут каждый день. Три вопроса: что сделал вчера, что делаю сегодня, какие препятствия.',
+                                    example: 'QA: «Вчера проверил 10 кейсов, нашёл 2 бага. Сегодня — регрессия. Блокер: среда падает».',
+                                    qa: 'Рапортует о найденных багах, блокерах. Если что-то мешает — поднимает на Daily.',
+                                    extra: 'Это не отчёт менеджеру, а синхронизация команды. Все стоят у доски.'
+                                },
+                                {
+                                    label: 'Разработка + QA',
+                                    x: 87, y: 30,
+                                    detail: '<strong>Разработка + тестирование.</strong> Команда пишет код, QA параллельно готовит и прогоняет тесты. Баги идут в Bug Triage.',
+                                    example: 'Разработчик пишет API, QA прогоняет тесты, находит баги, заводит баг-репорты. Bug Triage — приоритизация багов.',
+                                    qa: 'Активно участвует: пишет тест-кейсы, тестирует, находит баги, участвует в Bug Triage.',
+                                    extra: 'Основное время спринта — 8-10 дней.'
+                                },
+                                {
+                                    label: 'Sprint Review',
+                                    x: 87, y: 70,
+                                    detail: '<strong>Sprint Review.</strong> Демо инкремента заказчику. Стейкхолдеры дают обратную связь.',
+                                    example: 'Команда показывает: форма логина работает, регистрация работает. Заказчик: «Добавьте вход через Google».',
+                                    qa: 'Показывает результат тестирования. Может ответить на вопросы по качеству.',
+                                    extra: 'Обратная связь идёт в Product Backlog для следующих спринтов.'
+                                },
+                                {
+                                    label: 'Retrospective',
+                                    x: 50, y: 70,
+                                    detail: '<strong>Sprint Retrospective.</strong> Анализ процесса: что хорошо, что улучшить. Только для команды.',
+                                    example: 'Что хорошо: быстро нашли баги. Что улучшить: слишком долго ждали фиксов. Решение: разработчик фиксит баги в приоритете.',
+                                    qa: 'Предлагает улучшения процесса тестирования. Высказывает проблемы.',
+                                    extra: 'Выбираем 1-2 улучшения, внедряем в следующем спринте.'
+                                },
+                                {
+                                    label: 'Increment',
+                                    x: 12, y: 70,
+                                    detail: '<strong>Increment.</strong> Готовая часть продукта, соответствующая Definition of Done. Может быть выкачена в продакшн.',
+                                    example: 'Форма логина готова, протестирована. Можно релизить.',
+                                    qa: 'Проверяет соответствие DoD. Форма должна быть: работает, протестирована, задокументирована.',
+                                    extra: 'DoD — единые правила для всех задач, чтобы был чёткий критерий «готово».'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 15, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 40, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 65, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 87, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 84, y: 70, w: 0, r: 180 },
+                                { from: 5, to: 6, x: 47, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'git-flow',
+        cat: 'processes',
+        title: 'Схема Git Flow',
+        subtitle: 'Как организовать работу с ветками.',
+        date: '18.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Git Flow</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Ветки и их назначение</p>
+            <div style="display:flex;gap:4px;font-size:0.45rem;color:#4a6a8a;flex-wrap:wrap;">
+                <span style="background:#a5d6a7;padding:3px 6px;border-radius:4px;">main</span>
+                <span style="background:#90caf9;padding:3px 6px;border-radius:4px;">develop</span>
+                <span style="background:#fff59d;padding:3px 6px;border-radius:4px;">feature</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'gitflow-tabs',
+                title: 'Git Flow',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    // ═══════════════════════════════════════════════════
+                    //  ТАБ 1: ИНТЕРАКТИВНЫЙ ГРАФ
+                    // ═══════════════════════════════════════════════════
+                    {
+                        label: 'Интерактивный граф',
+                        title: 'Схема веток Git Flow',
+                        subtitle: 'Наведите на любую ветку, чтобы увидеть её назначение',
+                        gitGraphSim: {
+                            defaultInfo: {
+                                title: 'Схема Git Flow',
+                                text: 'Это визуализация классической модели ветвления Git Flow, которая помогает командам организовать процесс разработки и выпуска версий продукта.<br><br>Нажмите на любую ветку, этап тестирования или стрелку merge, чтобы увидеть её цель и задачи для QA.'
+                            },
+                            branches: [
+                                {
+                                    id: 'main',
+                                    label: 'main',
+                                    color: '#1565c0',
+                                    x: 10, y: 15,
+                                    width: 80,
+                                    type: 'horizontal',
+                                    info: {
+                                        title: 'Ветка Main',
+                                        text: '<strong>Цель:</strong> Хранит стабильный, готовый к выпуску код. Каждая фиксация — релизная версия.<br><br><strong>Действия QA:</strong><br>• Тестирование здесь не проводится.<br>• Код попадает сюда только после полной проверки в release-ветке.<br>• На проде — только <strong>smoke-тест</strong> после релиза.'
+                                    }
+                                },
+                                {
+                                    id: 'develop',
+                                    label: 'develop',
+                                    color: '#e65100',
+                                    x: 10, y: 55,
+                                    width: 80,
+                                    type: 'horizontal',
+                                    info: {
+                                        title: 'Ветка Develop',
+                                        text: '<strong>Цель:</strong> Ветка разработки. Сюда мержатся все фичи. Отсюда готовится релиз.<br><br><strong>Действия QA:</strong><br>• Тестирование на <strong>dev-окружении</strong>.<br>• Проверка, что фичи не сломали друг друга.<br>• Приёмка новых фич от разработчиков.'
+                                    }
+                                },
+                                {
+                                    id: 'feature',
+                                    label: 'feature/...',
+                                    color: '#2e7d32',
+                                    x: 30, y: 55,
+                                    endX: 30, endY: 80,
+                                    type: 'branch-down',
+                                    info: {
+                                        title: 'Ветка Feature',
+                                        text: '<strong>Цель:</strong> Отдельная ветка под каждую задачу. Создаётся от develop.<br><br><strong>Действия QA:</strong><br>• Тестирование фичи на dev-окружении.<br>• Проверка, что функция работает по требованиям.<br>• Написание тест-кейсов и чек-листов.<br>• После тестирования — merge в develop.'
+                                    }
+                                },
+                                {
+                                    id: 'release',
+                                    label: 'release/...',
+                                    color: '#6a1b9a',
+                                    x: 65, y: 55,
+                                    endX: 65, endY: 80,
+                                    type: 'branch-down',
+                                    info: {
+                                        title: 'Ветка Release',
+                                        text: '<strong>Цель:</strong> Подготовка релиза. Здесь только фиксы багов, никаких новых фич.<br><br><strong>Действия QA:</strong><br>• Полное <strong>регрессионное тестирование</strong>.<br>• Приёмочное тестирование (UAT).<br>• Проверка всех критичных сценариев.<br>• После приёмки — merge в main и develop.'
+                                    }
+                                },
+                                {
+                                    id: 'hotfix',
+                                    label: 'hotfix/...',
+                                    color: '#c62828',
+                                    x: 22, y: 15,
+                                    endX: 22, endY: 40,
+                                    type: 'branch-down',
+                                    info: {
+                                        title: 'Ветка Hotfix',
+                                        text: '<strong>Цель:</strong> Срочные фиксы в продакшене. Ответвляются от main.<br><br><strong>Действия QA:</strong><br>• <strong>Срочное</strong> тестирование фикса.<br>• Проверка, что фикс действительно решает проблему.<br>• Мини-регрессия (связанные функции).<br>• После фикса — merge в main и develop.'
+                                    }
+                                }
+                            ],
+                            merges: [
+                                {
+                                    id: 'merge-hotfix-main',
+                                    color: '#c62828',
+                                    path: [
+                                        { x: 22, y: 40 },
+                                        { x: 17, y: 40 },
+                                        { x: 17, y: 22 },
+                                        { x: 13, y: 22 }
+                                    ],
+                                    info: {
+                                        title: 'Merge hotfix → main',
+                                        text: '<strong>Что происходит:</strong> После успешного тестирования хотфикс мержится обратно в <strong>main</strong>. Фикс попадает в продакшн.<br><br><strong>Действия QA:</strong><br>• Подтвердить, что фикс в main работает.<br>• Провести smoke-тест после деплоя.<br>• Убедиться, что версия в проде обновлена.'
+                                    }
+                                },
+                                {
+                                    id: 'merge-hotfix-develop',
+                                    color: '#c62828',
+                                    path: [
+                                        { x: 22, y: 40 },
+                                        { x: 27, y: 40 },
+                                        { x: 27, y: 52 },
+                                        { x: 30, y: 52 }
+                                    ],
+                                    info: {
+                                        title: 'Merge hotfix → develop',
+                                        text: '<strong>Что происходит:</strong> Хотфикс также мержится в <strong>develop</strong>, чтобы фикс не потерялся в следующей версии.<br><br><strong>Действия QA:</strong><br>• Проверить, что фикс присутствует в develop.<br>• Убедиться, что он не сломал новые фичи.'
+                                    }
+                                },
+                                {
+                                    id: 'merge-feature-develop',
+                                    color: '#2e7d32',
+                                    path: [
+                                        { x: 30, y: 80 },
+                                        { x: 25, y: 80 },
+                                        { x: 25, y: 58 },
+                                        { x: 28, y: 58 }
+                                    ],
+                                    info: {
+                                        title: 'Merge feature → develop',
+                                        text: '<strong>Что происходит:</strong> После успешного тестирования фича мержится обратно в <strong>develop</strong>. Все изменения собираются в одну ветку.<br><br><strong>Действия QA:</strong><br>• Проверить, что фича работает в develop.<br>• Убедиться, что она не сломала другие фичи.<br>• Дать добро на merge.'
+                                    }
+                                },
+                                {
+                                    id: 'merge-release-main',
+                                    color: '#6a1b9a',
+                                    path: [
+                                        { x: 65, y: 80 },
+                                        { x: 70, y: 80 },
+                                        { x: 70, y: 22 },
+                                        { x: 74, y: 22 }
+                                    ],
+                                    info: {
+                                        title: 'Merge release → main',
+                                        text: '<strong>Что происходит:</strong> После приёмки (UAT) релизная ветка мержится в <strong>main</strong>. Это финальный релиз.<br><br><strong>Действия QA:</strong><br>• Финальный smoke-тест после деплоя.<br>• Убедиться, что версия соответствует релизной.<br>• Проверить, что все баги из release закрыты.'
+                                    }
+                                },
+                                {
+                                    id: 'merge-release-develop',
+                                    color: '#6a1b9a',
+                                    path: [
+                                        { x: 65, y: 80 },
+                                        { x: 75, y: 80 },
+                                        { x: 75, y: 58 },
+                                        { x: 78, y: 58 }
+                                    ],
+                                    info: {
+                                        title: 'Merge release → develop',
+                                        text: '<strong>Что происходит:</strong> Релизная ветка также мержится в <strong>develop</strong>, чтобы все фиксы, сделанные во время подготовки релиза, попали в следующую версию.<br><br><strong>Действия QA:</strong><br>• Убедиться, что все фиксы есть в develop.<br>• Проверить, что ничего не потерялось.'
+                                    }
+                                }
+                            ],
+                            stages: [
+                                {
+                                    id: 'retest-hotfix',
+                                    label: 'Ретест и регрессия (Hotfix)',
+                                    x: 42, y: 35,
+                                    parentBranch: 'hotfix',
+                                    info: {
+                                        title: 'Ретест и регрессия (Hotfix)',
+                                        text: '<strong>Цель этапа:</strong> Убедиться, что хотфикс действительно решает проблему и не сломал ничего другого.<br><br><strong>Задачи QA:</strong><br>• <strong>Ретест:</strong> воспроизвести сценарий из бага и убедиться, что он больше не воспроизводится.<br>• <strong>Регрессия:</strong> проверить связанные функции, которые могли пострадать от фикса.<br>• Проверить, что фикс не задел другие модули.<br>• Подтвердить статус бага в трекере (Verified).'
+                                    }
+                                },
+                                {
+                                    id: 'test-feature',
+                                    label: 'Тестирование фичи',
+                                    x: 30, y: 93,
+                                    parentBranch: 'feature',
+                                    info: {
+                                        title: 'Тестирование фичи',
+                                        text: '<strong>Цель этапа:</strong> Проверить, что новая функциональность работает по требованиям.<br><br><strong>Задачи QA:</strong><br>• <strong>Функциональное</strong> тестирование по тест-кейсам.<br>• Проверка позитивных и негативных сценариев.<br>• Проверка граничных значений.<br>• Тестирование UI/UX.<br>• Проверка интеграции с другими модулями.'
+                                    }
+                                },
+                                {
+                                    id: 'regression-uat',
+                                    label: 'Регрессия и UAT',
+                                    x: 65, y: 93,
+                                    parentBranch: 'release',
+                                    info: {
+                                        title: 'Регрессия и UAT',
+                                        text: '<strong>Цель этапа:</strong> Финальная проверка перед релизом.<br><br><strong>Задачи QA:</strong><br>• <strong>Регрессия:</strong> прогон всех тестов, чтобы убедиться, что ничего не сломалось.<br>• <strong>UAT (User Acceptance Testing):</strong> проверка заказчиком или реальными пользователями.<br>• Проверка всех критических сценариев.<br>• Подготовка отчёта о тестировании.<br>• Решение о релизе.'
+                                    }
+                                }
+                            ]
+                        }
+                    },
+
+                    // ═══════════════════════════════════════════════════
+                    //  ТАБ 2: ВЕТКИ (КАРТОЧКИ)
+                    // ═══════════════════════════════════════════════════
+                    {
+                        label: 'Ветки',
+                        title: 'Ветки Git Flow',
+                        subtitle: 'Полное описание: назначение, источник, назначение merge, задачи QA.',
+                        branches: [
+                            {
+                                id: 'main',
+                                label: 'main',
+                                color: '#1565c0',
+                                purpose: 'Стабильный продакшн-код',
+                                from: '— (основная ветка)',
+                                mergeTo: '— (сюда мержатся release и hotfix)',
+                                who: 'Release Manager / Tech Lead',
+                                qa: [
+                                    'Тестирование <strong>не проводится</strong> — только smoke после деплоя',
+                                    'Проверка, что версия в проде соответствует релизной',
+                                    'Мониторинг метрик первые 24 часа'
+                                ]
+                            },
+                            {
+                                id: 'develop',
+                                label: 'develop',
+                                color: '#e65100',
+                                purpose: 'Интеграция всех фич',
+                                from: '— (основная ветка для разработки)',
+                                mergeTo: 'feature, hotfix, release вливаются сюда',
+                                who: 'Все разработчики',
+                                qa: [
+                                    'Тестирование на <strong>dev-окружении</strong>',
+                                    'Проверка, что новые фичи не сломали старые',
+                                    'Приёмка фич от разработчиков',
+                                    'Регрессия перед созданием release'
+                                ]
+                            },
+                            {
+                                id: 'feature',
+                                label: 'feature/*',
+                                color: '#2e7d32',
+                                purpose: 'Разработка одной задачи / фичи',
+                                from: 'develop',
+                                mergeTo: 'develop (после тестирования)',
+                                who: 'Разработчик + QA',
+                                qa: [
+                                    '<strong>Функциональное</strong> тестирование фичи',
+                                    'Проверка позитивных и негативных сценариев',
+                                    'Тестирование граничных значений',
+                                    'UI/UX тестирование',
+                                    'Проверка интеграции с другими модулями'
+                                ]
+                            },
+                            {
+                                id: 'release',
+                                label: 'release/*',
+                                color: '#6a1b9a',
+                                purpose: 'Подготовка релиза',
+                                from: 'develop',
+                                mergeTo: 'main И develop',
+                                who: 'QA-лид + Release Manager',
+                                qa: [
+                                    'Полное <strong>регрессионное</strong> тестирование',
+                                    'UAT (User Acceptance Testing)',
+                                    'Проверка критических сценариев',
+                                    'Подготовка отчёта о тестировании',
+                                    'Решение о готовности релиза'
+                                ]
+                            },
+                            {
+                                id: 'hotfix',
+                                label: 'hotfix/*',
+                                color: '#c62828',
+                                purpose: 'Срочный фикс критического бага в проде',
+                                from: 'main',
+                                mergeTo: 'main И develop',
+                                who: 'Сеньор-разработчик + QA',
+                                qa: [
+                                    '<strong>Срочное</strong> тестирование фикса',
+                                    'Ретест — воспроизведение бага больше не работает',
+                                    'Мини-регрессия связанных функций',
+                                    'Подтверждение фикса в трекере (Verified)',
+                                    'Smoke-тест на проде после деплоя'
+                                ]
+                            }
+                        ]
+                    },
+
+                    // ═══════════════════════════════════════════════════
+                    //  ТАБ 3: ПРАВИЛА (КАРТОЧКИ)
+                    // ═══════════════════════════════════════════════════
+                    {
+                        label: 'Правила',
+                        title: 'Правила работы с ветками',
+                        subtitle: 'Ключевые правила Git Flow, сгруппированные по темам.',
+                        rules: [
+                            {
+                                category: 'Создание веток',
+                                color: '#2e7d32',
+                                items: [
+                                    '<strong>Feature</strong> — от <code>develop</code>',
+                                    '<strong>Release</strong> — от <code>develop</code>',
+                                    '<strong>Hotfix</strong> — от <code>main</code>',
+                                    'Название: <code>тип/JIRA-ID-описание</code>'
+                                ]
+                            },
+                            {
+                                category: 'Merge и Pull Request',
+                                color: '#1565c0',
+                                items: [
+                                    'Только через <strong>Pull Request</strong>',
+                                    'Обязательный <strong>Code Review</strong>',
+                                    'CI (автотесты) должны пройти',
+                                    '<strong>Никаких</strong> прямых merge локально'
+                                ]
+                            },
+                            {
+                                category: 'Что запрещено',
+                                color: '#c62828',
+                                items: [
+                                    '❌ Force push в main, develop',
+                                    '❌ Коммит напрямую в main',
+                                    '❌ Долгие feature-ветки (недели)',
+                                    '❌ Merge без Code Review',
+                                    '❌ Хранить секреты в репозитории'
+                                ]
+                            },
+                            {
+                                category: 'Naming Convention',
+                                color: '#6a1b9a',
+                                items: [
+                                    '<code>feature/AUTH-123-login</code>',
+                                    '<code>bugfix/AUTH-124-email</code>',
+                                    '<code>hotfix/PROD-1-payment</code>',
+                                    '<code>release/1.2.0</code>'
+                                ]
+                            },
+                            {
+                                category: 'Конфликты merge',
+                                color: '#e65100',
+                                items: [
+                                    'Обновить локальный <code>develop</code>',
+                                    '<code>git merge develop</code> в свою ветку',
+                                    'Разрешить конфликты в IDE',
+                                    'Запустить тесты и запушить',
+                                    'Локально — <strong>rebase</strong>, для общего — <strong>merge</strong>'
+                                ]
+                            },
+                            {
+                                category: 'Удаление веток',
+                                color: '#00897b',
+                                items: [
+                                    'После merge в основную',
+                                    '<code>git branch -d feature/xxx</code>',
+                                    '<code>git push origin --delete feature/xxx</code>',
+                                    'В GitHub — кнопка Delete branch'
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  WEB
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'devtools',
+        cat: 'web',
+        title: 'DevTools для тестировщика',
+        subtitle: 'Инструменты разработчика.',
+        date: '17.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">DevTools</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Инструменты разработчика</p>
+            <div style="background:#1a2a3a;padding:6px 8px;border-radius:6px;font-size:0.5rem;color:#80deea;font-family:monospace;">
+                Elements | Console | Network | Application
+            </div>
+        `,
+        sections: [
+            {
+                id: 'devtools-tabs',
+                title: 'DevTools в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Симулятор',
+                        title: 'Интерактивный симулятор DevTools',
+                        subtitle: 'Нажимайте кнопки слева, чтобы вызвать события, и исследуйте результат во вкладках DevTools.',
+                        devtoolsSim: {
+                            profile: {
+                                name: 'Сергей Власов',
+                                email: 'sergey.vlasov@yandex.com',
+                                status: 'Online',
+                                avatarLetter: 'SV'
+                            },
+                            buttons: [
+                                { id: 'fetch', label: 'Получить данные', color: '#2196f3' },
+                                { id: 'error', label: 'Вызвать ошибку', color: '#f44336' },
+                                { id: 'clear', label: 'Очистить логи', color: '#607d8b' }
+                            ],
+                            tabs: [
+                                { id: 'network',     label: 'Network',     info: 'Вкладка Network — шпион за общением браузера с сервером. Она показывает все сетевые запросы.', qa: 'Проверять статусы запросов (200 — успех, 404 — не найдено) и проверять, что при отправке форм уходят правильные данные.' },
+                                { id: 'console',     label: 'Console',     info: 'Вкладка Console показывает ошибки JavaScript и вывод console.log().', qa: 'Проверять красные ошибки. Если есть ошибка в консоли — это баг.' },
+                                { id: 'elements',    label: 'Elements',    info: 'Вкладка Elements показывает HTML и CSS страницы. Здесь можно редактировать стили прямо в браузере.', qa: 'Сравнивать вёрстку с макетом. Проверять размеры, цвета, отступы.' },
+                                { id: 'application', label: 'Application', info: 'Вкладка Application показывает хранилища: Cookies, LocalStorage, SessionStorage.', qa: 'Проверять, что токен авторизации хранится правильно (HttpOnly, Secure).' },
+                                { id: 'sources',     label: 'Sources',     info: 'Вкладка Sources позволяет отлаживать JavaScript: точки остановки, стек вызовов.', qa: 'Используется для отладки автотестов и сложных сценариев.' },
+                                { id: 'performance', label: 'Performance', info: 'Вкладка Performance профилирует производительность страницы.', qa: 'Анализ скорости загрузки, поиск узких мест.' },
+                                { id: 'memory',      label: 'Memory',      info: 'Вкладка Memory показывает потребление памяти.', qa: 'Поиск утечек памяти.' },
+                                { id: 'security',    label: 'Security',    info: 'Вкладка Security показывает информацию о безопасности: HTTPS, сертификаты.', qa: 'Убедиться, что страница использует HTTPS с валидным сертификатом.' }
+                            ],
+                            defaultTab: 'network',
+
+                            // ═══ ДЕФОЛТНЫЙ КОНТЕНТ (когда ничего не нажато) ═══
+                            defaults: {
+                                network:     [],
+                                console:     [],
+                                elements: {
+                                    html: '<header>\n  <h1>Профиль</h1>\n  <p>Сергей Власов</p>\n</header>',
+                                    tree: 'html > body > div#app > header'
+                                },
+                                application: {
+                                    cookies:    ['sessionId=abc123; HttpOnly; Secure'],
+                                    storage:    ['token: xyz987', 'theme: dark'],
+                                    cache:      ['manifest.json', 'app.js']
+                                },
+                                sources: {
+                                    files: [
+                                        'assets/',
+                                        '  css/',
+                                        '    main.css',
+                                        '  js/',
+                                        '    app.js'
+                                    ]
+                                },
+                                performance: {
+                                    bars: [
+                                        { color: '#4caf50', width: '100%', label: 'Loading' },
+                                        { color: '#ffc107', width: '60%',  label: 'Scripting' },
+                                        { color: '#f44336', width: '30%',  label: 'Rendering' }
+                                    ]
+                                },
+                                memory: {
+                                    snapshots: [
+                                        { name: 'Snapshot 1', size: '10.5 MB' },
+                                        { name: 'Snapshot 2', size: '12.8 MB' }
+                                    ]
+                                },
+                                security: {
+                                    status: '✓ This page is secure (valid HTTPS).',
+                                    certificate: {
+                                        subject: 'some-site.com',
+                                        issuer: 'Trusted Certificate Authority',
+                                        validUntil: 'Sep 17, 2026'
+                                    }
+                                }
+                            },
+
+                            // ═══ РЕЗУЛЬТАТЫ ДЕЙСТВИЙ ═══
+                            outputs: {
+                                fetch: {
+                                    network: [
+                                        { status: 200, method: 'GET', url: 'api/data?id=1', time: '124 ms', size: '2.4 KB', type: 'fetch' },
+                                        { status: 200, method: 'GET', url: 'api/profile',   time: '89 ms',  size: '1.1 KB', type: 'fetch' }
+                                    ],
+                                    console: [
+                                        { type: 'log', text: '> Запрос данных... { id: 1 }' },
+                                        { type: 'log', text: '→ GET /api/data?id=1 200 OK (124ms)' },
+                                        { type: 'log', text: '→ GET /api/profile 200 OK (89ms)' },
+                                        { type: 'log', text: '✅ Данные успешно загружены' }
+                                    ],
+                                    elements: {
+                                        html: '<header>\n  <h1>Профиль</h1>\n  <p>Сергей Власов</p>\n  <p>Заказов: 42</p>\n</header>',
+                                        tree: 'html > body > div#app > header (обновлён)'
+                                    },
+                                    application: {
+                                        cookies:    ['sessionId=abc123; HttpOnly; Secure'],
+                                        storage:    ['token: xyz987', 'theme: dark', 'user: anna'],
+                                        cache:      ['manifest.json', 'app.js', 'api/data?id=1 (кэш 5 мин)']
+                                    },
+                                    sources: {
+                                        files: [
+                                            'assets/',
+                                            '  css/',
+                                            '    main.css',
+                                            '  js/',
+                                            '    app.js',
+                                            '    api.js  ← задействован'
+                                        ]
+                                    },
+                                    performance: {
+                                        bars: [
+                                            { color: '#4caf50', width: '100%', label: 'Loading' },
+                                            { color: '#ffc107', width: '45%',  label: 'Scripting' },
+                                            { color: '#f44336', width: '15%',  label: 'Rendering' },
+                                            { color: '#2196f3', width: '70%',  label: 'Network' }
+                                        ]
+                                    },
+                                    memory: {
+                                        snapshots: [
+                                            { name: 'Snapshot 1 (до запроса)', size: '10.5 MB' },
+                                            { name: 'Snapshot 2 (после запроса)', size: '11.2 MB' }
+                                        ]
+                                    },
+                                    security: {
+                                        status: '✓ This page is secure (valid HTTPS).',
+                                        certificate: {
+                                            subject: 'some-site.com',
+                                            issuer: 'Trusted Certificate Authority',
+                                            validUntil: 'Sep 17, 2026'
+                                        },
+                                        note: 'API-запрос выполнен по HTTPS'
+                                    },
+                                    // ⚡ ДАННЫЕ ДЛЯ БЛОКА "Данные от сервера"
+                                    data: {
+                                        userName: 'Сергей Власов',
+                                        userId: 'user-1111',
+                                        email: 'sergey.vlasov@yandex.com',
+                                        orders: 50
+                                    }
+                                },
+
+                                error: {
+                                    network: [
+                                        { status: 500, method: 'POST', url: 'api/orders', time: '312 ms', size: '0.5 KB', type: 'fetch' }
+                                    ],
+                                    console: [
+                                        { type: 'log',   text: '> Запрос данных... { id: 4 }' },
+                                        { type: 'error', text: '❌ POST /api/orders 500 (Internal Server Error)' },
+                                        { type: 'error', text: '❌ Uncaught TypeError: Cannot read properties of undefined (reading \'login\')' },
+                                        { type: 'error', text: '   at payOrder (checkout.js:42)' }
+                                    ],
+                                    elements: {
+                                        html: '<div class="error-banner">\n  Ошибка загрузки данных!\n</div>',
+                                        tree: 'html > body > div#app > div.error-banner'
+                                    },
+                                    application: {
+                                        cookies:    ['sessionId=abc123 (просрочен!)'],
+                                        storage:    ['token: xyz987', 'theme: dark'],
+                                        cache:      []
+                                    },
+                                    sources: {
+                                        files: [
+                                            'assets/',
+                                            '  js/',
+                                            '    app.js',
+                                            '    checkout.js  ← ошибка на строке 42'
+                                        ]
+                                    },
+                                    performance: {
+                                        bars: [
+                                            { color: '#4caf50', width: '30%',  label: 'Loading' },
+                                            { color: '#f44336', width: '100%', label: 'Scripting (ошибка)' },
+                                            { color: '#f44336', width: '80%',  label: 'Rendering' }
+                                        ]
+                                    },
+                                    memory: {
+                                        snapshots: [
+                                            { name: 'Snapshot 1 (до ошибки)', size: '10.5 MB' },
+                                            { name: 'Snapshot 2 (после ошибки)', size: '18.7 MB ⚠️ утечка' }
+                                        ]
+                                    },
+                                    security: {
+                                        status: '✓ This page is secure (valid HTTPS).',
+                                        certificate: {
+                                            subject: 'some-site.com',
+                                            issuer: 'Trusted Certificate Authority',
+                                            validUntil: 'Sep 17, 2026'
+                                        },
+                                        warning: '⚠️ В console обнаружена ошибка — возможна XSS-попытка'
+                                    },
+                                    data: {
+                                        error: 'Ошибка сервера: 500',
+                                        message: 'Не удалось получить данные'
+                                    }
+                                },
+
+                                clear: {
+                                    network:     [],
+                                    console:     [],
+                                    elements:    { html: '', tree: '' },
+                                    application: { cookies: [], storage: [], cache: [] },
+                                    sources:     { files: [] },
+                                    performance: { bars: [] },
+                                    memory:      { snapshots: [] },
+                                    security:    { status: 'Данные очищены', certificate: null },
+                                    data: null
+                                }
+                            }
+                        }
+                    },
+                    {
+                        label: 'Вкладки',
+                        title: 'Основные вкладки',
+                        subtitle: 'Кликните на карточку.',
+                        cards: [
+                            { title: 'Elements', text: 'Просмотр и редактирование HTML и CSS. Проверка размеров, цветов, отступов.' },
+                            { title: 'Console', text: 'Выполнение JavaScript, просмотр ошибок. <code>console.log()</code>.' },
+                            { title: 'Network', text: '⭐ Самая важная вкладка! Все HTTP-запросы, статусы, время, размер.' },
+                            { title: 'Application', text: 'Cookies, LocalStorage, SessionStorage, IndexedDB.' },
+                            { title: 'Performance', text: 'Профилирование, анализ времени загрузки, оптимизация.' },
+                            { title: 'Lighthouse', text: 'Автоматический аудит: Performance, A11Y, SEO.' }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  API И POSTMAN
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'api-postman',
+        cat: 'web',
+        title: 'API и Postman для тестировщика',
+        subtitle: 'Как проверять API руками — от документации до автотестов.',
+        date: '16.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">API + Postman</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Запрос → Ответ → Проверка</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;flex-wrap:wrap;justify-content:center;font-family:monospace;">
+                <span style="background:#4caf50;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">GET</span>
+                <span style="background:#ff9800;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">POST</span>
+                <span style="background:#2196f3;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">PUT</span>
+                <span style="background:#f44336;padding:2px 6px;border-radius:4px;color:#fff;font-weight:700;">DELETE</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'api-postman-main',
+                title: 'API в действии',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+
+                    // ═══ АНИМАЦИЯ ═══
+                    {
+                        label: 'Анимация',
+                        title: 'Путь API-запроса',
+                        subtitle: '🎬 Запустите анимацию — увидите весь цикл тестирования API.',
+                        animatedFlow: {
+                            title: 'API Testing Flow',
+                            hint: '🎬 Документация → Collection → Request → Response → Tests → Automation',
+                            stepDelay: 4000,
+                            nodes: [
+                                {
+                                    label: 'Документация',
+                                    x: 7, y: 50,
+                                    detail: 'Первый шаг — получить <strong>описание API</strong>. Для REST это обычно <strong>Swagger</strong> или <strong>OpenAPI</strong>, для SOAP — <strong>WSDL</strong>. Документация показывает: какие эндпоинты есть, какие параметры, какие статус-коды.',
+                                    example: 'Открыли Swagger UI. Видим: <code>GET /users</code>, <code>POST /users</code>, <code>PUT /users/{id}</code>. У каждого — параметры, примеры запроса и ответа.',
+                                    qa: 'Если документации нет — создаём сами: перехватываем трафик через Charles или DevTools, выписываем эндпоинты в Confluence или Postman.',
+                                    extra: 'Плохая документация = потерянное время. Хорошая документация = половина тестирования сделана.'
+                                },
+                                {
+                                    label: 'Collection',
+                                    x: 22, y: 50,
+                                    detail: 'Создаём <strong>коллекцию в Postman</strong> — набор запросов для тестирования. Группируем по модулям: Users, Auth, Orders.',
+                                    example: 'Создали коллекцию <code>Shopping API</code>. Внутри папки: <code>Auth</code> (login, register), <code>Users</code> (get, update), <code>Orders</code> (create, list).',
+                                    qa: 'Коллекция — это <strong>тест-набор</strong>. Её можно шарить с командой, гонять автоматически через Runner или Newman.',
+                                    extra: 'В Postman есть <strong>переменные</strong> (Environment, Collection). Храните токен, URL, ID — не дублируйте.'
+                                },
+                                {
+                                    label: 'Request',
+                                    x: 38, y: 50,
+                                    detail: 'Формируем запрос: <strong>метод</strong> (GET/POST/PUT/DELETE), <strong>URL</strong>, <strong>Headers</strong> (Content-Type, Authorization), <strong>Body</strong> (для POST/PUT — JSON).',
+                                    example: '<code>POST /api/users</code><br>Headers: <code>Content-Type: application/json</code><br>Body: <code>{"name": "Alex", "email": "alex@mail.ru"}</code>',
+                                    qa: 'Проверяем <strong>обязательные поля</strong>, <strong>типы данных</strong>, <strong>валидацию</strong>. Отправляем и <strong>валидные</strong>, и <strong>невалидные</strong> данные.',
+                                    extra: 'Позитивный тест: валидные данные → 201 Created. Негативный: без email → 400 Bad Request.'
+                                },
+                                {
+                                    label: 'Response',
+                                    x: 54, y: 50,
+                                    detail: 'Получаем ответ от сервера. Смотрим: <strong>статус-код</strong>, <strong>заголовки</strong>, <strong>тело ответа</strong>. Сравниваем с ожидаемым.',
+                                    example: '<code>201 Created</code><br><code>Time: 124 ms</code><br><code>Size: 245 B</code><br>Body: <code>{"id": 42, "name": "Alex"}</code>',
+                                    qa: 'Проверяем: статус-код соответствует, поля в ответе правильные, время ответа адекватное, нет лишних данных.',
+                                    extra: 'В Postman можно <strong>сохранять</strong> примеры ответов — это Examples. Полезно для документации.'
+                                },
+                                {
+                                    label: 'Tests',
+                                    x: 70, y: 50,
+                                    detail: 'Пишем <strong>автопроверки</strong> на JavaScript прямо в Postman. Они запускаются после получения ответа и проверяют: статус, поля, типы, время.',
+                                    example: '<code>pm.test("Status 201", () => {<br>&nbsp;&nbsp;pm.response.to.have.status(201);<br>});</code>',
+                                    qa: 'Автотесты в Postman = <strong>быстрая регрессия</strong>. Прогнали 50 запросов — получили отчёт за минуту.',
+                                    extra: 'Postman показывает <strong>зелёные галочки</strong> для прошедших проверок и красные крестики — для упавших.'
+                                },
+                                {
+                                    label: 'Automation',
+                                    x: 90, y: 50,
+                                    detail: 'Запускаем всю коллекцию через <strong>Collection Runner</strong> или <strong>Newman</strong> (CLI). Newman легко встроить в <strong>CI/CD</strong> — и API-тесты будут гоняться на каждый пуш.',
+                                    example: 'В CI: <code>newman run shopping-api.json -e staging.json</code>. Падает — пайплайн останавливается.',
+                                    qa: 'Идеал: <strong>API-тесты в CI/CD</strong>. Каждый push автоматически проверяет API на соответствие.',
+                                    extra: 'Postman также умеет <strong>мониторы</strong> — запуск коллекции по расписанию (например, каждые 15 минут).'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 7,  y: 50, w: 13 },
+                                { from: 1, to: 2, x: 22, y: 50, w: 14 },
+                                { from: 2, to: 3, x: 38, y: 50, w: 14 },
+                                { from: 3, to: 4, x: 54, y: 50, w: 14 },
+                                { from: 4, to: 5, x: 70, y: 50, w: 18 }
+                            ]
+                        }
+                    },
+
+                    // ═══ POSTMAN СИМУЛЯТОР ═══
+                    {
+                        label: 'Postman',
+                        title: 'Интерактивный симулятор Postman',
+                        subtitle: 'Нажимайте на запросы в левой панели — смотрите, как меняется запрос и ответ.',
+                        postmanSim: {
+                            collections: [
+                                {
+                                    id: 'auth',
+                                    title: 'Auth',
+                                    requests: [
+                                        { id: 'login',  method: 'POST',   label: 'Login',   url: '/api/auth/login' },
+                                        { id: 'logout', method: 'POST',   label: 'Logout',  url: '/api/auth/logout' }
+                                    ]
+                                },
+                                {
+                                    id: 'users',
+                                    title: 'Users',
+                                    requests: [
+                                        { id: 'getUser',    method: 'GET',    label: 'Get User',    url: '/api/users/42' },
+                                        { id: 'createUser', method: 'POST',   label: 'Create User', url: '/api/users' },
+                                        { id: 'updateUser', method: 'PUT',    label: 'Update User', url: '/api/users/42' },
+                                        { id: 'deleteUser', method: 'DELETE', label: 'Delete User', url: '/api/users/42' }
+                                    ]
+                                }
+                            ],
+                            defaultRequest: 'getUser',
+
+                            // ═══ Состояния для каждого запроса ═══
+                            states: {
+                                getUser: {
+                                    method: 'GET',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [
+                                        { key: 'include', value: 'orders', enabled: true }
+                                    ],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true },
+                                        { key: 'Accept',        value: 'application/json',   enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '124 ms',
+                                        size: '312 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Cache-Control', value: 'no-cache' }
+                                        ],
+                                        body: `{
+  "id": 42,
+  "name": "Alex Ivanov",
+  "email": "alex@example.com",
+  "createdAt": "2026-01-15T10:00:00Z",
+  "orders": [
+    { "id": 1, "total": 1990 },
+    { "id": 2, "total": 750 }
+  ]
+}`
+                                    },
+                                    explanation: '✅ <strong>GET</strong> — читаем пользователя. Статус <code>200 OK</code>, поля правильные, есть вложенный массив <code>orders</code> — потому что передали <code>include=orders</code>.'
+                                },
+
+                                login: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/auth/login',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json', enabled: true }
+                                    ],
+                                    body: `{
+  "email": "alex@example.com",
+  "password": "Password123"
+}`,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '256 ms',
+                                        size: '178 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Set-Cookie',   value: 'session=abc123; HttpOnly; Secure' }
+                                        ],
+                                        body: `{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "expiresIn": 3600,
+  "user": {
+    "id": 42,
+    "name": "Alex Ivanov"
+  }
+}`
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — логин. Сервер вернул токен и <code>Set-Cookie</code> с флагом <code>HttpOnly; Secure</code>. Это правильно.'
+                                },
+
+                                logout: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/auth/logout',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 204,
+                                        statusText: 'No Content',
+                                        time: '89 ms',
+                                        size: '0 B',
+                                        headers: [
+                                            { key: 'Set-Cookie', value: 'session=; Max-Age=0; HttpOnly' }
+                                        ],
+                                        body: null
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — logout. Статус <code>204 No Content</code> — правильный ответ на logout. Cookie удалена через <code>Max-Age=0</code>.'
+                                },
+
+                                createUser: {
+                                    method: 'POST',
+                                    url: 'https://api.shop.example.com/api/users',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json',  enabled: true },
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: `{
+  "name": "Maria Petrova",
+  "email": "maria@example.com",
+  "password": "SecurePass456"
+}`,
+                                    response: {
+                                        status: 201,
+                                        statusText: 'Created',
+                                        time: '185 ms',
+                                        size: '145 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' },
+                                            { key: 'Location',     value: '/api/users/43' }
+                                        ],
+                                        body: `{
+  "id": 43,
+  "name": "Maria Petrova",
+  "email": "maria@example.com",
+  "createdAt": "2026-10-16T11:22:00Z"
+}`
+                                    },
+                                    explanation: '✅ <strong>POST</strong> — создание. Статус <code>201 Created</code>, заголовок <code>Location</code> указывает на нового пользователя. Пароль в ответе <strong>не возвращается</strong> — правильно.'
+                                },
+
+                                updateUser: {
+                                    method: 'PUT',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Content-Type', value: 'application/json',  enabled: true },
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: `{
+  "name": "Alex Ivanov",
+  "email": "new-alex@example.com"
+}`,
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        time: '142 ms',
+                                        size: '156 B',
+                                        headers: [
+                                            { key: 'Content-Type', value: 'application/json' }
+                                        ],
+                                        body: `{
+  "id": 42,
+  "name": "Alex Ivanov",
+  "email": "new-alex@example.com",
+  "updatedAt": "2026-10-16T11:25:00Z"
+}`
+                                    },
+                                    explanation: '✅ <strong>PUT</strong> — полное обновление. Email изменился, добавлено поле <code>updatedAt</code>. Так и должно быть.'
+                                },
+
+                                deleteUser: {
+                                    method: 'DELETE',
+                                    url: 'https://api.shop.example.com/api/users/42',
+                                    params: [],
+                                    headers: [
+                                        { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
+                                    ],
+                                    body: null,
+                                    response: {
+                                        status: 204,
+                                        statusText: 'No Content',
+                                        time: '98 ms',
+                                        size: '0 B',
+                                        headers: [],
+                                        body: null
+                                    },
+                                    explanation: '✅ <strong>DELETE</strong> — удаление. Статус <code>204 No Content</code> — тело отсутствует. Повторный DELETE вернёт <code>404 Not Found</code> или <code>204</code> (идемпотентность).'
+                                }
+                            }
+                        }
+                    },
+
+                    // ═══ ТЕОРИЯ — АККОРДЕОН ═══
+                    {
+                        label: 'Теория',
+                        title: 'Основы API',
+                        subtitle: 'Раскрывайте по одному.',
+                        accordion: [
+                            {
+                                title: 'Что такое API и веб-сервис',
+                                body: '<p><strong>API</strong> (Application Programming Interface) — интерфейс, через который программы общаются друг с другом.</p><p><strong>Веб-сервис</strong> — реализация API, работающая по сети (обычно через HTTP).</p><p><strong>REST</strong> — архитектурный стиль, где всё строится на HTTP-методах и URL. Самый популярный.</p><p><strong>SOAP</strong> — старый протокол с XML, ещё жив в банках и госсекторе.</p>'
+                            },
+                            {
+                                title: 'HTTP-методы',
+                                body: '<ul><li><strong>GET</strong> — читать данные (идемпотентный, безопасный)</li><li><strong>POST</strong> — создать ресурс (НЕ идемпотентный)</li><li><strong>PUT</strong> — полностью обновить (идемпотентный)</li><li><strong>PATCH</strong> — частично обновить (не идемпотентный)</li><li><strong>DELETE</strong> — удалить (идемпотентный)</li></ul><p><strong>Идемпотентный</strong> = повторный вызов даёт тот же результат. DELETE два раза подряд — со второго раза вернёт 404/204, но состояние системы то же.</p>'
+                            },
+                            {
+                                title: 'Статус-коды',
+                                body: '<ul><li><strong>1xx</strong> — информация (редко встречаются)</li><li><strong>2xx</strong> — успех: 200 OK, 201 Created, 204 No Content</li><li><strong>3xx</strong> — редирект: 301, 302, 304 Not Modified</li><li><strong>4xx</strong> — ошибка клиента: 400, 401, 403, 404, 422</li><li><strong>5xx</strong> — ошибка сервера: 500, 502, 503, 504</li></ul><p><strong>401 vs 403:</strong> 401 — «ты не авторизован» (нет токена), 403 — «ты авторизован, но не имеешь прав».</p>'
+                            },
+                            {
+                                title: 'JSON — основной формат',
+                                body: '<p><strong>JSON</strong> — текстовый формат обмена данными. Состоит из:</p><ul><li>Объект: <code>{ "key": "value" }</code></li><li>Массив: <code>[1, 2, 3]</code></li><li>Строки — только в двойных кавычках</li><li>Числа — без кавычек</li><li>true / false / null</li></ul><p><strong>Частые ошибки:</strong> одинарные кавычки, лишние запятые, комментарии (их нет в JSON).</p>'
+                            },
+                            {
+                                title: 'Аутентификация vs Авторизация',
+                                body: '<ul><li><strong>Идентификация</strong> — «я кто?» (логин или ID)</li><li><strong>Аутентификация</strong> — «докажи» (пароль, токен) → <code>401</code> при ошибке</li><li><strong>Авторизация</strong> — «что мне можно?» → <code>403</code> при недостатке прав</li></ul><p><strong>Пример:</strong> обычный юзер пытается удалить чужой пост. Токен валиден (аутентификация пройдена), но прав нет (авторизация отклонена). Ответ — <code>403 Forbidden</code>.</p>'
+                            },
+                            {
+                                title: 'Что тестирует QA в API',
+                                body: '<ul><li>✅ <strong>Позитивные</strong> — валидные данные → 200/201/204</li><li>❌ <strong>Негативные</strong> — пустые поля, невалидные типы → 400</li><li>🔒 <strong>Авторизация</strong> — без токена → 401, чужой токен → 401</li><li>🛡 <strong>Права</strong> — юзер делает админское действие → 403</li><li>⏱ <strong>Время ответа</strong> — не больше N секунд</li><li>📝 <strong>Формат ответа</strong> — все поля, правильные типы</li><li>🌐 <strong>Граничные значения</strong> — макс. длина строки, 0, -1</li></ul>'
+                            }
+                        ]
+                    },
+
+                    // ═══ ШПАРГАЛКА ПО POSTMAN ═══
+                    {
+                        label: 'Шпаргалка',
+                        title: 'Горячие клавиши и трюки Postman',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        cards: [
+                            { icon: '⌨️', title: 'Ctrl + Enter',  text: 'Отправить запрос (не убирая руки с клавиатуры).' },
+                            { icon: '📁', title: 'Ctrl + S',      text: 'Сохранить запрос в коллекцию. Не забудьте указать папку!' },
+                            { icon: '🔁', title: 'Ctrl + Alt + R', text: 'Открыть Collection Runner. Запуск всех запросов разом.' },
+                            { icon: '🌍', title: 'Environments',   text: 'Храните {{baseUrl}}, {{token}} в переменных. Меняйте одну переменную — меняется весь сценарий.' },
+                            { icon: '🧪', title: 'Tests',          text: 'Пишите JS-проверки: pm.test("Status 200", () => pm.response.to.have.status(200));' },
+                            { icon: '📥', title: 'Examples',       text: 'Сохраняйте примеры ответов. Полезно для документации и команды.' },
+                            { icon: '🧑‍💼', title: 'Pre-request',   text: 'JS, который выполняется ДО запроса. Можно генерировать timestamp или подпись.' },
+                            { icon: '🔄', title: 'Newman',         text: 'CLI-версия Postman. Запускается в CI/CD: newman run collection.json' }
+                        ]
+                    },
+
+                    // ═══ QUIZ ═══
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-тест по API',
+                        subtitle: 'Выберите правильный ответ.',
+                        quiz: {
+                            question: 'Какой статус-код должен вернуть API, если пользователь пытается удалить чужой пост без прав?',
+                            options: [
+                                { text: '400 Bad Request', correct: false, explain: '400 — синтаксическая ошибка в запросе. Тут запрос корректен, просто нет прав.' },
+                                { text: '401 Unauthorized', correct: false, explain: '401 — нет или неверный токен. Здесь токен валидный, но прав недостаточно.' },
+                                { text: '403 Forbidden', correct: true, explain: 'Правильно! 403 — пользователь авторизован, но не имеет прав на действие. Это ключевое отличие от 401.' },
+                                { text: '404 Not Found', correct: false, explain: '404 — ресурс не найден. Здесь ресурс есть, просто нет прав.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'web-page-structure',
+        cat: 'web',
+        title: 'Структура веб-страницы для тестировщика',
+        subtitle: 'Как устроена HTML-страница: теги, вложенность, назначение.',
+        date: '20.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">HTML-структура</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Из чего состоит веб-страница</p>
+            <div style="background:#1e2a3a;padding:6px 8px;border-radius:6px;font-size:0.5rem;color:#80deea;font-family:monospace;">
+                &lt;head&gt; &lt;body&gt; &lt;header&gt; &lt;main&gt; &lt;footer&gt;
+            </div>
+        `,
+        sections: [
+            {
+                id: 'web-structure-tabs',
+                title: 'Структура веб-страницы',
+                subtitle: 'Наведите курсор на элемент слева, чтобы увидеть его код и описание.',
+                tabs: [
+                    {
+                        label: 'Интерактивная схема',
+                        title: 'Структура веб-страницы для тестировщика',
+                        subtitle: 'Наведите курсор на элемент или структурный блок слева, чтобы увидеть его код и описание.',
+                        webPageSim: {
+                            // ═══ ЛЕВАЯ ПАНЕЛЬ: визуальные блоки ═══
+                            structure: [
+                                {
+                                    id: 'head',
+                                    tag: 'head',
+                                    label: '(невидимая часть)',
+                                    indent: 0,
+                                    items: [
+                                        { text: 'Заголовок вкладки: Структура веб-страницы...' },
+                                        { text: 'Подключены: Стили и шрифты.' }
+                                    ],
+                                    code: { html: [1, 2, 3, 4, 5] },
+                                    explanation: 'Секция <head> содержит метаинформацию о странице: заголовок вкладки, кодировку, подключённые стили и шрифты. Пользователь этого блока не видит, но он критичен для работы страницы.'
+                                },
+                                {
+                                    id: 'body',
+                                    tag: 'body',
+                                    label: '(видимая часть)',
+                                    indent: 0,
+                                    items: [],
+                                    code: { html: [6, 16] },
+                                    explanation: 'Секция <body> содержит всё видимое содержимое страницы: текст, картинки, формы, кнопки. Именно её видит пользователь.'
+                                },
+                                {
+                                    id: 'header',
+                                    tag: 'header',
+                                    label: '',
+                                    indent: 1,
+                                    items: [
+                                        { text: 'Добро пожаловать!', isHeading: true }
+                                    ],
+                                    code: { html: [7, 9] },
+                                    explanation: 'Тег <header> — шапка страницы или раздела. Обычно содержит логотип, навигацию, заголовок H1.'
+                                },
+                                {
+                                    id: 'main',
+                                    tag: 'main',
+                                    label: '',
+                                    indent: 1,
+                                    items: [
+                                        { text: 'Это пример интерактивной веб-страницы. Наведите мышку на любой элемент, чтобы узнать, как он устроен.' },
+                                        {
+                                            type: 'form',
+                                            title: 'Форма обратной связи',
+                                            fields: [
+                                                { label: 'Ваш Email:', inputType: 'text' }
+                                            ],
+                                            button: 'Отправить'
+                                        }
+                                    ],
+                                    code: { html: [10, 15] },
+                                    explanation: 'Тег <main> — основной контент страницы. На странице должен быть только один <main>.'
+                                },
+                                {
+                                    id: 'footer',
+                                    tag: 'footer',
+                                    label: '',
+                                    indent: 1,
+                                    items: [
+                                        { text: '© 2026. Учебный проект.' }
+                                    ],
+                                    code: { html: [14] },
+                                    explanation: 'Тег <footer> — подвал страницы или раздела. Обычно содержит копирайт, контакты, ссылки на политики.'
+                                }
+                            ],
+
+                            // ═══ ПРАВАЯ ПАНЕЛЬ: код в 3 форматах ═══
+                            codeTabs: [
+                                {
+                                    id: 'html',
+                                    label: 'HTML',
+                                    lines: [
+                                        { num: 1,  code: '<!DOCTYPE html>', comment: 'Объявляет тип документа' },
+                                        { num: 2,  code: '<html lang="ru">', comment: 'Корневой элемент, lang="ru" указывает язык' },
+                                        { num: 3,  code: '  <head>', comment: 'Невидимая мета-информация' },
+                                        { num: 4,  code: '    <meta charset="UTF-8">', comment: 'Кодировка символов' },
+                                        { num: 5,  code: '    <title>Структура веб-страницы</title>', comment: 'Заголовок вкладки' },
+                                        { num: 6,  code: '  </head>', comment: '' },
+                                        { num: 7,  code: '  <body>', comment: 'Видимое содержимое' },
+                                        { num: 8,  code: '    <header>', comment: '"Шапка" сайта' },
+                                        { num: 9,  code: '      <h1>Добро пожаловать!</h1>', comment: '' },
+                                        { num: 10, code: '    </header>', comment: '' },
+                                        { num: 11, code: '    <main>', comment: 'Основной контент' },
+                                        { num: 12, code: '      <p>Это пример...</p>', comment: '' },
+                                        { num: 13, code: '      <div>', comment: 'Контейнер' },
+                                        { num: 14, code: '        <h3>Форма...</h3>', comment: '' },
+                                        { num: 15, code: '        <label for="email-input">...</label>', comment: '' },
+                                        { num: 16, code: '        <input type="email" id="email-input">', comment: '' },
+                                        { num: 17, code: '        <button>Отправить</button>', comment: '' },
+                                        { num: 18, code: '      </div>', comment: '' },
+                                        { num: 19, code: '    </main>', comment: '' },
+                                        { num: 20, code: '    <footer>', comment: 'Подвал сайта' },
+                                        { num: 21, code: '      <p>© 2026. Учебный проект.</p>', comment: '' },
+                                        { num: 22, code: '    </footer>', comment: '' },
+                                        { num: 23, code: '  </body>', comment: '' },
+                                        { num: 24, code: '</html>', comment: '' }
+                                    ]
+                                },
+                                {
+                                    id: 'css',
+                                    label: 'CSS',
+                                    lines: [
+                                        { num: 1, code: '/* Стили для страницы */', comment: '' },
+                                        { num: 2, code: 'body {', comment: '' },
+                                        { num: 3, code: '  font-family: Arial, sans-serif;', comment: '' },
+                                        { num: 4, code: '  margin: 0;', comment: '' },
+                                        { num: 5, code: '}', comment: '' }
+                                    ]
+                                },
+                                {
+                                    id: 'js',
+                                    label: 'JavaScript',
+                                    lines: [
+                                        { num: 1, code: '// Логика страницы', comment: '' },
+                                        { num: 2, code: 'document.querySelector("button")', comment: '' },
+                                        { num: 3, code: '  .addEventListener("click", () => {', comment: '' },
+                                        { num: 4, code: '    alert("Форма отправлена!");', comment: '' },
+                                        { num: 5, code: '  });', comment: '' }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'cache',
+        cat: 'web',
+        title: 'Кэш браузера и сервера',
+        subtitle: 'Что кэшируется и зачем.',
+        date: '17.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Кэш</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Клиентский и серверный</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.5rem;">
+                <div style="background:#e3f2fd;padding:4px;border-radius:4px;color:#1565c0;text-align:center;">Клиент</div>
+                <div style="background:#fff8e1;padding:4px;border-radius:4px;color:#e65100;text-align:center;">Сервер</div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'cache-tabs',
+                title: 'Кэш в деталях',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Виды',
+                        title: 'Виды кэша',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        compare: [
+                            {
+                                title: 'Клиентский кэш (браузера)',
+                                question: 'Где: в браузере пользователя',
+                                text: '<strong>Хранит:</strong> HTML, CSS, JS, изображения, шрифты.<br><br><strong>Ускоряет:</strong> повторную загрузку страниц.<br><br><strong>Управляется:</strong> заголовками Cache-Control, Expires, ETag.<br><br><strong>Проблема:</strong> если обновить картинку на сервере, у пользователя может остаться старая. Нужна правильная инвалидация.'
+                            },
+                            {
+                                title: 'Серверный кэш',
+                                question: 'Где: на сервере или CDN',
+                                text: '<strong>Хранит:</strong> результаты тяжёлых запросов к БД, сгенерированные страницы, ответы API.<br><br><strong>Снижает:</strong> нагрузку на сервер, ускоряет отклик.<br><br><strong>Управляется:</strong> через Redis, Memcached.<br><br><strong>Проблема:</strong> если данные обновились, но кэш не сброшен — пользователь видит устаревшее.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Заголовки',
+                        title: 'Как управлять кэшем',
+                        subtitle: 'Раскрывайте.',
+                        reveal: [
+                            {
+                                question: 'Cache-Control',
+                                answer: '<strong>Cache-Control</strong> — главный заголовок для управления кэшированием.<br><br><strong>Значения:</strong><ul><li><code>no-store</code> — не кэшировать вообще</li><li><code>no-cache</code> — кэшировать, но каждый раз проверять у сервера</li><li><code>max-age=3600</code> — кэшировать 1 час</li><li><code>public</code> — можно кэшировать на любом уровне (CDN)</li><li><code>private</code> — только в браузере пользователя</li></ul>'
+                            },
+                            {
+                                question: 'ETag',
+                                answer: '<strong>ETag</strong> — уникальный идентификатор версии ресурса.<br><br><strong>Как работает:</strong><ol><li>Сервер отправляет ETag вместе с ответом</li><li>При следующем запросе браузер отправляет <code>If-None-Match: &lt;etag&gt;</code></li><li>Если ресурс не изменился — сервер вернёт <code>304 Not Modified</code> и не будет передавать тело</li></ol>'
+                            },
+                            {
+                                question: 'Last-Modified',
+                                answer: '<strong>Last-Modified</strong> — дата последнего изменения ресурса.<br><br><strong>Как работает:</strong> аналогично ETag, но менее точно (секундная точность).<br><br><strong>Пример:</strong> браузер отправляет <code>If-Modified-Since</code>. Если ресурс не менялся после этой даты — сервер вернёт 304.'
+                            },
+                            {
+                                question: 'Как инвалидируется кэш?',
+                                answer: '<strong>Способы инвалидации:</strong><ul><li><strong>Query-параметр:</strong> <code>style.css?v=2</code> — при изменении v браузер скачает заново</li><li><strong>Cache busting в имени:</strong> <code>style.abc123.css</code></li><li><strong>Сброс Cache-Control</strong> при деплое</li><li><strong>Purge CDN</strong> через API</li></ul>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Анимация',
+                        title: 'Путь кэша',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Как работает кэш браузера',
+                            hint: '🎬 запрос → ответ → кэш → повтор → 304',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Запрос 1',
+                                    x: 15, y: 30,
+                                    detail: '<strong>1. Первый запрос.</strong> Браузер запрашивает ресурс. Кэша ещё нет.',
+                                    example: 'Пользователь открыл страницу. Браузер запрашивает <code>style.css</code>. Кэша нет — идёт полноценный запрос.',
+                                    qa: 'Проверка: DevTools → Network → Size для ресурса показывает реальный размер (не из кэша).',
+                                    extra: 'Первый заход всегда медленнее.'
+                                },
+                                {
+                                    label: 'Ответ',
+                                    x: 40, y: 30,
+                                    detail: '<strong>2. Сервер отвечает.</strong> Отдаёт файл + заголовки кэширования.',
+                                    example: 'Сервер вернул CSS + заголовки:<br><code>Cache-Control: max-age=3600</code><br><code>ETag: "abc123"</code>',
+                                    qa: 'Проверка: заголовки кэширования правильные? Для приватных данных — <code>no-store</code>.',
+                                    extra: 'Без заголовков кэширования браузер не будет кэшировать.'
+                                },
+                                {
+                                    label: 'Кэш',
+                                    x: 65, y: 30,
+                                    detail: '<strong>3. Браузер кэширует.</strong> Файл сохраняется в disk cache.',
+                                    example: 'CSS сохранён в кэш браузера. Будет использован при следующих запросах.',
+                                    qa: 'Проверка: DevTools → Network → Size показывает <code>(disk cache)</code> для повторного запроса.',
+                                    extra: 'Может быть memory cache (RAM) или disk cache (SSD).'
+                                },
+                                {
+                                    label: 'Запрос 2',
+                                    x: 90, y: 30,
+                                    detail: '<strong>4. Повторный запрос (через 5 мин).</strong> Браузер отправляет <code>If-None-Match</code>.',
+                                    example: 'Браузер отправляет запрос с заголовком <code>If-None-Match: "abc123"</code>.',
+                                    qa: 'Проверка: кэш не истёк (max-age=3600). Заголовок отправляется.',
+                                    extra: 'Экономим трафик — не тянем весь файл.'
+                                },
+                                {
+                                    label: '304',
+                                    x: 65, y: 70,
+                                    detail: '<strong>5. Сервер отвечает 304 Not Modified.</strong> Тело НЕ передаётся.',
+                                    example: '<code>HTTP/1.1 304 Not Modified</code> — сервер говорит: «Ресурс не изменился, используй свой кэш».',
+                                    qa: 'Проверка: DevTools → Network → статус 304, размер 0.',
+                                    extra: 'Экономится 99% трафика. Особенно важно для мобильных.'
+                                },
+                                {
+                                    label: 'Инвалидация',
+                                    x: 40, y: 70,
+                                    detail: '<strong>6. Инвалидация (через час).</strong> Кэш устарел (max-age истёк).',
+                                    example: 'Прошёл час. Браузер снова делает полноценный запрос. Сервер отдаёт свежий файл.',
+                                    qa: 'Проверка: после инвалидации пользователь видит актуальную версию.',
+                                    extra: 'На деплое используем cache busting: <code>style.css?v=2</code> — сразу инвалидация.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 90, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 62, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Что вернёт сервер?',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Ресурс не изменился, браузер отправил If-None-Match с ETag. Что вернёт сервер?',
+                            options: [
+                                { text: '200 OK с полным телом', correct: false, explain: '200 — если сервер решит отдать ресурс заново. Но при совпадении ETag так не делают — это тратит трафик.' },
+                                { text: '304 Not Modified', correct: true, explain: 'Правильно! 304 — сервер говорит: «Ресурс не изменился, используй свой кэш». Тело ответа пустое, экономится трафик и время.' },
+                                { text: '404 Not Found', correct: false, explain: '404 — когда ресурс не найден. Здесь ресурс есть, просто он не изменился.' }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Симулятор',
+                        title: 'Интерактивный симулятор кэша',
+                        subtitle: 'Нажимайте кнопки — смотрите, как работает кэширование.',
+                        cacheSim: {
+                            buttons: [
+                                { id: 'request1',     label: '🔵 Запрос 1 (первый)',    color: '#2196f3' },
+                                { id: 'request2',     label: '🟢 Запрос 2 (через 5 мин)', color: '#4caf50' },
+                                { id: 'invalidate',   label: '🟠 Инвалидировать кэш',    color: '#ff9800' },
+                                { id: 'reset',        label: '⚪ Сбросить всё',           color: '#607d8b' }
+                            ],
+                            states: {
+                                initial: {
+                                    cacheStatus: 'empty',
+                                    request: null,
+                                    response: null,
+                                    cacheInfo: null,
+                                    explanation: 'Нажмите «Запрос 1», чтобы начать. Кэш пуст — будет полноценная загрузка.'
+                                },
+                                request1: {
+                                    cacheStatus: 'filled',
+                                    request: {
+                                        method: 'GET',
+                                        url: '/style.css',
+                                        headers: [
+                                            { key: 'Host:', value: 'example.com' },
+                                            { key: 'User-Agent:', value: 'Chrome/120' },
+                                            { key: 'Accept:', value: 'text/css' }
+                                        ]
+                                    },
+                                    response: {
+                                        status: 200,
+                                        statusText: 'OK',
+                                        headers: [
+                                            { key: 'Cache-Control:', value: 'max-age=3600' },
+                                            { key: 'ETag:', value: '"abc123"' },
+                                            { key: 'Content-Length:', value: '2456' },
+                                            { key: 'Content-Type:', value: 'text/css' }
+                                        ],
+                                        body: '/* CSS styles */\nbody { margin: 0; }'
+                                    },
+                                    cacheInfo: {
+                                        status: 'filled',
+                                        size: '2.4 KB',
+                                        expiresIn: '3600 сек',
+                                        etag: '"abc123"'
+                                    },
+                                    explanation: 'Первый запрос: кэш был пуст, сервер вернул файл + заголовки кэширования. Теперь файл сохранён в кэше браузера.'
+                                },
+                                request2: {
+                                    cacheStatus: 'valid',
+                                    request: {
+                                        method: 'GET',
+                                        url: '/style.css',
+                                        headers: [
+                                            { key: 'Host:', value: 'example.com' },
+                                            { key: 'If-None-Match:', value: '"abc123"' }
+                                        ]
+                                    },
+                                    response: {
+                                        status: 304,
+                                        statusText: 'Not Modified',
+                                        headers: [
+                                            { key: 'ETag:', value: '"abc123"' },
+                                            { key: 'Cache-Control:', value: 'max-age=3600' }
+                                        ],
+                                        body: null
+                                    },
+                                    cacheInfo: {
+                                        status: 'valid',
+                                        size: '0 KB (из кэша)',
+                                        expiresIn: '3595 сек',
+                                        etag: '"abc123"'
+                                    },
+                                    explanation: 'Второй запрос: браузер отправил If-None-Match с ETag. Сервер вернул 304 Not Modified — тело ответа НЕ передавалось. Экономия трафика и времени!'
+                                },
+                                invalidate: {
+                                    cacheStatus: 'empty',
+                                    request: null,
+                                    response: null,
+                                    cacheInfo: {
+                                        status: 'empty',
+                                        size: '—',
+                                        expiresIn: '—',
+                                        etag: '—'
+                                    },
+                                    explanation: 'Кэш инвалидирован (например, задеплоили новую версию). При следующем запросе сервер вернёт свежий файл со статусом 200.'
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'cookies',
+        cat: 'web',
+        title: 'Cookies и хранилища браузера',
+        subtitle: 'Что где хранится.',
+        date: '17.09.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Cookies / Storage</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Что где хранится</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.5rem;">
+                <div style="background:#e3f2fd;padding:4px;border-radius:4px;color:#1565c0;text-align:center;"><strong>Cookies</strong></div>
+                <div style="background:#e8f5e9;padding:4px;border-radius:4px;color:#2e7d32;text-align:center;"><strong>Storage</strong></div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'cookies-tabs',
+                title: 'Хранилища браузера',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Сравнение',
+                        title: 'Cookies vs LocalStorage vs SessionStorage',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        compare: [
+                            {
+                                title: 'Cookies',
+                                question: 'Отправляются на сервер с каждым запросом',
+                                text: '<strong>Размер:</strong> до 4 КБ.<br><br><strong>Особенность:</strong> автоматически отправляются с каждым HTTP-запросом.<br><br><strong>Типы:</strong><ul><li>Сессионные — удаляются при закрытии браузера</li><li>Постоянные — с датой истечения</li></ul><strong>Флаги:</strong> HttpOnly, Secure, SameSite для безопасности.'
+                            },
+                            {
+                                title: 'LocalStorage',
+                                question: 'Локально, бессрочно',
+                                text: '<strong>Размер:</strong> до 5–10 МБ.<br><br><strong>Особенность:</strong> не отправляется на сервер автоматически.<br><br><strong>Используется для:</strong><ul><li>Настроек темы</li><li>Языка</li><li>Кэша для офлайна</li></ul><strong>Удаляется:</strong> только вручную или через JS.'
+                            },
+                            {
+                                title: 'SessionStorage',
+                                question: 'Только на время сессии',
+                                text: '<strong>Размер:</strong> до 5 МБ.<br><br><strong>Особенность:</strong> удаляется при закрытии вкладки.<br><br><strong>Используется для:</strong><ul><li>Временного сохранения формы</li><li>Данных между страницами в рамках одного визита</li></ul><strong>Не сохраняется:</strong> между сессиями.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Флаги Cookies',
+                        title: 'Что делает каждый атрибут',
+                        subtitle: 'Раскрывайте.',
+                        reveal: [
+                            {
+                                question: 'HttpOnly',
+                                answer: '<strong>HttpOnly</strong> — куки недоступны через JavaScript.<br><br><strong>Защита от XSS:</strong> если злоумышленник внедрит скрипт, он не украдёт куку с токеном.<br><br><strong>Проверка:</strong> DevTools → Application → Cookies → колонка HttpOnly.<br><br><strong>ОБЯЗАТЕЛЕН для токенов авторизации.</strong>'
+                            },
+                            {
+                                question: 'Secure',
+                                answer: '<strong>Secure</strong> — куки передаются только по HTTPS.<br><br><strong>Защита:</strong> от перехвата в открытом HTTP.<br><br><strong>Проверка:</strong> DevTools → Application → Cookies → колонка Secure.<br><br><strong>На проде:</strong> обязателен. На dev с HTTP-протоколом — может отсутствовать.'
+                            },
+                            {
+                                question: 'SameSite',
+                                answer: '<strong>SameSite</strong> — контроль того, какие сайты могут отправлять куки с запросами.<br><br><strong>Значения:</strong><ul><li><code>Strict</code> — куки только для своего домена</li><li><code>Lax</code> — по умолчанию для переходов по ссылкам</li><li><code>None</code> — для всех (требует Secure)</li></ul><strong>Защита от CSRF-атак.</strong>'
+                            },
+                            {
+                                question: 'Expires / Max-Age',
+                                answer: '<strong>Expires</strong> — конкретная дата и время, когда кука удалится.<br><br><strong>Max-Age</strong> — сколько секунд кука живёт от момента установки.<br><br><strong>Если оба не указаны:</strong> кука сессионная — удаляется при закрытии браузера.<br><br><strong>Пример:</strong> <code>Max-Age=3600</code> — кука живёт 1 час.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Безопасность',
+                        title: 'Что проверять при тестировании',
+                        subtitle: 'Раскрывайте.',
+                        accordion: [
+                            {
+                                title: 'Где хранить токен авторизации?',
+                                body: '<p><strong>Лучший вариант:</strong> <code>HttpOnly Secure Cookie</code>.<br><br><strong>Почему:</strong> недоступен через JS (защита от XSS) и передаётся только по HTTPS.<br><br><strong>Хуже:</strong> LocalStorage.<ul><li>✅ Удобно</li><li>❌ Доступен через JS — уязвим для XSS</li></ul><strong>Если используется LocalStorage:</strong> минимум нужен строгий CSP (Content Security Policy).</p>'
+                            },
+                            {
+                                title: 'Что должно удаляться при logout?',
+                                body: '<p><strong>При выходе из аккаунта должны быть очищены:</strong><ul><li>Токены из Cookies</li><li>Токены из LocalStorage</li><li>Данные сессии из SessionStorage</li><li>Кэш пользовательских данных</li></ul><strong>Как проверить:</strong> после logout закройте вкладку и зайдите снова. Вы НЕ должны оставаться авторизованными.</p>'
+                            },
+                            {
+                                title: 'Что можно кэшировать?',
+                                body: '<p><strong>Можно:</strong><ul><li>Статические ресурсы (картинки, CSS, шрифты)</li><li>Публичные данные (справочники, курсы валют)</li></ul><strong>❌ НЕЛЬЗЯ:</strong><ul><li>Персональные данные (номера карт, паспорта)</li><li>Токены и пароли</li><li>Приватные страницы (личный кабинет)</li></ul><strong>Проверка:</strong> после logout персональные данные не должны остаться в кэше.</p>'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Анимация',
+                        title: 'Путь Cookies',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Жизненный цикл Cookie',
+                            hint: '🎬 логин → установка → использование → удаление',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Логин',
+                                    x: 15, y: 30,
+                                    detail: '<strong>1. Логин.</strong> Пользователь вводит email и пароль.',
+                                    example: 'Пользователь ввёл <code>user@mail.ru</code> и пароль. Нажал «Войти».',
+                                    qa: 'Проверяет: передаётся ли пароль по HTTPS (не в открытом виде).',
+                                    extra: 'Никогда не логируем пароли в открытом виде.'
+                                },
+                                {
+                                    label: 'Проверка',
+                                    x: 40, y: 30,
+                                    detail: '<strong>2. Сервер проверяет.</strong> Сверяет данные с БД. Если ок — генерирует токен.',
+                                    example: 'Сервер нашёл пользователя, проверил хэш пароля, сгенерировал JWT-токен.',
+                                    qa: 'Проверяет: используется ли хэширование (bcrypt, argon2).',
+                                    extra: 'Токен — это идентификатор сессии. Может быть JWT, session ID или opaque token.'
+                                },
+                                {
+                                    label: 'Set-Cookie',
+                                    x: 65, y: 30,
+                                    detail: '<strong>3. Сервер отправляет Set-Cookie.</strong> В заголовке ответа.',
+                                    example: '<code>Set-Cookie: token=xxx; HttpOnly; Secure; SameSite=Lax; Max-Age=3600</code>',
+                                    qa: 'Проверяет флаги: HttpOnly, Secure, SameSite. Без них — уязвимости.',
+                                    extra: '⚠️ Без HttpOnly — XSS-атака украдёт токен. Без Secure — перехват по HTTP.'
+                                },
+                                {
+                                    label: 'Хранение',
+                                    x: 90, y: 30,
+                                    detail: '<strong>4. Браузер сохраняет.</strong> Cookie кладётся в хранилище.',
+                                    example: 'Cookies для домена example.com сохранены. Их можно увидеть в DevTools → Application → Cookies.',
+                                    qa: 'Проверка: DevTools → Application → Cookies → найти токен → проверить флаги.',
+                                    extra: 'Если флагов нет — баг безопасности.'
+                                },
+                                {
+                                    label: 'Отправка',
+                                    x: 65, y: 70,
+                                    detail: '<strong>5. Отправляется с каждым запросом.</strong> Браузер автоматически добавляет Cookie в заголовок.',
+                                    example: '<code>Cookie: token=xxx</code> — автоматически добавляется к каждому запросу.',
+                                    qa: 'Проверка: DevTools → Network → Request Headers → Cookie.',
+                                    extra: 'Сервер проверяет токен на каждом запросе. Если токен просрочен — 401.'
+                                },
+                                {
+                                    label: 'Logout',
+                                    x: 40, y: 70,
+                                    detail: '<strong>6. Удаление при logout.</strong> Сервер отправляет <code>Set-Cookie: token=; Max-Age=0</code>.',
+                                    example: 'После logout кука удалена. Также очищаем LocalStorage, SessionStorage.',
+                                    qa: 'Проверка: после logout закрыть вкладку и открыть снова — пользователь НЕ авторизован.',
+                                    extra: 'Также нужно удалить токен на сервере (отозвать).'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 90, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 62, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Где безопаснее?',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Где безопаснее всего хранить токен авторизации?',
+                            options: [
+                                { text: 'LocalStorage', correct: false, explain: 'LocalStorage доступен через JavaScript. Если злоумышленник внедрит скрипт (XSS), он украдёт токен.' },
+                                { text: 'HttpOnly Secure Cookie', correct: true, explain: 'Правильно! HttpOnly запрещает доступ через JS, Secure — передаёт только по HTTPS. Это самый безопасный способ хранения токенов.' },
+                                { text: 'SessionStorage', correct: false, explain: 'SessionStorage тоже доступен через JS, как и LocalStorage — уязвим для XSS.' }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Симулятор',
+                        title: 'Интерактивный Cookie Inspector',
+                        subtitle: 'Включайте и выключайте флаги cookie — смотрите, как меняются заголовки и безопасность.',
+                        cookiesSim: {
+                            flags: [
+                                {
+                                    id: 'httpOnly',
+                                    label: 'HttpOnly',
+                                    desc: 'Cookie недоступна через JavaScript',
+                                    default: true,
+                                    explainOn: '✅ Cookie защищена от XSS. Скрипт на странице не сможет прочитать <code>document.cookie</code>.',
+                                    explainOff: '❌ УЯЗВИМОСТЬ! Любой скрипт (включая внедрённый XSS) сможет украсть cookie через <code>document.cookie</code>.',
+                                    affects: 'xss'
+                                },
+                                {
+                                    id: 'secure',
+                                    label: 'Secure',
+                                    desc: 'Cookie передаётся только по HTTPS',
+                                    default: true,
+                                    explainOn: '✅ Cookie не утечёт при подключении по HTTP. Работает только по HTTPS.',
+                                    explainOff: '❌ УЯЗВИМОСТЬ! При HTTP-запросе cookie передаётся в открытом виде — можно перехватить.',
+                                    affects: 'mitm'
+                                },
+                                {
+                                    id: 'sameSite',
+                                    label: 'SameSite=Lax',
+                                    desc: 'Cookie отправляется только с запросами с того же сайта',
+                                    default: true,
+                                    explainOn: '✅ Cookie не отправляется при переходах с других сайтов. Защита от CSRF.',
+                                    explainOff: '❌ УЯЗВИМОСТЬ! Cookie отправится с запросом с любого сайта. CSRF-атака возможна.',
+                                    affects: 'csrf'
+                                }
+                            ],
+                            token: 'auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+                            threats: [
+                                { id: 'xss',  name: 'XSS-атака (кража cookie)',   icon: '👤', active: false },
+                                { id: 'mitm', name: 'MITM-перехват (HTTP)',        icon: '📡', active: false },
+                                { id: 'csrf', name: 'CSRF-атака (подделка запроса)', icon: '🎭', active: false }
+                            ],
+                            requestBase: 'GET /api/profile HTTP/1.1',
+                            responseBase: 'HTTP/1.1 200 OK',
+                            headerCookiesKey: 'Cookie:',
+                            headerSetCookieKey: 'Set-Cookie:'
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    // ═══════════════════════════════════════════════════════
+    //  ТЕСТ-ДИЗАЙН
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'equivalence',
+        cat: 'testdesign',
+        title: 'Классы эквивалентности',
+        subtitle: 'Как сократить число тестов без потери качества.',
+        date: '14.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Классы эквивалентности</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Группы значений</p>
+            <div style="display:flex;gap:3px;font-size:0.45rem;flex-wrap:wrap;">
+                <span style="background:#a5d6a7;padding:3px 6px;border-radius:4px;color:#1a4a1a;">18-54</span>
+                <span style="background:#ef9a9a;padding:3px 6px;border-radius:4px;color:#6a1a1a;">&lt;18</span>
+                <span style="background:#ef9a9a;padding:3px 6px;border-radius:4px;color:#6a1a1a;">&gt;54</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'equivalence-tabs',
+                title: 'Техника в деталях',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Интерактивная шкала',
+                        title: 'Эквивалентное разбиение',
+                        subtitle: 'Выберите метод, затем кликните по точке или цветному классу',
+                        scale: {
+                            title: 'Поле «Возраст»: 0 – 120 лет',
+                            methods: {
+                                2: {
+                                    name: 'Метод 2-х значений',
+                                    description: 'Проверяем саму границу и значение сразу за ней.'
+                                },
+                                3: {
+                                    name: 'Метод 3-х значений',
+                                    description: 'Проверяем значение до границы, саму границу и значение после.'
+                                }
+                            },
+                            minVal: -20,
+                            maxVal: 140,
+                            segments: [
+                                { from: -20, to: 0,   color: '#ef5350', label: 'Невалидные (< 0)',     desc: 'Отрицательные значения. Система должна отклонить.' },
+                                { from: 0,   to: 18,  color: '#66bb6a', label: 'Дети (0–17)',            desc: 'Валидный класс. Все значения внутри обрабатываются одинаково.' },
+                                { from: 18,  to: 55,  color: '#42a5f5', label: 'Взрослые (18–54)',       desc: 'Валидный класс. Основной сценарий использования.' },
+                                { from: 55,  to: 120, color: '#ffca28', label: 'Пенсионеры (55–120)',    desc: 'Валидный класс. Особые условия (скидки и т.п.).' },
+                                { from: 120, to: 140, color: '#ef5350', label: 'Невалидные (> 120)',     desc: 'Слишком большие значения. Система должна отклонить.' }
+                            ],
+                            points: [
+                                { value: -1,  label: '-1',  type: 'invalid',  desc: 'Значение перед нижней границей. Ожидаем ошибку.' },
+                                { value: 0,   label: '0',   type: 'valid',    desc: 'Нижняя граница валидного диапазона. Принимается.' },
+                                { value: 1,   label: '1',   type: 'valid',    desc: 'Первое значение после нижней границы. Принимается.' },
+                                { value: 17,  label: '17',  type: 'boundary', desc: 'Верхняя граница класса «Дети». Принимается.' },
+                                { value: 18,  label: '18',  type: 'boundary', desc: 'Нижняя граница класса «Взрослые». Принимается.' },
+                                { value: 54,  label: '54',  type: 'boundary', desc: 'Верхняя граница класса «Взрослые». Принимается.' },
+                                { value: 55,  label: '55',  type: 'boundary', desc: 'Нижняя граница класса «Пенсионеры». Принимается.' },
+                                { value: 120, label: '120', type: 'valid',    desc: 'Верхняя граница валидного диапазона. Принимается.' },
+                                { value: 121, label: '121', type: 'invalid',  desc: 'Значение после верхней границы. Ожидаем ошибку.' }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Суть',
+                        title: 'Что это',
+                        subtitle: 'Раскрывайте.',
+                        accordion: [
+                            { title: 'Идея метода', body: '<p><strong>Что это:</strong> метод тест-дизайна, который делит все возможные значения на <strong>классы эквивалентности</strong>.</p><p><strong>Внутри класса</strong> система ведёт себя одинаково.</p><p><strong>Правило:</strong> проверяем <strong>по одному значению</strong> из каждого класса.</p>' },
+                            { title: 'Позитивные классы', body: '<p>0–17 (дети), 18–54 (взрослые), 55–120 (пенсионеры).</p><p>Берём по одному значению: 10, 30, 70.</p>' },
+                            { title: 'Негативные классы', body: '<p>&lt;0, &gt;120, буквы, спецсимволы, пустое значение.</p><p>Ожидаем ошибку.</p>' },
+                            { title: 'Экономия', body: '<p>121 значение → 5 тестов. Экономия 96%.</p>' }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Мини-проверка',
+                        subtitle: 'Выберите ответ.',
+                        quiz: {
+                            question: 'Поле «Возраст» принимает 0–120. Сколько классов эквивалентности достаточно?',
+                            options: [
+                                { text: '2', correct: false, explain: 'Мало. Нужны позитивные и негативные классы.' },
+                                { text: '3–4', correct: true, explain: 'Правильно! Валидные (0–120, можно разбить) + отрицательные + слишком большие + нечисловые.' },
+                                { text: '121', correct: false, explain: 'Это все возможные значения. Мы как раз сокращаем их до классов.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'boundary',
+        cat: 'testdesign',
+        title: 'Анализ граничных значений',
+        subtitle: 'Где чаще всего прячутся баги.',
+        date: '14.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Граничные значения</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Точки перехода</p>
+            <div style="background:#e3f2fd;padding:6px;border-radius:6px;font-size:0.5rem;color:#1565c0;text-align:center;font-family:monospace;">
+                -1 | 0 | 1 … 119 | 120 | 121
+            </div>
+        `,
+        sections: [
+            {
+                id: 'boundary-tabs',
+                title: 'Границы в деталях',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Анимация',
+                        title: 'Метод 3-х значений',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Проверка границы 17',
+                            hint: '🎬 16 → 17 → 18',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'До границы',
+                                    x: 15, y: 30,
+                                    detail: '<strong>16 — перед границей.</strong> Валидное значение, близко к верхней границе. Должно приниматься.',
+                                    example: 'Пользователь 16 лет. Система должна принять это значение (входит в класс 0–17).',
+                                    qa: 'QA проверяет: «пограничное» валидное значение работает.',
+                                    extra: '⚠️ Часто разработчики пишут <code>&lt;</code> вместо <code>&lt;=</code> — тогда 16 не пройдёт. Это баг.'
+                                },
+                                {
+                                    label: 'Граница',
+                                    x: 50, y: 30,
+                                    detail: '<strong>17 — сама граница.</strong> Максимальное валидное значение. Должно приниматься.',
+                                    example: 'Пользователь 17 лет. Это крайнее значение класса 0–17.',
+                                    qa: 'QA проверяет именно границу. Самый частый источник багов.',
+                                    extra: 'Пример бага: система отклоняет 17, хотя это валидное значение. Значит, граница обрабатывается неверно.'
+                                },
+                                {
+                                    label: 'После',
+                                    x: 85, y: 30,
+                                    detail: '<strong>18 — после границы.</strong> Первое значение следующего класса. Для класса 0–17 оно невалидное — но система принимает его как часть класса 18–54.',
+                                    example: 'Пользователь 18 лет. Система принимает его — это уже взрослый. Разница с 17 всего 1 год — но класс другой.',
+                                    qa: 'QA проверяет: переход между классами работает корректно.',
+                                    extra: 'Если 17 отклонён, но 18 принят — граница работает правильно. Если 18 тоже отклонён — баг в логике.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 18, y: 30, w: 30 },
+                                { from: 1, to: 2, x: 53, y: 30, w: 30 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Метод 2-х',
+                        title: 'Метод 2-х значений',
+                        subtitle: 'Граница и следующее за ней.',
+                        steps: {
+                            title: 'Для границы 17',
+                            stages: [
+                                {
+                                    title: '17 — сама граница',
+                                    text: 'Максимальное валидное значение. Должно приниматься.<br><br><strong>Пример:</strong> пользователь 17 лет — система принимает.'
+                                },
+                                {
+                                    title: '18 — за границей',
+                                    text: 'Первое значение следующего класса. Для класса 0–17 — невалидное. Но как часть класса 18–54 — валидное.<br><br><strong>Пример:</strong> пользователь 18 лет — система принимает.'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Метод 3-х',
+                        title: 'Метод 3-х значений',
+                        subtitle: 'Перед, на, после границы.',
+                        steps: {
+                            title: 'Для границы 17',
+                            stages: [
+                                {
+                                    title: '16 — перед границей',
+                                    text: 'Валидное значение. Должно приниматься.<br><br><strong>Проверяет:</strong> что все значения внутри класса работают.'
+                                },
+                                {
+                                    title: '17 — сама граница',
+                                    text: 'Максимальное валидное значение. Должно приниматься.<br><br><strong>Проверяет:</strong> что граница включена в валидный диапазон.'
+                                },
+                                {
+                                    title: '18 — после границы',
+                                    text: 'Первое значение следующего класса. Проверяет переход между классами.<br><br><strong>Проверяет:</strong> что система правильно переходит к следующему классу.'
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Для границы 0',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Метод 3-х значений для границы 0 в диапазоне 0–120. Какие значения нужно проверить?',
+                            options: [
+                                { text: '-1, 0, 1', correct: true, explain: 'Правильно! Метод 3-х значений проверяет значение до границы (-1), саму границу (0) и значение после (1). Это полное покрытие границы.' },
+                                { text: '0, 60, 120', correct: false, explain: 'Это проверка по классам эквивалентности, а не по границам. Здесь нет проверки именно границы.' },
+                                { text: '-1, 121', correct: false, explain: 'Это только крайние невалидные значения. Не хватает самой границы и значений рядом с ней.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'tours',
+        cat: 'testdesign',
+        title: 'Исследовательские туры Уиттакера',
+        subtitle: 'Методика системного поиска багов.',
+        date: '08.01.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Туры Уиттакера</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">7 туров по городу</p>
+            <div style="background:#e8f5e9;padding:6px;border-radius:6px;font-size:0.5rem;color:#2e7d32;">
+                🏛 🎢 🗺 🏙 🌋
+            </div>
+        `,
+        sections: [
+            {
+                id: 'tours-main',
+                title: 'Интерактивная шпаргалка: Исследовательские туры Уиттакера',
+                subtitle: 'Систематизируйте поиск багов с помощью метафоры путешествия по городу.',
+                sidebar: {
+                    intro: {
+                        title: 'Что это такое?',
+                        content: `
+                            <p><strong>Методика туров Уиттакера</strong> — это подход к исследовательскому тестированию, который предлагает взглянуть на приложение как на незнакомый город, а на тестировщика — как на туриста.</p>
+                            <p>У туриста есть <strong>ограниченное время</strong> и <strong>конкретная цель</strong> (тур), что помогает сфокусироваться и не отвлекаться.</p>
+
+                            <div class="cs-tours__hint">
+                                <strong>Как пользоваться методикой:</strong>
+                                <ol>
+                                    <li><strong>Выберите тур.</strong> Определите, какой «район» и какую «цель» вы хотите исследовать.</li>
+                                    <li><strong>Поставьте таймер.</strong> Ограничьте сессию (30, 60 или 90 минут), чтобы сохранить концентрацию.</li>
+                                    <li><strong>Следуйте миссии.</strong> Строго придерживайтесь цели тура, не отвлекаясь на другие проверки.</li>
+                                    <li><strong>Фиксируйте результаты.</strong> Записывайте найденные баги, вопросы и идеи для будущих тестов.</li>
+                                </ol>
+                            </div>
+                        `
+                    },
+                    districts: [
+                        {
+                            id: 'business',
+                            label: 'Деловой центр',
+                            icon: '',
+                            description: 'Фокус на главных, ключевых функциях, ради которых пользователи используют приложение.',
+                            tours: [
+                                {
+                                    title: 'Денежный тур (The Money Tour)',
+                                    color: '#2e7d32',
+                                    goal: 'Проследить за всем, что связано с деньгами.',
+                                    example: 'В интернет-магазине пройти путь от выбора тарифа, ввода данных карты, получения чека до проверки списания и отображения подписки в профиле.',
+                                    attention: 'Ошибки округления, неверные расчёты налогов, проблемы с интеграцией платёжных систем, некорректные статусы оплаты.'
+                                },
+                                {
+                                    title: 'Тур FedEx (The FedEx Tour)',
+                                    color: '#2e7d32',
+                                    goal: 'Проследить за жизненным циклом данных.',
+                                    example: 'В таск-трекере создать задачу, добавить к ней описание и файлы, назначить исполнителя, изменить статус, оставить комментарий и, наконец, архивировать её.',
+                                    attention: 'Потеря данных при сохранении, некорректное отображение после редактирования, проблемы с правами доступа к данным, ошибки при удалении.'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'historical',
+                            label: 'Исторический район',
+                            icon: '',
+                            description: 'Фокус на старой функциональности, унаследованном коде и местах, где раньше были баги.',
+                            tours: [
+                                {
+                                    title: 'Тур по плохому району (The Bad-Neighborhood Tour)',
+                                    color: '#e65100',
+                                    goal: 'Проверить области, где исторически было найдено много багов.',
+                                    example: 'Если в прошлом модуль отчётов часто падал из-за больших объёмов данных, целенаправленно сгенерировать несколько сложных и объёмных отчётов.',
+                                    attention: 'Регрессионные баги, повторение старых ошибок, появление новых проблем в нестабильных модулях.'
+                                },
+                                {
+                                    title: 'Музейный тур (The Museum Tour)',
+                                    color: '#e65100',
+                                    goal: 'Проверить старые функции, которые давно не менялись.',
+                                    example: 'Найти в системе функцию «Экспорт в PDF», которая была сделана 5 лет назад, и проверить, как она работает с новыми типами данных, появившимися в системе недавно.',
+                                    attention: 'Проблемы совместимости со свежими данными, устаревший интерфейс, несоответствие текущей логике приложения.'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'entertainment',
+                            label: 'Развлекательный район',
+                            icon: '',
+                            description: 'Фокус на второстепенных, «косметических» функциях, которые делают приложение удобнее.',
+                            tours: [
+                                {
+                                    title: 'Тур глухого переулка (The Back Alley Tour)',
+                                    color: '#6a1b9a',
+                                    goal: 'Исследовать самые редко используемые и неочевидные функции.',
+                                    example: 'В профиле пользователя найти настройки кастомизации уведомлений для редкого события и проверить все их комбинации.',
+                                    attention: 'Забытые разработчиками ошибки, неработающие ссылки, устаревшая логика.'
+                                },
+                                {
+                                    title: 'Тур полуночника (The All-Nighter Tour)',
+                                    color: '#6a1b9a',
+                                    goal: 'Проверить работу системы с минимальным количеством данных.',
+                                    example: 'Зарегистрировать нового пользователя и сразу перейти на дашборд. Проверить, как выглядят пустые графики, списки задач и уведомления.',
+                                    attention: '«Заглушки» вместо данных, ошибки деления на ноль, поехавшая вёрстка на пустых элементах.'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'tourist',
+                            label: 'Туристический район',
+                            icon: '',
+                            description: 'Быстрые, поверхностные проверки, чтобы «отметиться» в разных частях функциональности.',
+                            tours: [
+                                {
+                                    title: 'Тур супермодели (The Supermodel Tour)',
+                                    color: '#00897b',
+                                    goal: 'Оценить только внешний вид, не вникая в логику.',
+                                    example: 'Открыть приложение на разных устройствах (десктоп, планшет, мобильный) и быстро прокликать все основные экраны, обращая внимание только на вёрстку: отступы, шрифты, цвета, выравнивание.',
+                                    attention: 'Визуальные баги, проблемы адаптивности, несоответствие макетам, опечатки.'
+                                },
+                                {
+                                    title: 'Тур шотландского паба (The Scottish Pub Tour)',
+                                    color: '#00897b',
+                                    goal: 'Выбрать одну очень маленькую фичу и «глубоко копнуть» именно в ней.',
+                                    example: 'В форме регистрации сосредоточиться только на поле ввода email и проверить его со всеми возможными валидными и невалидными значениями, нажимая Enter вместо кнопки, вставляя текст из буфера и т.д.',
+                                    attention: 'Ошибки валидации, проблемы с обработкой частных случаев, неожиданное поведение UI-элементов.'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'hotel',
+                            label: 'Отельный район',
+                            icon: '',
+                            description: 'Проверка вспомогательных функций, которые часто игнорируются.',
+                            tours: [
+                                {
+                                    title: 'Тур, отменённый из-за дождя (The Rained-Out Tour)',
+                                    color: '#1565c0',
+                                    goal: 'Представить, что основная функция недоступна. Что ещё можно делать в приложении?',
+                                    example: 'Основной дашборд с задачами «упал». Проверить, можно ли в это время зайти в настройки профиля, поменять пароль, прочитать документацию или перейти в раздел помощи.',
+                                    attention: 'Доступность и работоспособность второстепенных разделов, когда основные не работают.'
+                                },
+                                {
+                                    title: 'Тур домоседа (The Couch Potato Tour)',
+                                    color: '#1565c0',
+                                    goal: 'Пройти основной сценарий, принимая все значения по умолчанию.',
+                                    example: 'При установке программы нажимать только «Далее», «ОК», «Принять», не меняя никаких галочек и настроек.',
+                                    attention: 'Корректность стандартных настроек, логичность поведения «из коробки».'
+                                }
+                            ]
+                        },
+                        {
+                            id: 'bad',
+                            label: 'Захудалый район',
+                            icon: '',
+                            description: 'Целенаправленные попытки сломать приложение, используя негативные сценарии.',
+                            tours: [
+                                {
+                                    title: 'Тур саботажника (The Saboteur Tour)',
+                                    color: '#c62828',
+                                    goal: 'Ввести в систему максимально некорректные, экстремальные и вредоносные данные.',
+                                    example: 'В поле для загрузки аватара попробовать загрузить файл .exe размером 2 ГБ, документ Word с макросами или картинку с XSS-скриптом в названии.',
+                                    attention: 'Уязвимости, падение сервера, некорректная обработка ошибок, проблемы безопасности.'
+                                },
+                                {
+                                    title: 'Обсессивно-компульсивный тур (The Obsessive-Compulsive Tour)',
+                                    color: '#c62828',
+                                    goal: 'Повторять одно и то же действие много раз подряд.',
+                                    example: 'Быстро кликнуть на кнопку «Сохранить» 20 раз. Попробовать создать 500 одинаковых задач за короткое время.',
+                                    attention: 'Ошибки, связанные с «состоянием гонки» (race condition), дублирование данных, снижение производительности, зависание интерфейса.'
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+    {
+        id: 'heuristics',
+        cat: 'base',
+        title: 'Эвристики и мнемоники',
+        subtitle: 'Подсказки для поиска багов.',
+        date: '08.01.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Эвристики</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">SFDIPOT, CIDTESTD</p>
+            <div style="background:#f3e5f5;padding:6px;border-radius:6px;font-size:0.5rem;color:#6a1b9a;text-align:center;">
+                <strong>SFDIPOT</strong>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'heuristics-main',
+                title: 'Интерактивная шпаргалка: Эвристики и Мнемоники в тестировании',
+                subtitle: 'Ваш карманный гид для генерации тест-идей и принятия взвешенных решений.',
+                sidebar: {
+                    intro: {
+                        title: 'Что это такое?',
+                        content: `
+                            <p><strong>Эвристики</strong> — это простые правила или ментальные «короткие пути», основанные на опыте, которые помогают быстро решать проблемы. В тестировании это подсказки, помогающие решить, что и как проверять.</p>
+                            <p><strong>Мнемоники</strong> — это частный случай эвристик, созданный для лёгкого запоминания. Обычно это аббревиатура или фраза, где каждая буква или слово напоминает об определённом аспекте проверки.</p>
+                        `
+                    },
+                    groups: [
+                        {
+                            id: 'product-analysis',
+                            label: 'Анализ продукта и планирование',
+                            color: '#1565c0',
+                            mnemonics: [
+                                { title: 'SFDIPOT', goal: 'Структурно изучить продукт.', items: 'Structure, Function, Data, Interfaces, Platform, Operations, Time.' },
+                                { title: 'HEENA', goal: 'Проверка сложных продуктов.', items: 'History, Explore, Experiment, Note-taking, Analysis.' },
+                                { title: 'GO DaRE=M', goal: 'Составление тест-плана.', items: 'Goals, Outputs, Drivers and Resources, Experience, Motivations.' },
+                                { title: 'CIDTESTD', goal: 'Высокоуровневое планирование.', items: 'Customers, Information, Developer relations, Team, Equipment & tools, Schedule, Test items, Deliverables.' },
+                                { title: 'SCAMPER', goal: 'Генерация креативных идей о продукте.', items: 'Substitute, Combine, Adapt, Modify, Put to another use, Eliminate, Reverse.' }
+                            ]
+                        },
+                        {
+                            id: 'api-testing',
+                            label: 'Тестирование API',
+                            color: '#2e7d32',
+                            mnemonics: [
+                                { title: 'ICE OVER MAD!', goal: 'Комплексная проверка API-эндпоинта.', items: 'Interfaces, Components, Endpoints, Outputs, Variables, Exceptions, Responses, Methods, Arguments, Data.' },
+                                { title: 'PAPAS BE @ SFO', goal: 'Проверка функциональности через API.', items: 'Print, Accessibility, Performance, Alterations, Security, Business rules, Errors, @, Scale, Functional, Operability.' },
+                                { title: 'DEED HELP GC', goal: 'Ещё один чек-лист для API.', items: 'Data, Experience, Environment, Dependencies, Header, Errors, Logic, Parameters, Groups, Cookies.' },
+                                { title: 'DVLA PC', goal: 'Поддерживающие проверки API.', items: 'Data, Validation, Limits, Authentication, Performance, Cookies.' }
+                            ]
+                        },
+                        {
+                            id: 'mobile-testing',
+                            label: 'Тестирование мобильных приложений',
+                            color: '#6a1b9a',
+                            mnemonics: [
+                                { title: 'I SLICED UP FUN', goal: 'Всестороннее тестирование мобильного приложения.', items: 'Inputs, Store, Location, Interactions, Communications, Ergonomics, Data, Usability, Platform, Function, Updates, Network.' },
+                                { title: 'COP FLUNG GUN', goal: 'Ещё один чек-лист для мобильного тестирования.', items: 'Connectivity, Orientation, Performance, Functions, Location, User Scenarios, Network, Gestures, Guidelines, Updates, Notifications.' },
+                                { title: 'MOBILE APP TESTING', goal: 'Детальный чек-лист для мобильных приложений.', items: 'Multi-touch, Orientation, Battery, Interruption, Location, Ergonomics, Audio, Performance, Persistence, Telephony, External hardware, Storage, Touch ID, In-app purchases, Network, Gestures.' },
+                                { title: 'PAOLO', goal: 'Тестирование смены ориентации экрана.', items: 'Portrait, And, Other, Landscape, Orientations.' }
+                            ]
+                        },
+                        {
+                            id: 'requirements',
+                            label: 'Анализ требований и User Story',
+                            color: '#e65100',
+                            mnemonics: [
+                                { title: 'INVEST', goal: 'Проверка качества User Story.', items: 'Independent, Negotiable, Valuable, Estimable, Small, Testable.' },
+                                { title: 'CIRCUS MATTA', goal: 'Ревью пользовательских историй и требований.', items: 'Clear, Independent, Realistic, Concise, Unambiguous, Solution-Free, Measurable, Achievable, Testable, Threadable, Abstract.' },
+                                { title: 'W5HE (WWWWWH/KE)', goal: 'Глубокий анализ требований через вопросы.', items: 'Who, What, When, Where, Why, How, Examples.' }
+                            ]
+                        },
+                        {
+                            id: 'quality',
+                            label: 'Качество и атрибуты системы',
+                            color: '#00897b',
+                            mnemonics: [
+                                { title: 'CRUSSPIC STMPL', goal: 'Оценка качественных характеристик системы.', items: 'Capability, Reliability, Usability, Security, Scalability, Performance, Installability, Compatibility, Supportability, Testability, Maintainability, Portability, Localizability.' },
+                                { title: 'CAN I USE THIS', goal: 'Тестирование Usability.', items: 'Compliance, Accessibility, Neatness, Intuitive, User-friendly, Simple, Effective, Thoughtful, Helpful, Intelligent, Satisfying.' },
+                                { title: 'SPIES', goal: 'Тестирование локализации.', items: 'Surface, Punctuation, Icons, Error messages, Special characters.' }
+                            ]
+                        },
+                        {
+                            id: 'process',
+                            label: 'Процесс тестирования',
+                            color: '#c62828',
+                            mnemonics: [
+                                { title: 'RCRCRC', goal: 'Умный выбор тестов для регрессии.', items: 'Recent, Core, Risky, Configuration, Repaired, Chronic.' },
+                                { title: 'DUFFSSCRA', goal: 'Напоминание о техниках тест-дизайна.', items: 'Domain, User-Cases, Flow, Function, State, Scenario, Combinations, Risk, Automatable.' },
+                                { title: 'FCC CUTS VIDS', goal: 'Идеи для исследовательских туров.', items: 'Function, Combination, Complex, Continuous, User, Testing, Scenario, Variation, Interrupt, Data, Stress.' },
+                                { title: 'SLIME', goal: 'Приоритезация тестов.', items: 'Security, Legal, Image, Mission, Economic.' },
+                                { title: 'MUTII', goal: 'Общая эвристика для поиска тест-идей.', items: 'Market, Users, Tasks, Information, Implementation.' }
+                            ]
+                        },
+                        {
+                            id: 'performance',
+                            label: 'Тестирование производительности',
+                            color: '#4a148c',
+                            mnemonics: [
+                                { title: 'CCD IS EARI', goal: 'Основные принципы нагрузочного тестирования.', items: 'Concurrent users, Complexity, Data, Interruptions, Software, Environment, Architecture, Resources, Instrumentation.' },
+                                { title: 'IVECTRAS', goal: 'Классификация видов нагрузочных тестов.', items: 'Individual, Volume, Endurance, Concurrency, Throughput, Ramp, Abuse, Spike.' },
+                                { title: 'FIBLOTS', goal: 'Построение модели нагрузки.', items: 'Frequent, Intensive, Business critical, Legal, Obvious, Technically risky, Stakeholder mandated.' }
+                            ]
+                        },
+                        {
+                            id: 'reports',
+                            label: 'Баг-репорты, отчёты и оракулы',
+                            color: '#00695c',
+                            mnemonics: [
+                                { title: 'RIMGEA', goal: 'Создание качественного баг-репорта.', items: 'Reproduce, Isolate, Maximize, Generalize, Externalize, And Say It Clearly.' },
+                                { title: 'MCOASTER', goal: 'Ещё один чек-лист для баг-репорта.', items: 'Mission, Coverage, Oracles, Actions, Status, Time, Environment, Risk.' },
+                                { title: 'FAILURE', goal: 'Проверка качества сообщений об ошибках.', items: 'Force, Appropriate, Informative, Light, User-centric, Recoverable, Elegant.' },
+                                { title: 'FEW HICCUPS', goal: 'Тестовые оракулы (Как понять, что это баг?).', items: 'Familiarity, Explainability, World, History, Image, Claims, Comparable Products, User\'s Desires, Product, Statutes.' },
+                                { title: 'PROOF', goal: 'Написание отчёта после сессионного тестирования.', items: 'Past, Results, Obstacles, Outlook, Feelings.' }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ]
+    },
+
+    
+    // ═══════════════════════════════════════════════════════
+    //  ФУНКЦИОНАЛЬНОЕ
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'smoke-sanity-regression',
+        cat: 'functional',
+        title: 'Smoke → Sanity → Regression',
+        subtitle: 'Как выбрать тесты при выпуске новой версии.',
+        date: '08.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Smoke / Sanity / Regression</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Порядок тестирования</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;">
+                <span style="background:#f0d5b8;padding:2px 5px;border-radius:4px;color:#6a3a1a;">Smoke</span>
+                <span>→</span>
+                <span style="background:#c5d8ef;padding:2px 5px;border-radius:4px;color:#1a3a5a;">Sanity</span>
+                <span>→</span>
+                <span style="background:#f0c5c5;padding:2px 5px;border-radius:4px;color:#6a1a1a;">Regression</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'ssr-tabs',
+                title: 'Порядок тестирования',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Анимация',
+                        title: 'Порядок тестирования после релиза билда',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Что тестировать после релиза билда',
+                            hint: '🎬 билд → Smoke → Sanity → Regression → Отчёт → Релиз',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Новый билд',
+                                    x: 12, y: 30,
+                                    detail: '<strong>Новый билд.</strong> Разработчики собрали новую версию. Она выложена на тестовое окружение.',
+                                    example: 'Разработчики закончили спринт. Билд v1.5.0 залит на dev-стенд. QA начинает проверку.',
+                                    qa: 'QA получает уведомление и приступает к проверке. Смотрит релизные заметки: что изменилось?',
+                                    extra: 'Не тестируем старые билды. Всегда актуальная версия.'
+                                },
+                                {
+                                    label: 'Smoke',
+                                    x: 37, y: 30,
+                                    detail: '<strong>1. Smoke Test (5–10 минут).</strong> Проверяем самое критичное: работает ли приложение вообще?',
+                                    example: 'Открыть приложение? Залогиниться? Открыть главную? Добавить товар в корзину? Оплатить?',
+                                    qa: 'Если Smoke упал — <strong>дальнейшее тестирование бессмысленно</strong>. Сообщаем разработчикам, они фиксят, присылают новый билд.',
+                                    extra: 'Smoke — стоп-фактор. Не прошедший Smoke билд не тестируется.'
+                                },
+                                {
+                                    label: 'Sanity',
+                                    x: 62, y: 30,
+                                    detail: '<strong>2. Sanity Test (30 минут).</strong> Точечная проверка исправленных багов и связанных областей.',
+                                    example: 'В билде исправили 5 багов. Sanity-тесты: проверяем эти 5 багов + связанные функции, которые могли сломаться.',
+                                    qa: 'QA делает ретест (проверяет, что баги исправлены) + связанные проверки.',
+                                    extra: 'Sanity — быстрая, точечная. Не путать с полной регрессией.'
+                                },
+                                {
+                                    label: 'Regression',
+                                    x: 87, y: 30,
+                                    detail: '<strong>3. Regression Test (2–8 часов).</strong> Полный прогон всех тест-кейсов, связанных с изменениями.',
+                                    example: 'Прогоняем регрессионный набор: 200 тестов. Цель — убедиться, что новое не сломало старое.',
+                                    qa: 'QA запускает регрессию. Часто автоматизированную — экономит время.',
+                                    extra: 'Регрессия — обязательна перед каждым релизом.'
+                                },
+                                {
+                                    label: 'Отчёт',
+                                    x: 62, y: 70,
+                                    detail: '<strong>4. Отчёт о тестировании.</strong> Считаем статистику: сколько тестов прошло, сколько багов, какие критичные.',
+                                    example: '«Из 200 тестов: 190 passed, 10 failed. Найдено 15 багов: 2 Critical, 5 Major, 8 Minor. Релиз возможен после фикса Critical».',
+                                    qa: 'QA готовит отчёт. На его основе менеджмент решает: релизить или нет.',
+                                    extra: 'Отчёт — итог всей тестовой работы. Формализованный документ.'
+                                },
+                                {
+                                    label: 'Релиз',
+                                    x: 37, y: 70,
+                                    detail: '<strong>5. Релиз в продакшн.</strong> Если всё ок — релизим. Проводим smoke-тест уже на проде.',
+                                    example: 'Релиз выкатили на прод. QA делает smoke: работает ли основное? Мониторинг метрик: ошибки, скорость.',
+                                    qa: 'Smoke на проде + мониторинг в течение 24 часов.',
+                                    extra: 'Если в проде критический баг — откат (rollback) или срочный хотфикс.'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 15, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 40, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 65, y: 30, w: 20 },
+                                { from: 3, to: 4, x: 87, y: 34, w: 0, r: 90 },
+                                { from: 4, to: 5, x: 59, y: 70, w: 0, r: 180 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'Smoke упал',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Smoke-тест упал: приложение не запускается. Что делать?',
+                            options: [
+                                { text: 'Перейти к Regression', correct: false, explain: 'Нет смысла! Если билд не запускается, регрессия тоже не пройдёт. Сначала нужно, чтобы разработчики починили.' },
+                                { text: 'Остановить тестирование и вернуть билд разработчикам', correct: true, explain: 'Правильно! Если Smoke не прошёл — дальнейшее тестирование бессмысленно. Сообщаем разработчикам, они фиксят, присылают новый билд.' },
+                                { text: 'Написать баг и продолжить', correct: false, explain: 'Баг написать надо, но продолжать тестирование нельзя — билд нерабочий.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
+    {
+        id: 'retest-regression',
+        cat: 'functional',
+        title: 'Ретест и регрессия',
+        subtitle: 'Что делать после фикса бага.',
+        date: '08.11.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">Ретест и регрессия</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Порядок проверки</p>
+            <div style="display:flex;gap:3px;font-size:0.42rem;">
+                <span style="background:#b8d9c8;padding:2px 5px;border-radius:4px;color:#1a4a3a;">Re-test</span>
+                <span>→</span>
+                <span style="background:#f0c5c5;padding:2px 5px;border-radius:4px;color:#6a1a1a;">Regression</span>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'retest-tabs',
+                title: 'Ретест и регрессия',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    {
+                        label: 'Анимация',
+                        title: 'Порядок после фикса бага',
+                        subtitle: '🎬 Запустите анимацию.',
+                        animatedFlow: {
+                            title: 'Путь проверки исправленного бага',
+                            hint: '🎬 Fixed → Re-test → Regression → Verified',
+                            stepDelay: 3500,
+                            nodes: [
+                                {
+                                    label: 'Баг исправлен',
+                                    x: 12, y: 30,
+                                    detail: '<strong>Fixed.</strong> Разработчик исправил баг. Код задеплоен на тестовое окружение. Баг переведён в статус Fixed.',
+                                    example: 'Разработчик исправил функцию <code>payOrder()</code> — убрал двойное списание. Задеплоил на dev-стенд. Написал QA: «Проверь».',
+                                    qa: 'QA получает уведомление. Открывает баг-репорт, готовится выполнить шаги воспроизведения.',
+                                    extra: 'Не начинаем ретест, пока разработчик не сообщил о фиксе.'
+                                },
+                                {
+                                    label: 'Re-test',
+                                    x: 37, y: 30,
+                                    detail: '<strong>1. Ретест (Re-test).</strong> Берём баг-репорт, выполняем шаги воспроизведения. Проверяем: баг больше не воспроизводится?',
+                                    example: 'Шаги из баг-репорта: 1. Войти. 2. Добавить пиццу. 3. Оплатить. 4. Проверить баланс. QA выполняет — сумма списывается один раз. ✅',
+                                    qa: 'Если баг не воспроизводится — <strong>переходим к регрессии</strong>. Если воспроизводится — возвращаем баг разработчику с комментарием.',
+                                    extra: 'Ретест — точечная проверка. Только этот баг. Не больше.'
+                                },
+                                {
+                                    label: 'Regression',
+                                    x: 62, y: 30,
+                                    detail: '<strong>2. Регрессия (Regression).</strong> Запускаем связанные тесты: проверяем, что фикс не сломал соседние функции.',
+                                    example: 'Чинили оплату → проверяем корзину, доставку, историю заказов, возвраты. Все связанные функции должны работать.',
+                                    qa: 'QA прогоняет регрессионный набор для оплаты и связанных модулей. Если что-то сломалось — новый баг.',
+                                    extra: 'Регрессия — широкая проверка. Цель — убедиться, что фикс не сломал старое.'
+                                },
+                                {
+                                    label: 'Verified',
+                                    x: 87, y: 30,
+                                    detail: '<strong>3. Verified.</strong> Если ретест и регрессия прошли — переводим баг в статус Verified.',
+                                    example: 'Ретест ✅, регрессия ✅. QA меняет статус бага на Verified. В комментарии: «Баг исправлен, регрессия пройдена».',
+                                    qa: 'Проверяет: точно ли всё работает? Нет ли смежных проблем? Затем переводит в Verified.',
+                                    extra: 'Финальный шаг: после релиза баг закроется (Closed).'
+                                }
+                            ],
+                            arrows: [
+                                { from: 0, to: 1, x: 15, y: 30, w: 20 },
+                                { from: 1, to: 2, x: 40, y: 30, w: 20 },
+                                { from: 2, to: 3, x: 65, y: 30, w: 20 }
+                            ]
+                        }
+                    },
+                    {
+                        label: 'Сравнение',
+                        title: 'Ретест vs Регрессия',
+                        subtitle: 'Кликните на карточку — она подсветится.',
+                        compare: [
+                            {
+                                title: 'Ретест (Re-test)',
+                                question: 'Проверка конкретного бага',
+                                text: '<strong>Что делаем:</strong> повторно выполняем шаги из баг-репорта.<br><br><strong>Цель:</strong> убедиться, что конкретный баг исправлен.<br><br><strong>Объём:</strong> только один баг. Точечная проверка.<br><br><strong>Когда:</strong> сразу после того, как разработчик сообщил о фиксе.<br><br><strong>Пример:</strong> был баг «кнопка Оплатить не работает». Проверяем: работает ли кнопка Оплатить.'
+                            },
+                            {
+                                title: 'Регрессия (Regression)',
+                                question: 'Проверка, что фикс не сломал старое',
+                                text: '<strong>Что делаем:</strong> прогоняем тесты для связанных функций.<br><br><strong>Цель:</strong> убедиться, что фикс не сломал что-то другое.<br><br><strong>Объём:</strong> широкий. Все связанные функции.<br><br><strong>Когда:</strong> после успешного ретеста.<br><br><strong>Пример:</strong> чинили кнопку Оплатить → проверяем корзину, доставку, историю заказов.'
+                            }
+                        ]
+                    },
+                    {
+                        label: 'Проверь себя',
+                        title: 'С чего начать?',
+                        subtitle: 'Мини-проверка.',
+                        quiz: {
+                            question: 'Разработчик исправил баг. С чего вы начнёте проверку?',
+                            options: [
+                                { text: 'С регрессии', correct: false, explain: 'Регрессия идёт ВТОРОЙ. Сначала убеждаемся, что баг действительно исправлен — это ретест.' },
+                                { text: 'С ретеста конкретного бага', correct: true, explain: 'Правильно! Сначала точечно проверяем, что баг исправлен. Если да — запускаем регрессию, чтобы убедиться, что ничего не сломалось.' },
+                                { text: 'Со Smoke-теста', correct: false, explain: 'Smoke делают при получении нового билда, а не после конкретного фикса.' }
+                            ]
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+];
+
+
+// ═══════════════════════════════════════════════════════════
+//  СОСТОЯНИЕ
+// ═══════════════════════════════════════════════════════════
+let csActiveCategory = 'all';
+let csCurrentSheetId = null;
+let csCurrentSectionId = null;
+
+
+// ═══════════════════════════════════════════════════════════
+//  ЕДИНЫЙ ПОРЯДОК ВКЛАДОК
+// ═══════════════════════════════════════════════════════════
+function getTabPriority(label) {
+    const l = (label || '').toLowerCase().trim();
+    const order = {
+        'анимация': 1,
+        'схема': 2,
+        'классический вид': 3,
+        'доска': 4,
+        'граф': 5,
+        'симулятор': 6,
+        'интерактивный граф': 7,
+        'сравнение': 10,
+        'список': 20,
+        'раскрывайте': 21,
+        'суть': 22,
+        'цикл задачи': 30,
+        'методы': 40,
+        'проверь себя': 99
+    };
+    return order[l] ?? 50;
+}
+
+function sortTabs(tabs) {
+    if (!Array.isArray(tabs)) return tabs;
+    return [...tabs].sort((a, b) => {
+        const pa = getTabPriority(a.label);
+        const pb = getTabPriority(b.label);
+        if (pa !== pb) return pa - pb;
+        return 0;
+    });
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  КАТАЛОГ
+// ═══════════════════════════════════════════════════════════
+
+function getCsCatLabel(key) {
+    const labels = {
+        'base': 'База',
+        'classification': 'Классификация',
+        'documentation': 'Документация',
+        'web': 'Тестирование web',
+        'processes': 'Процессы',
+        'testdesign': 'Тест-дизайн'
+    };
+    return labels[key] || key;
+}
+
+function renderCsCatalog() {
+    const grid = document.getElementById('csGrid');
+    if (!grid) return;
+
+    const filtered = csActiveCategory === 'all'
+        ? CHEATSHEETS
+        : CHEATSHEETS.filter(c => c.cat === csActiveCategory);
+
+    if (filtered.length === 0) {
+        grid.innerHTML = '<p class="cs-empty">В этой категории пока нет шпаргалок</p>';
+        return;
+    }
+
+    grid.innerHTML = filtered.map(item => `
+        <div class="cs-card" data-sheet-id="${item.id}">
+            <div class="cs-card__preview">
+                <span class="cs-card__badge">${getCsCatLabel(item.cat)}</span>
+                <div class="cs-card__preview-inner">${item.preview || ''}</div>
+            </div>
+            <div class="cs-card__body">
+                <h3 class="cs-card__title">${item.title}</h3>
+                <div class="cs-card__date">${item.date}</div>
+            </div>
+        </div>
+    `).join('');
+
+    grid.querySelectorAll('.cs-card').forEach(cardEl => {
+        cardEl.addEventListener('click', function() {
+            openCsDetail(this.dataset.sheetId);
+        });
+    });
+}
+
+function setupCsFilters() {
+    const container = document.getElementById('csFilters');
+    if (!container) return;
+
+    container.addEventListener('click', (e) => {
+        const chip = e.target.closest('.cs-chip');
+        if (!chip) return;
+
+        container.querySelectorAll('.cs-chip').forEach(c => c.classList.remove('cs-chip--active'));
+        chip.classList.add('cs-chip--active');
+
+        csActiveCategory = chip.dataset.cat || 'all';
+        renderCsCatalog();
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ДЕТАЛЬНЫЙ ПРОСМОТР
+// ═══════════════════════════════════════════════════════════
+
+function openCsDetail(sheetId) {
+    const sheet = CHEATSHEETS.find(c => c.id === sheetId);
+    if (!sheet) return;
+
+    csCurrentSheetId = sheetId;
+
+    document.getElementById('csCatalogView').style.display = 'none';
+    document.getElementById('csDetailView').style.display = 'block';
+
+    const sidebar = document.getElementById('csSidebar');
+    sidebar.innerHTML = `
+        <div class="cs-sidebar__title">${sheet.title}</div>
+        <nav class="cs-nav">
+            ${sheet.sections.map(sec => `
+                <button class="cs-nav__item" data-section-id="${sec.id}">${sec.title}</button>
+            `).join('')}
+        </nav>
+    `;
+
+    sidebar.querySelectorAll('.cs-nav__item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            selectCsSection(this.dataset.sectionId);
+        });
+    });
+
+    if (sheet.sections.length > 0) {
+        selectCsSection(sheet.sections[0].id);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeCsDetail() {
+    document.getElementById('csCatalogView').style.display = 'block';
+    document.getElementById('csDetailView').style.display = 'none';
+    csCurrentSheetId = null;
+    csCurrentSectionId = null;
+}
+
+function selectCsSection(sectionId) {
+    const sheet = CHEATSHEETS.find(c => c.id === csCurrentSheetId);
+    if (!sheet) {
+        console.warn('❌ Sheet не найден:', csCurrentSheetId);
+        return;
+    }
+    const section = sheet.sections.find(s => s.id === sectionId);
+    if (!section) {
+        console.warn('❌ Section не найдена:', sectionId, 'в', sheet.id);
+        return;
+    }
+
+    csCurrentSectionId = sectionId;
+
+    document.querySelectorAll('.cs-nav__item').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.sectionId === sectionId);
+    });
+
+    renderCsSection(section);
+}
+
+function renderCsSection(section) {
+    const content = document.getElementById('csContent');
+    if (!content) return;
+
+    content.innerHTML = '';
+
+    let bodyHtml = '';
+
+    // ═══ TOURS (Туры Уиттакера) ═══
+    if (section.sidebar && section.sidebar.districts) {
+        const sb = section.sidebar;
+        bodyHtml += `
+            <div class="cs-tours">
+                <aside class="cs-tours__sidebar">
+                    <h3 class="cs-tours__sidebar-title">${escapeHtml(section.title)}</h3>
+                    <nav class="cs-tours__nav">
+                        <button class="cs-tours__nav-item active" data-tour-id="intro">
+                            <span class="cs-tours__nav-icon"></span> Что это такое?
+                        </button>
+                        ${sb.districts.map(d => `
+                            <button class="cs-tours__nav-item" data-tour-id="${d.id}">
+                                <span class="cs-tours__nav-icon">${d.icon}</span> ${d.label}
+                            </button>
+                        `).join('')}
+                    </nav>
+                </aside>
+                <div class="cs-tours__content">
+                    <!-- Вводный блок -->
+                    <div class="cs-tours__panel active" data-tour-panel="intro">
+                        <div class="cs-tours__intro">
+                            <h3 class="cs-tours__district-title">${sb.intro.title}</h3>
+                            ${sb.intro.content}
+                        </div>
+                    </div>
+
+                    <!-- Районы -->
+                    ${sb.districts.map(d => `
+                        <div class="cs-tours__panel" data-tour-panel="${d.id}">
+                            <div class="cs-tours__district-header">
+                                <h3 class="cs-tours__district-title">${d.icon} ${d.label}</h3>
+                                <p class="cs-tours__district-desc">${d.description}</p>
+                            </div>
+                            <div class="cs-tours__cards">
+                                ${d.tours.map(t => `
+                                    <div class="cs-tour-card">
+                                        <h4 class="cs-tour-card__title" style="color: ${t.color};">${t.title}</h4>
+                                        <div class="cs-tour-card__row"><strong>Цель:</strong> ${t.goal}</div>
+                                        <div class="cs-tour-card__row"><strong>Пример:</strong> ${t.example}</div>
+                                        <div class="cs-tour-card__row"><strong>На что обращать внимание:</strong> ${t.attention}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ HEURISTICS (Эвристики и мнемоники) ═══
+    if (section.sidebar && section.sidebar.groups) {
+        const sb = section.sidebar;
+        bodyHtml += `
+            <div class="cs-heur">
+                <aside class="cs-heur__sidebar">
+                    <h3 class="cs-heur__sidebar-title">${escapeHtml(section.title)}</h3>
+                    <nav class="cs-heur__nav">
+                        <button class="cs-heur__nav-item active" data-heur-id="intro">
+                            <span class="cs-tours__nav-icon"></span> Что это такое?
+                        </button>
+                        ${sb.groups.map(g => `
+                            <button class="cs-heur__nav-item" data-heur-id="${g.id}">
+                                <span class="cs-tours__nav-icon"></span> ${g.label}
+                            </button>
+                        `).join('')}
+                    </nav>
+                </aside>
+                <div class="cs-heur__content">
+                    <!-- Вводный блок -->
+                    <div class="cs-heur__panel active" data-heur-panel="intro">
+                        <div class="cs-heur__intro">
+                            <h3 class="cs-tours__district-title">${sb.intro.title}</h3>
+                            ${sb.intro.content}
+                        </div>
+                    </div>
+
+                    <!-- Группы мнемоник -->
+                    ${sb.groups.map(g => `
+                        <div class="cs-heur__panel" data-heur-panel="${g.id}">
+                            <div class="cs-heur__group-header">
+                                <h3 class="cs-heur__group-title" style="color: ${g.color};">${g.label}</h3>
+                            </div>
+                            <div class="cs-heur__cards">
+                                ${g.mnemonics.map(m => `
+                                    <div class="cs-mnemonic-card" style="border-left: 4px solid ${g.color};">
+                                        <h4 class="cs-mnemonic-card__title" style="color: ${g.color};">${m.title}</h4>
+                                        <div class="cs-mnemonic-card__row"><strong>Цель:</strong> ${m.goal}</div>
+                                        <div class="cs-mnemonic-card__row"><strong>Расшифровка:</strong> ${m.items}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ TESTCASE LIFECYCLE ═══
+    if (section.tcLifecycle) {
+        const tcl = section.tcLifecycle;
+        
+        // Функция рендера одной схемы
+        function renderTcDiagram(diagram, diagramNum) {
+            const statuses = diagram.statuses || [];
+            const arrows = diagram.arrows || [];
+            
+            // Находим статус по id
+            const getStatus = (id) => statuses.find(s => s.id === id);
+            
+            // Строим SVG-стрелки
+            let svgArrows = '';
+            arrows.forEach(arrow => {
+                const from = getStatus(arrow.from);
+                const to = getStatus(arrow.to);
+                if (!from || !to) return;
+                
+                const color = arrow.color || '#8a9fb8';
+                const markerId = `arrow-head-${diagramNum}-${arrow.from}-${arrow.to}`;
+                
+                // Стрелка идёт от центра "from" к центру "to"
+                svgArrows += `
+                    <defs>
+                        <marker id="${markerId}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                            <polygon points="0 0, 6 3, 0 6" fill="${color}"/>
+                        </marker>
+                    </defs>
+                    <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"
+                        stroke="${color}" stroke-width="0.6"
+                        marker-end="url(#${markerId})"
+                        class="cs-tclife__svg-line"/>
+                `;
+            });
+            
+            return `
+                <div class="cs-tclife__diagram-block">
+                    <div class="cs-tclife__diagram-wrap">
+                        <div class="cs-tclife__diagram-title">${diagram.title}</div>
+                        
+                        <div class="cs-tclife__diagram">
+                            <svg class="cs-tclife__svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                ${svgArrows}
+                            </svg>
+                            
+                            ${statuses.map(s => `
+                                <div class="cs-tclife__status"
+                                    data-tc-status-id="${s.id}"
+                                    data-tc-diagram="${diagramNum}"
+                                    style="left:${s.x}%; top:${s.y}%; background:${s.color}; color:${s.textColor};">
+                                    ${s.label}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="cs-tclife__info" id="tclifeInfo${diagramNum}">
+                        <h3>${diagram.title}</h3>
+                        <p>${diagram.description || tcl.subtitle}</p>
+                        <div class="cs-tclife__hint">${tcl.defaultHint}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        bodyHtml += `
+            <div class="cs-tclife">
+                <h2 class="cs-tclife__title">${tcl.title}</h2>
+                <p class="cs-tclife__subtitle">${tcl.subtitle}</p>
+                
+                <div class="cs-tclife__diagrams">
+                    ${renderTcDiagram(tcl.diagram1, '1')}
+                    ${renderTcDiagram(tcl.diagram2, '2')}
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ BUG LIFECYCLE ═══
+    if (section.bugLifecycle) {
+        const bl = section.bugLifecycle;
+        const statuses = bl.statuses || [];
+        const arrows = bl.arrows || [];
+        
+        const getStatus = (id) => statuses.find(s => s.id === id);
+        
+        let svgArrows = '';
+        arrows.forEach((arrow, i) => {
+            const from = getStatus(arrow.from);
+            const to = getStatus(arrow.to);
+            if (!from || !to) return;
+            
+            const color = arrow.color || '#8a9fb8';
+            const markerId = `bl-arrow-${i}`;
+            
+            let path;
+            if (arrow.curve === 'left-down') {
+                // In Progress (сверху справа) → Fixed (снизу слева)
+                // Мягкая кривая, уходит влево, но не слишком далеко
+                const startX = from.x - 5;
+                const startY = from.y + 4;
+                const endX = to.x + 3;
+                const endY = to.y - 4;
+                
+                // Контрольные точки: умеренный уход влево
+                const cp1x = 30;
+                const cp1y = from.y + 20;
+                const cp2x = 22;
+                const cp2y = to.y - 20;
+                
+                path = `<path d="M ${startX} ${startY} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${endX} ${endY}"
+                            stroke="${color}" stroke-width="0.6" fill="none"
+                            marker-end="url(#${markerId})"
+                            class="cs-buglife__svg-line"/>`;
+            } else {
+                const dx = to.x - from.x;
+                const dy = to.y - from.y;
+                const len = Math.sqrt(dx * dx + dy * dy);
+                const unitX = dx / len;
+                const unitY = dy / len;
+                
+                // Сдвиг по горизонтали (для параллельных стрелок вверх/вниз)
+                const offsetX = arrow.offsetX || 0;
+                
+                const startX = from.x + unitX * 4 + offsetX;
+                const startY = from.y + unitY * 4;
+                const endX = to.x - unitX * 4 + offsetX;
+                const endY = to.y - unitY * 4;
+                
+                path = `<line x1="${startX}" y1="${startY}" x2="${endX}" y2="${endY}"
+                            stroke="${color}" stroke-width="0.6"
+                            marker-end="url(#${markerId})"
+                            class="cs-buglife__svg-line"/>`;
+            }
+            
+            svgArrows += `
+                <defs>
+                    <marker id="${markerId}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                        <polygon points="0 0, 6 3, 0 6" fill="${color}"/>
+                    </marker>
+                </defs>
+                ${path}
+            `;
+        });
+        
+        bodyHtml += `
+            <div class="cs-buglife">
+                <h2 class="cs-buglife__title">${bl.title}</h2>
+                <p class="cs-buglife__subtitle">${bl.subtitle}</p>
+                
+                <div class="cs-buglife__layout">
+                    <div class="cs-buglife__diagram-wrap">
+                        <!-- ═══ ДЕСКТОПНАЯ СХЕМА (SVG) ═══ -->
+                        <div class="cs-buglife__diagram cs-buglife__diagram--desktop">
+                            <svg class="cs-buglife__svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                ${svgArrows}
+                            </svg>
+                            
+                            ${statuses.map(s => `
+                                <div class="cs-buglife__status"
+                                    data-status-id="${s.id}"
+                                    style="left:${s.x}%; top:${s.y}%; background:${s.color}; color:${s.textColor};">
+                                    ${s.label}
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- ═══ МОБИЛЬНЫЙ СПИСОК (дерево) ═══ -->
+                        <div class="cs-buglife__list">
+                            ${statuses.map(s => `
+                                <div class="cs-buglife__list-item"
+                                    data-status-id="${s.id}"
+                                    style="border-left-color: ${s.color};">
+                                    <div class="cs-buglife__list-badge" 
+                                        style="background:${s.color}; color:${s.textColor};">
+                                        ${s.label}
+                                    </div>
+                                    <div class="cs-buglife__list-title">${s.title}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="cs-buglife__info" id="buglifeInfo">
+                        <h3>${bl.title}</h3>
+                        <p>${bl.subtitle}</p>
+                        <div class="cs-buglife__hint">${bl.defaultHint}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ BOX METHODS (Методы тестирования) ═══
+    if (section.boxMethods) {
+        const bm = section.boxMethods;
+        bodyHtml += `
+            <div class="cs-box">
+                <h2 class="cs-box__title">${bm.title}</h2>
+                <p class="cs-box__subtitle">${bm.subtitle}</p>
+                
+                <div class="cs-box__layout">
+                    <div class="cs-box__left">
+                        ${bm.boxes.map((box, i) => `
+                            <div class="cs-box__item${i === 0 ? ' active' : ''}" 
+                                data-box-id="${box.id}" 
+                                data-box-idx="${i}">
+                                <div class="cs-box__icon cs-box__icon--${box.iconStyle}">
+                                    ${box.icon}
+                                </div>
+                                <div class="cs-box__label">${box.label}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="cs-box__right">
+                        <div class="cs-box__info" id="boxInfo">
+                            <h3>${bm.title}</h3>
+                            <p>${bm.subtitle}</p>
+                            <div class="cs-box__hint">${bm.defaultHint}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ STAGES (Этапы тестирования) ═══
+    if (section.stages) {
+        const st = section.stages;
+        bodyHtml += `
+            <div class="cs-stages">
+                <h2 class="cs-stages__title">${st.title}</h2>
+                <p class="cs-stages__subtitle">${st.subtitle}</p>
+                
+                <div class="cs-stages__line">
+                    ${st.steps.map((step, i) => `
+                        <div class="cs-stages__step" data-stage-id="${step.id}" data-stage-idx="${i}">
+                            <div class="cs-stages__dot">${i + 1}</div>
+                            <div class="cs-stages__label">${step.label}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="cs-stages__info">
+                    <h3 class="cs-stages__info-title">${st.infoTitle}</h3>
+                    <p class="cs-stages__info-text">${st.infoText}</p>
+                    <div class="cs-stages__info-result" id="stageResult">
+                        <strong>Результат этапа:</strong> ${st.defaultHint}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+
+    // ═══ REQ SIDEBAR (Тестирование требований) ═══
+    if (section.reqSidebar) {
+        const rs = section.reqSidebar;
+        bodyHtml += `
+            <div class="cs-req">
+                <aside class="cs-req__sidebar">
+                    <h3 class="cs-req__sidebar-title">${section.title}</h3>
+                    <nav class="cs-req__nav">
+                        ${rs.items.map((item, i) => `
+                            <button class="cs-req__nav-item${i === 0 ? ' active' : ''}" 
+                                    data-req-id="${item.id}">
+                                ${item.label}
+                            </button>
+                        `).join('')}
+                    </nav>
+                </aside>
+                <div class="cs-req__content">
+                    ${rs.items.map((item, i) => `
+                        <div class="cs-req__panel${i === 0 ? ' active' : ''}" data-req-panel="${item.id}">
+                            <h2 class="cs-req__panel-title">${item.title}</h2>
+                            <p class="cs-req__panel-sub">${item.subtitle}</p>
+                            
+                            ${item.cards ? `
+                                <div class="cs-req__cards">
+                                    ${item.cards.map(card => `
+                                        <div class="cs-req__card">
+                                            <h3 class="cs-req__card-title" style="color:${card.color};">
+                                                ${card.icon ? card.icon + ' ' : ''}${card.title}
+                                            </h3>
+                                            <p class="cs-req__card-desc">${card.desc}</p>
+                                            ${card.bullets ? `
+                                                <ul class="cs-req__card-bullets">
+                                                    ${card.bullets.map(b => `<li>${b}</li>`).join('')}
+                                                </ul>
+                                            ` : ''}
+                                            ${card.code ? `
+                                                <pre class="cs-req__card-code">${escapeHtml(card.code)}</pre>
+                                            ` : ''}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            ${item.properties ? `
+                                <div class="cs-req__props">
+                                    <div class="cs-req__props-grid">
+                                        ${item.properties.map((p, idx) => `
+                                            <button class="cs-req__prop${idx === 2 ? ' active' : ''}" 
+                                                    data-prop-id="${p.id}">
+                                                ${p.label}
+                                            </button>
+                                        `).join('')}
+                                    </div>
+                                    <div class="cs-req__prop-info" id="reqPropInfo_${item.id}">
+                                        <h3>${item.properties[2].title}</h3>
+                                        <p>${item.properties[2].desc}</p>
+                                        <div class="cs-req__prop-example">
+                                            <strong>Пример:</strong> ${item.properties[2].example}
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            ${item.processBlocks ? `
+                                <div class="cs-req__process">
+                                    ${item.processBlocks.map(block => `
+                                        <div class="cs-req__process-block" 
+                                            style="background:${block.bgColor}; border-left-color:${block.color};">
+                                            <h3 style="color:${block.color};">
+                                                ${block.icon} ${block.title}
+                                            </h3>
+                                            <ol class="cs-req__process-list">
+                                                ${block.items.map(it => `<li>${it}</li>`).join('')}
+                                            </ol>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            
+                            ${item.implicitRequirements ? `
+                                <div class="cs-req__implicit">
+                                    <h3 class="cs-req__implicit-title">
+                                        ${item.implicitRequirements.title}
+                                    </h3>
+                                    <ul class="cs-req__implicit-list">
+                                        ${item.implicitRequirements.items.map(it => `<li>${it}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+
+    // ═══ COMPARE ═══
+    if (section.compare) {
+        bodyHtml += `<div class="cs-compare">`;
+        section.compare.forEach((block, idx) => {
+            bodyHtml += `
+                <div class="cs-compare__card" data-block-idx="${idx}">
+                    <h3 class="cs-compare__title">${block.title}</h3>
+                    ${block.question ? `<p class="cs-compare__question">${block.question}</p>` : ''}
+                    <p class="cs-compare__text">${block.text}</p>
+                </div>
+            `;
+        });
+        bodyHtml += `</div>`;
+    }
+
+    // ═══ STEPS ═══
+    if (section.steps) {
+        const stepsId = 'steps_' + Math.random().toString(36).slice(2, 8);
+        bodyHtml += `
+            <div class="cs-steps" id="${stepsId}">
+                <h3 class="cs-steps__title">${section.steps.title}</h3>
+                <div class="cs-steps__progress">
+                    <div class="cs-steps__progress-fill" style="width: 0%;"></div>
+                    ${section.steps.stages.map((_, i) => `
+                        <div class="cs-steps__dot" data-step="${i}">${i + 1}</div>
+                    `).join('')}
+                </div>
+                <div class="cs-steps__stage"></div>
+                <div class="cs-steps__controls">
+                    <button class="cs-steps__btn cs-steps__btn--prev" data-steps-nav="prev" disabled>← Назад</button>
+                    <button class="cs-steps__btn cs-steps__btn--next" data-steps-nav="next">Далее →</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ REVEAL ═══
+    if (section.reveal) {
+        section.reveal.forEach((item, idx) => {
+            bodyHtml += `
+                <div class="cs-reveal" data-reveal-idx="${idx}">
+                    <h3 class="cs-reveal__q">${item.question}</h3>
+                    <button class="cs-reveal__btn" data-reveal-btn>
+                        <span class="cs-reveal__btn-text">Показать ответ</span>
+                        <span class="cs-reveal__btn-icon">▼</span>
+                    </button>
+                    <div class="cs-reveal__a">${item.answer}</div>
+                </div>
+            `;
+        });
+    }
+
+    // ═══ QUIZ ═══
+    if (section.quiz) {
+        bodyHtml += `
+            <div class="cs-quiz">
+                <h3 class="cs-quiz__question">${section.quiz.question}</h3>
+                <div class="cs-quiz__options">
+                    ${section.quiz.options.map((opt, idx) => `
+                        <button class="cs-quiz__option" data-opt-idx="${idx}">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div class="cs-quiz__explain"></div>
+            </div>
+        `;
+    }
+
+    // ═══ DIAGRAM ═══
+    if (section.diagram) {
+        bodyHtml += `
+            <div class="cs-diagram">
+                <h3 class="cs-diagram__title">${section.diagram.title}</h3>
+                <div class="cs-diagram__row">
+                    ${section.diagram.nodes.map((node, idx) => `
+                        <div class="cs-diagram__node" data-node-idx="${idx}">${node.label}</div>
+                        ${idx < section.diagram.nodes.length - 1 ? '<span class="cs-diagram__arrow">→</span>' : ''}
+                    `).join('')}
+                </div>
+                <div class="cs-diagram__detail"></div>
+            </div>
+        `;
+    }
+
+    // ═══ FLOW ═══
+    if (section.flow) {
+        bodyHtml += `
+            <div class="cs-flow">
+                <h3 class="cs-flow__title">${section.flow.title}</h3>
+                <p class="cs-flow__hint">${section.flow.hint || 'Наведите на элемент'}</p>
+                <div class="cs-flow__canvas">
+                    ${section.flow.nodes.map(node => `
+                        <div class="cs-flow__node" style="left:${node.x}%; top:${node.y}%;" data-flow-idx="${section.flow.nodes.indexOf(node)}">
+                            ${node.label}
+                        </div>
+                    `).join('')}
+                    ${(section.flow.arrows || []).map(arrow => `
+                        <div class="cs-flow__arrow" style="left:${arrow.x}%; top:${arrow.y}%; width:${arrow.w}%; transform:rotate(${arrow.r || 0}deg);"></div>
+                    `).join('')}
+                </div>
+                <div class="cs-flow__detail"><em>Наведите на узел</em></div>
+            </div>
+        `;
+    }
+
+    // ─── TABS ───
+    if (section.tabs) {
+        const sortedTabs = sortTabs(section.tabs);   // ⚡ СОРТИРУЕМ
+        const tabsId = 'tabs_' + Math.random().toString(36).slice(2, 8);
+        bodyHtml += `
+            <div class="cs-tabs" id="${tabsId}">
+                <div class="cs-tabs__nav">
+                    ${sortedTabs.map((tab, i) => `
+                        <button class="cs-tabs__tab${i === 0 ? ' active' : ''}" data-tab-idx="${i}">
+                            ${tab.label}
+                        </button>
+                    `).join('')}
+                </div>
+                ${sortedTabs.map((tab, i) => `
+                    <div class="cs-tabs__panel${i === 0 ? ' active' : ''}" data-panel-idx="${i}">
+                        ${tab.title ? `<h4 class="cs-tabs__panel-title">${tab.title}</h4>` : ''}
+                        ${tab.subtitle ? `<p class="cs-tabs__panel-sub">${tab.subtitle}</p>` : ''}
+                        ${renderTabContent(tab)}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // ═══ ANIMATED FLOW ═══
+    if (section.animatedFlow) {
+        const ani = section.animatedFlow;
+        bodyHtml += `
+            <div class="cs-ani">
+                <h3 class="cs-ani__title">${ani.title}</h3>
+                <p class="cs-ani__hint">${ani.hint || '🎬 Нажмите «Запустить»'}</p>
+                <div class="cs-ani__canvas">
+                    <div class="cs-ani__canvas-inner">
+                        <div class="cs-ani__progress">
+                            <div class="cs-ani__progress-fill"></div>
+                        </div>
+                        ...узлы...
+                    </div>
+                </div>
+                <div class="cs-ani__detail">
+                    <span class="cs-ani__detail-step">Шаг 0 / ${ani.nodes.length}</span>
+                    <span class="cs-ani__detail-title">Готово к запуску</span>
+                    Нажмите «Запустить анимацию».
+                </div>
+                <div class="cs-ani__controls">
+                    <button class="cs-ani__btn cs-ani__btn--play" data-ani-action="play">Запустить анимацию</button>
+                    <button class="cs-ani__btn cs-ani__btn--reset" data-ani-action="reset">⟲Сброс</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ ACCORDION ═══
+    if (section.accordion) {
+        bodyHtml += `<div class="cs-accordion">`;
+        section.accordion.forEach((acc, idx) => {
+            bodyHtml += `
+                <div class="cs-acc-item" data-acc-idx="${idx}">
+                    <button class="cs-acc-header">
+                        <span>${acc.title}</span>
+                        <span class="cs-acc-icon">+</span>
+                    </button>
+                    <div class="cs-acc-body">
+                        <div class="cs-acc-body__inner">${acc.body}</div>
+                    </div>
+                </div>
+            `;
+        });
+        bodyHtml += `</div>`;
+    }
+
+    content.innerHTML = `
+        <div class="cs-content__head">
+            <h2 class="cs-content__title">${section.title}</h2>
+            ${section.subtitle ? `<p class="cs-content__subtitle">${section.subtitle}</p>` : ''}
+        </div>
+        ${bodyHtml}
+    `;
+
+    initCsSectionHandlers(content, section);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ОБРАБОТЧИКИ
+// ═══════════════════════════════════════════════════════════
+
+
+function initCsSectionHandlers(content, section) {
+
+    // ─── TOURS — переключение районов ───
+    content.querySelectorAll('.cs-tours').forEach(toursEl => {
+        if (toursEl._init) return;
+        toursEl._init = true;
+
+        const navItems = toursEl.querySelectorAll('.cs-tours__nav-item');
+        const panels = toursEl.querySelectorAll('.cs-tours__panel');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const id = this.dataset.tourId;
+                navItems.forEach(n => n.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panel = toursEl.querySelector(`[data-tour-panel="${id}"]`);
+                if (panel) panel.classList.add('active');
+            });
+        });
+    });
+
+    // ─── HEURISTICS — переключение групп ───
+    content.querySelectorAll('.cs-heur').forEach(heurEl => {
+        if (heurEl._init) return;
+        heurEl._init = true;
+
+        const navItems = heurEl.querySelectorAll('.cs-heur__nav-item');
+        const panels = heurEl.querySelectorAll('.cs-heur__panel');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const id = this.dataset.heurId;
+                navItems.forEach(n => n.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panel = heurEl.querySelector(`[data-heur-panel="${id}"]`);
+                if (panel) panel.classList.add('active');
+            });
+        });
+    });
+
+    // ═══ TESTCASE LIFECYCLE ═══
+    content.querySelectorAll('.cs-tclife').forEach(tclEl => {
+        if (tclEl._init) return;
+        tclEl._init = true;
+        
+        ['1', '2'].forEach(diagramNum => {
+            const statuses = tclEl.querySelectorAll(`.cs-tclife__status[data-tc-diagram="${diagramNum}"]`);
+            const info = tclEl.querySelector(`#tclifeInfo${diagramNum}`);
+            if (!info) return;
+            const defaultInfo = info.innerHTML;
+            const diagramData = diagramNum === '1' ? section.tcLifecycle.diagram1 : section.tcLifecycle.diagram2;
+            
+            statuses.forEach(status => {
+                const showInfo = () => {
+                    const id = status.dataset.tcStatusId;
+                    const st = diagramData.statuses.find(s => s.id === id);
+                    if (!st) return;
+                    
+                    statuses.forEach(s => s.classList.remove('active'));
+                    status.classList.add('active');
+                    
+                    info.innerHTML = `
+                        <h3>${st.title}</h3>
+                        <p>${st.desc}</p>
+                        <div class="cs-tclife__section">
+                            <strong>👤 Кто:</strong>
+                            <p>${st.who}</p>
+                        </div>
+                        <div class="cs-tclife__section">
+                            <strong>➡️ Что дальше:</strong>
+                            <p>${st.next}</p>
+                        </div>
+                    `;
+                };
+                
+                status.addEventListener('click', showInfo);
+                status.addEventListener('mouseenter', showInfo);
+            });
+            
+            const diagramWrap = tclEl.querySelectorAll('.cs-tclife__diagram-block')[parseInt(diagramNum, 10) - 1];
+            if (diagramWrap) {
+                diagramWrap.addEventListener('mouseleave', () => {
+                    statuses.forEach(s => s.classList.remove('active'));
+                    info.innerHTML = defaultInfo;
+                });
+            }
+        });
+    });
+
+    // ═══ BUG LIFECYCLE ═══
+    content.querySelectorAll('.cs-buglife').forEach(bugEl => {
+        if (bugEl._init) return;
+        bugEl._init = true;
+        
+        // Работает и для .cs-buglife__status (десктоп), и для .cs-buglife__list-item (мобильный)
+        const triggers = bugEl.querySelectorAll('[data-status-id]');
+        const info = bugEl.querySelector('#buglifeInfo');
+        const defaultInfo = info.innerHTML;
+        
+        triggers.forEach(trigger => {
+            const showInfo = () => {
+                const id = trigger.dataset.statusId;
+                const st = section.bugLifecycle.statuses.find(s => s.id === id);
+                if (!st) return;
+                
+                // Подсвечиваем все триггеры с этим id (и в схеме, и в списке)
+                bugEl.querySelectorAll('[data-status-id]').forEach(t => {
+                    t.classList.toggle('active', t.dataset.statusId === id);
+                });
+                
+                info.innerHTML = `
+                    <h3>${st.title}</h3>
+                    <p>${st.desc}</p>
+                    <div class="cs-buglife__section">
+                        <strong>👤 Кто:</strong>
+                        <p>${st.who}</p>
+                    </div>
+                    <div class="cs-buglife__section">
+                        <strong>➡️ Что дальше:</strong>
+                        <p>${st.next}</p>
+                    </div>
+                `;
+            };
+            
+            trigger.addEventListener('click', showInfo);
+            trigger.addEventListener('mouseenter', showInfo);
+        });
+        
+        bugEl.addEventListener('mouseleave', () => {
+            bugEl.querySelectorAll('[data-status-id]').forEach(t => t.classList.remove('active'));
+            info.innerHTML = defaultInfo;
+        });
+    });
+
+    // ═══ BOX METHODS ═══
+    content.querySelectorAll('.cs-box').forEach(boxEl => {
+        if (boxEl._init) return;
+        boxEl._init = true;
+        
+        const items = boxEl.querySelectorAll('.cs-box__item');
+        const info = boxEl.querySelector('#boxInfo');
+        const defaultInfo = info.innerHTML;
+        
+        items.forEach(item => {
+            const showInfo = () => {
+                const idx = parseInt(item.dataset.boxIdx, 10);
+                const box = section.boxMethods.boxes[idx];
+                
+                items.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                info.innerHTML = `
+                    <h3 style="color:${box.color};">${box.title}</h3>
+                    <p class="cs-box__short">${box.short}</p>
+                    <p>${box.detail}</p>
+                    
+                    <div class="cs-box__section">
+                        <strong>Цели:</strong>
+                        <ul>
+                            ${box.goals.map(g => `<li>${g}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="cs-box__section">
+                        <strong>Примеры:</strong>
+                        <ul>
+                            ${box.examples.map(ex => `<li>${ex}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="cs-box__section cs-box__section--qa">
+                        <strong>Что делает QA:</strong>
+                        <p>${box.qa}</p>
+                    </div>
+                    
+                    <div class="cs-box__section cs-box__section--tools">
+                        <strong>Инструменты:</strong>
+                        <p>${box.tools}</p>
+                    </div>
+                `;
+            };
+            
+            item.addEventListener('mouseenter', showInfo);
+            item.addEventListener('click', showInfo);
+        });
+        
+        boxEl.addEventListener('mouseleave', () => {
+            items.forEach(i => i.classList.remove('active'));
+            items[0].classList.add('active');
+            info.innerHTML = defaultInfo;
+        });
+    });
+
+    // ═══ STAGES ═══
+    content.querySelectorAll('.cs-stages').forEach(stagesEl => {
+        if (stagesEl._init) return;
+        stagesEl._init = true;
+        
+        const steps = stagesEl.querySelectorAll('.cs-stages__step');
+        const resultBox = stagesEl.querySelector('#stageResult');
+        
+        const defaultHint = section.stages.defaultHint;
+        
+        steps.forEach(step => {
+            step.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.stageIdx, 10);
+                const stepData = section.stages.steps[idx];
+                
+                steps.forEach(s => s.classList.remove('active'));
+                this.classList.add('active');
+                
+                resultBox.innerHTML = `
+                    <strong>${stepData.title}</strong>
+                    <div style="margin-top:10px;">
+                        <div style="font-weight:700;color:#00897b;margin-bottom:4px;">Цель:</div>
+                        <div>${stepData.goal}</div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div style="font-weight:700;color:#00897b;margin-bottom:4px;">Особенности:</div>
+                        <ul style="margin:0;padding-left:20px;">
+                            ${stepData.features.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div style="font-weight:700;color:#00897b;margin-bottom:4px;">Результат:</div>
+                        <div>${stepData.result}</div>
+                    </div>
+                `;
+            });
+        });
+    });
+
+    // ═══ REQ SIDEBAR ═══
+    content.querySelectorAll('.cs-req').forEach(reqEl => {
+        if (reqEl._init) return;
+        reqEl._init = true;
+        
+        const navItems = reqEl.querySelectorAll('.cs-req__nav-item');
+        const panels = reqEl.querySelectorAll('.cs-req__panel');
+        
+        // Переключение подтем
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const id = this.dataset.reqId;
+                navItems.forEach(n => n.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panel = reqEl.querySelector(`[data-req-panel="${id}"]`);
+                if (panel) panel.classList.add('active');
+            });
+        });
+        
+        // Клик по свойству качества
+        reqEl.querySelectorAll('.cs-req__prop').forEach(prop => {
+            prop.addEventListener('click', function() {
+                const id = this.dataset.propId;
+                const parent = this.closest('.cs-req__panel');
+                if (!parent) return;
+                
+                parent.querySelectorAll('.cs-req__prop').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                
+                const reqData = section.reqSidebar.items.find(it => 
+                    it.properties && it.properties.some(p => p.id === id)
+                );
+                if (!reqData) return;
+                const propData = reqData.properties.find(p => p.id === id);
+                
+                const info = parent.querySelector('.cs-req__prop-info');
+                if (!info) return;
+                
+                info.innerHTML = `
+                    <h3>${propData.title}</h3>
+                    <p>${propData.desc}</p>
+                    <div class="cs-req__prop-example">
+                        <strong>Пример:</strong> ${propData.example}
+                    </div>
+                `;
+            });
+        });
+    });
+
+    // ─── TABS ───
+    content.querySelectorAll('.cs-tabs').forEach(tabsEl => {
+        const tabBtns = tabsEl.querySelectorAll('.cs-tabs__tab');
+        const panels  = tabsEl.querySelectorAll('.cs-tabs__panel');
+
+        // ⚡ Используем ту же сортировку
+        const sortedTabs = sortTabs(section.tabs);
+
+        tabBtns.forEach((btn, i) => {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                panels[i].classList.add('active');
+
+                const tabData = sortedTabs[i];   // ✅
+                initTabContent(panels[i], tabData);
+            });
+        });
+
+        panels.forEach((p, i) => {
+            initTabContent(p, sortedTabs[i]);    // ✅
+        });
+    });
+
+    // ─── COMPARE ───
+    content.querySelectorAll('.cs-compare__card').forEach(card => {
+        card.addEventListener('click', function() {
+            const allCards = content.querySelectorAll('.cs-compare__card');
+            const isActive = this.classList.contains('active');
+            allCards.forEach(c => c.classList.remove('active', 'dimmed'));
+            if (!isActive) {
+                this.classList.add('active');
+                allCards.forEach(c => { if (c !== this) c.classList.add('dimmed'); });
+            }
+        });
+    });
+
+    // ─── STEPS (вне табов) ───
+    content.querySelectorAll('.cs-steps').forEach(stepsEl => {
+        if (stepsEl.closest('.cs-tabs__panel')) return;
+        if (stepsEl._init) return;
+        stepsEl._init = true;
+        if (section.steps) initStepsBlock(stepsEl, section.steps.stages);
+    });
+
+    // ─── REVEAL (вне табов) ───
+    content.querySelectorAll('.cs-reveal').forEach(el => {
+        if (el.closest('.cs-tabs__panel')) return;
+        const btn = el.querySelector('[data-reveal-btn]');
+        if (!btn || btn._init) return;
+        btn._init = true;
+        btn.addEventListener('click', function() {
+            el.classList.toggle('open');
+            const isOpen = el.classList.contains('open');
+            this.querySelector('.cs-reveal__btn-text').textContent = isOpen ? 'Скрыть ответ' : 'Показать ответ';
+            this.querySelector('.cs-reveal__btn-icon').textContent = isOpen ? '▲' : '▼';
+        });
+    });
+
+    // ─── QUIZ (вне табов) ───
+    const quizEl = content.querySelector('.cs-quiz');
+    if (quizEl && section.quiz && !quizEl.closest('.cs-tabs__panel') && !quizEl._init) {
+        quizEl._init = true;
+        initQuizBlock(quizEl, section.quiz);
+    }
+
+    // ─── DIAGRAM (вне табов) ───
+    const diagramEl = content.querySelector('.cs-diagram');
+    if (diagramEl && section.diagram && !diagramEl.closest('.cs-tabs__panel') && !diagramEl._init) {
+        diagramEl._init = true;
+        initDiagramBlock(diagramEl, section.diagram.nodes);
+    }
+
+    // ─── FLOW (вне табов) ───
+    const flowEl = content.querySelector('.cs-flow');
+    if (flowEl && section.flow && !flowEl.closest('.cs-tabs__panel') && !flowEl._init) {
+        flowEl._init = true;
+        initFlowBlock(flowEl, section.flow.nodes);
+    }
+
+    // ─── ANIMATED FLOW (вне табов) ───
+    const aniEl = content.querySelector('.cs-ani');
+    if (aniEl && section.animatedFlow && !aniEl.closest('.cs-tabs__panel') && !aniEl._init) {
+        aniEl._init = true;
+        initAnimatedFlow(aniEl, section.animatedFlow);
+    }
+
+    // ─── ACCORDION (вне табов) ───
+    content.querySelectorAll('.cs-acc-header').forEach(header => {
+        if (header.closest('.cs-tabs__panel')) return;
+        if (header._init) return;
+        header._init = true;
+        header.addEventListener('click', function() {
+            const itemEl = this.closest('.cs-acc-item');
+            const isOpen = itemEl.classList.contains('open');
+            const acc = this.closest('.cs-accordion') || content;
+            acc.querySelectorAll('.cs-acc-item').forEach(el => el.classList.remove('open'));
+            if (!isOpen) itemEl.classList.add('open');
+        });
+    });
+}
+
+function initTabContent(panel, tabData) {
+    if (!panel) return;
+
+    // ═══ POSTMAN SIMULATOR — интерактивность ═══
+    panel.querySelectorAll('.postman-sim').forEach(pmEl => {
+        if (pmEl._tabInit) return;
+        pmEl._tabInit = true;
+
+        const sim = tabData && tabData.postmanSim;
+        if (!sim) return;
+
+        // ─── Ссылки на DOM ───
+        const requestBtns       = pmEl.querySelectorAll('.postman-request');
+        const methodBadge       = pmEl.querySelector('#postmanMethodBadge');
+        const urlInput          = pmEl.querySelector('#postmanUrl');
+        const sendBtn           = pmEl.querySelector('#postmanSendBtn');
+        const paramsBox         = pmEl.querySelector('#postmanParams');
+        const headersBox        = pmEl.querySelector('#postmanHeaders');
+        const bodyBox           = pmEl.querySelector('#postmanBody');
+        const responseMeta      = pmEl.querySelector('#postmanResponseMeta');
+        const responseBodyBox   = pmEl.querySelector('#postmanResponseBody');
+        const responseHeadersBox = pmEl.querySelector('#postmanResponseHeaders');
+        const explanation       = pmEl.querySelector('#postmanExplanation');
+
+        // ─── Вкладки запроса ───
+        const reqTabs = pmEl.querySelectorAll('[data-postman-tab]');
+        reqTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const id = this.dataset.postmanTab;
+                pmEl.querySelectorAll('[data-postman-tab]').forEach(t => t.classList.remove('active'));
+                pmEl.querySelectorAll('[data-postman-panel]').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panelEl = pmEl.querySelector(`[data-postman-panel="${id}"]`);
+                if (panelEl) panelEl.classList.add('active');
+            });
+        });
+
+        // ─── Вкладки ответа ───
+        const resTabs = pmEl.querySelectorAll('[data-postman-tab-res]');
+        resTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const id = this.dataset.postmanTabRes;
+                pmEl.querySelectorAll('[data-postman-tab-res]').forEach(t => t.classList.remove('active'));
+                pmEl.querySelectorAll('[data-postman-panel-res]').forEach(p => p.classList.remove('active'));
+                this.classList.add('active');
+                const panelEl = pmEl.querySelector(`[data-postman-panel-res="${id}"]`);
+                if (panelEl) panelEl.classList.add('active');
+            });
+        });
+
+        // ─── Функция рендера состояния ───
+        function renderState(stateKey) {
+            const st = sim.states[stateKey];
+            if (!st) return;
+
+            // Method + URL
+            methodBadge.textContent = st.method;
+            methodBadge.className = 'postman-method-badge postman-method-badge--' + st.method.toLowerCase();
+            urlInput.value = st.url;
+
+            // Params
+            if (st.params && st.params.length) {
+                paramsBox.innerHTML = st.params.map(p => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(p.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(p.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                paramsBox.innerHTML = '<div class="postman-kv__empty">Нет query-параметров</div>';
+            }
+
+            // Headers
+            if (st.headers && st.headers.length) {
+                headersBox.innerHTML = st.headers.map(h => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(h.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(h.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                headersBox.innerHTML = '<div class="postman-kv__empty">Нет заголовков</div>';
+            }
+
+            // Body
+            if (st.body) {
+                bodyBox.textContent = st.body;
+                bodyBox.style.display = 'block';
+            } else {
+                bodyBox.textContent = '';
+                bodyBox.innerHTML = '<span class="postman-kv__empty">У этого запроса нет body</span>';
+            }
+
+            // Response meta
+            const res = st.response;
+            const statusClass = res.status >= 200 && res.status < 300 ? 'ok'
+                              : res.status >= 400 && res.status < 500 ? 'warn'
+                              : 'error';
+            responseMeta.innerHTML = `
+                <span class="postman-response__status postman-response__status--${statusClass}">
+                    ${res.status} ${escapeHtml(res.statusText)}
+                </span>
+                <span class="postman-response__time">Time: ${escapeHtml(res.time)}</span>
+                <span class="postman-response__size">Size: ${escapeHtml(res.size)}</span>
+            `;
+
+            // Response body
+            if (res.body) {
+                responseBodyBox.textContent = res.body;
+            } else {
+                responseBodyBox.innerHTML = '<span class="postman-kv__empty">Тело ответа отсутствует (204 No Content)</span>';
+            }
+
+            // Response headers
+            if (res.headers && res.headers.length) {
+                responseHeadersBox.innerHTML = res.headers.map(h => `
+                    <div class="postman-kv__row">
+                        <span class="postman-kv__key">${escapeHtml(h.key)}</span>
+                        <span class="postman-kv__value">${escapeHtml(h.value)}</span>
+                    </div>
+                `).join('');
+            } else {
+                responseHeadersBox.innerHTML = '<div class="postman-kv__empty">Нет заголовков</div>';
+            }
+
+            // Объяснение
+            explanation.innerHTML = st.explanation;
+        }
+
+        // ─── Клик по запросу в левой панели ───
+        requestBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const reqId = this.dataset.reqId;
+                requestBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                renderState(reqId);
+            });
+        });
+
+        // ─── Кнопка Send — имитация отправки ───
+        sendBtn.addEventListener('click', function() {
+            const originalText = this.textContent;
+            this.textContent = '⏳ Sending...';
+            this.disabled = true;
+
+            setTimeout(() => {
+                this.textContent = originalText;
+                this.disabled = false;
+                // Подсветим response на секунду
+                responseMeta.classList.add('postman-flash');
+                setTimeout(() => responseMeta.classList.remove('postman-flash'), 600);
+            }, 400);
+        });
+
+        // ─── Первичный рендер ───
+        renderState(sim.defaultRequest);
+    });
+
+    // ─── PYRAMID ───
+    panel.querySelectorAll('.cs-pyramid').forEach(pyrEl => {
+        if (pyrEl._tabInit) return;
+        pyrEl._tabInit = true;
+
+        const sim = tabData.pyramid;
+        if (!sim) return;
+
+        const levels = pyrEl.querySelectorAll('.cs-pyramid__level');
+        const info   = pyrEl.querySelector('#pyramidInfo');
+        if (!info) return;
+
+        const defaultInfo = info.innerHTML;
+        const defaultIdx  = sim.levels.length - 1;
+
+        function showLevel(lvlEl, idx) {
+            const lvl = sim.levels[idx];
+            if (!lvl) return;
+
+            levels.forEach(l => l.classList.remove('active'));
+            lvlEl.classList.add('active');
+
+            info.innerHTML = `
+                <h3>${lvl.title}</h3>
+                <p>${lvl.detail}</p>
+                <ul class="cs-pyramid__features">
+                    ${lvl.features.map(f => `<li>${f}</li>`).join('')}
+                </ul>
+                <div class="cs-pyramid__goal">
+                    <strong>Цель:</strong> ${lvl.goal}
+                </div>
+            `;
+        }
+
+        levels.forEach((lvlEl, idx) => {
+            lvlEl.addEventListener('mouseenter', () => showLevel(lvlEl, idx));
+            lvlEl.addEventListener('click',      () => showLevel(lvlEl, idx));
+        });
+
+        pyrEl.addEventListener('mouseleave', () => {
+            levels.forEach(l => l.classList.remove('active'));
+            if (levels[defaultIdx]) levels[defaultIdx].classList.add('active');
+            info.innerHTML = defaultInfo;
+        });
+    });
+        
+
+    // ═══════════════════════════════════════════════════════════
+    //  GIT FLOW SIMULATOR — интерактивность
+    // ═══════════════════════════════════════════════════════════
+    panel.querySelectorAll('.cs-git').forEach(gitEl => {
+        if (gitEl._tabInit) return;
+        gitEl._tabInit = true;
+
+        // ⚡ 1. Данные и ссылки
+        const sim = tabData && tabData.gitGraphSim;
+        if (!sim) return;
+
+        const infoBox = gitEl.querySelector('#gitInfo');
+        if (!infoBox) return;
+
+        const defaultInfoHtml = infoBox.innerHTML;
+        const allTriggers = gitEl.querySelectorAll('[data-git-id]');
+        const mergeGroups = gitEl.querySelectorAll('.cs-git-merge-group');
+
+        // ═══ 2. Обработчики для ВЕТОК и ЭТАПОВ ═══
+        allTriggers.forEach(trigger => {
+            const gitId = trigger.dataset.gitId;
+            const branchData = sim.branches.find(b => b.id === gitId);
+            const stageData = sim.stages.find(s => s.id === gitId);
+            const data = branchData || stageData;
+            if (!data || !data.info) return;
+
+            const handleHover = () => {
+                allTriggers.forEach(t => t.classList.remove('active'));
+                mergeGroups.forEach(g => g.classList.remove('active'));
+                trigger.classList.add('active');
+
+                infoBox.innerHTML = `
+                    <h3>${data.info.title}</h3>
+                    <p>${data.info.text}</p>
+                `;
+                infoBox.classList.add('visible');
+            };
+
+            trigger.addEventListener('mouseenter', handleHover);
+            trigger.addEventListener('click', handleHover);
+        });
+
+        // ═══ 3. Обработчики для MERGE-стрелок (hit-зоны) ═══
+        mergeGroups.forEach(group => {
+            const mergeId = group.dataset.mergeId;
+            const mergeData = sim.merges && sim.merges.find(m => m.id === mergeId);
+            if (!mergeData || !mergeData.info) return;
+
+            const hitZones = group.querySelectorAll('.cs-git-merge-hit');
+            if (hitZones.length === 0) return;
+
+            const handleMergeHover = () => {
+                allTriggers.forEach(t => t.classList.remove('active'));
+                mergeGroups.forEach(g => g.classList.remove('active'));
+                group.classList.add('active');
+
+                infoBox.innerHTML = `
+                    <h3>${mergeData.info.title}</h3>
+                    <p>${mergeData.info.text}</p>
+                `;
+                infoBox.classList.add('visible');
+            };
+
+            hitZones.forEach(hit => {
+                hit.addEventListener('click', handleMergeHover);
+                hit.addEventListener('mouseenter', handleMergeHover);
+            });
+        });
+
+        // ═══ 4. Сброс при уходе мыши со всей схемы ═══
+        gitEl.addEventListener('mouseleave', () => {
+            allTriggers.forEach(t => t.classList.remove('active'));
+            mergeGroups.forEach(g => g.classList.remove('active'));
+            infoBox.innerHTML = defaultInfoHtml;
+            infoBox.classList.remove('visible');
+        });
+    });
+
+    // ═══ CACHE SIMULATOR — интерактивность ═══
+    panel.querySelectorAll('.cs-cache').forEach(cacheEl => {
+        if (cacheEl._tabInit) return;
+        cacheEl._tabInit = true;
+
+        const sim = tabData && tabData.cacheSim;
+        if (!sim) return;
+
+        const buttons = cacheEl.querySelectorAll('.cs-cache-btn');
+        const cacheStatus = cacheEl.querySelector('#cacheStatus');
+        const requestBox = cacheEl.querySelector('#cacheRequest');
+        const responseBox = cacheEl.querySelector('#cacheResponse');
+        const explanation = cacheEl.querySelector('#cacheExplanation');
+
+        let isCacheFilled = false;
+
+        function renderState(stateKey) {
+            const state = sim.states[stateKey];
+            if (!state) return;
+
+            // ─── Статус кэша ───
+            const ci = state.cacheInfo;
+            if (ci) {
+                let statusIcon = '';
+                let statusText = 'Пусто';
+                let statusClass = 'empty';
+
+                if (ci.status === 'filled') {
+                    statusIcon = '';
+                    statusText = 'Заполнен';
+                    statusClass = 'filled';
+                } else if (ci.status === 'valid') {
+                    statusIcon = '';
+                    statusText = 'Актуален (304)';
+                    statusClass = 'valid';
+                }
+
+                cacheStatus.innerHTML = `
+                    <div class="cs-cache-status__row ${statusClass}">
+                        <span class="cs-cache-status__icon">${statusIcon}</span>
+                        <span class="cs-cache-status__label">${statusText}</span>
+                    </div>
+                    <div class="cs-cache-status__details">
+                        <div class="cs-cache-status__detail">
+                            <span>Размер:</span>
+                            <strong>${escapeHtml(ci.size)}</strong>
+                        </div>
+                        <div class="cs-cache-status__detail">
+                            <span>Истекает через:</span>
+                            <strong>${escapeHtml(ci.expiresIn)}</strong>
+                        </div>
+                        <div class="cs-cache-status__detail">
+                            <span>ETag:</span>
+                            <strong>${escapeHtml(ci.etag)}</strong>
+                        </div>
+                    </div>
+                `;
+            } else {
+                cacheStatus.innerHTML = `<div class="cs-cache__hint">Кэш пуст</div>`;
+            }
+
+            // ─── Request ───
+            if (state.request) {
+                const req = state.request;
+                requestBox.innerHTML = `
+                    <div class="cs-header-line">
+                        <span class="cs-header-key">${req.method}</span>
+                        <span class="cs-header-value">${escapeHtml(req.url)}</span>
+                    </div>
+                    ${req.headers.map(h => `
+                        <div class="cs-header-line">
+                            <span class="cs-header-key">${escapeHtml(h.key)}</span>
+                            <span class="cs-header-value">${escapeHtml(h.value)}</span>
+                        </div>
+                    `).join('')}
+                `;
+            } else {
+                requestBox.innerHTML = `<div class="cs-cache__hint">Нажмите кнопку слева, чтобы увидеть запрос.</div>`;
+            }
+
+            // ─── Response ───
+            if (state.response) {
+                const res = state.response;
+                const statusClass = res.status === 200 ? 'ok' : (res.status === 304 ? 'cached' : 'error');
+
+                responseBox.innerHTML = `
+                    <div class="cs-header-line">
+                        <span class="cs-header-key">HTTP/1.1</span>
+                        <span class="cs-header-value cs-header-${statusClass}">
+                            ${res.status} ${escapeHtml(res.statusText)}
+                        </span>
+                    </div>
+                    ${res.headers.map(h => `
+                        <div class="cs-header-line">
+                            <span class="cs-header-key">${escapeHtml(h.key)}</span>
+                            <span class="cs-header-value">${escapeHtml(h.value)}</span>
+                        </div>
+                    `).join('')}
+                    ${res.body ? `
+                        <div class="cs-cache__body">
+                            <div class="cs-cache__body-label">Body:</div>
+                            <pre class="cs-cache__body-pre">${escapeHtml(res.body)}</pre>
+                        </div>
+                    ` : `
+                        <div class="cs-cache__body cs-cache__body--empty">
+                            <em>Тело ответа отсутствует (304 Not Modified)</em>
+                        </div>
+                    `}
+                `;
+            } else {
+                responseBox.innerHTML = `<div class="cs-cache__hint">Ответ сервера появится здесь.</div>`;
+            }
+
+            // ─── Объяснение ───
+            explanation.innerHTML = `
+                <div class="cs-cache__explanation-title">Что происходит</div>
+                <div class="cs-cache__explanation-text">${state.explanation}</div>
+            `;
+        }
+
+        // ─── Обработчики кнопок ───
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const action = this.dataset.action;
+
+                if (action === 'reset') {
+                    isCacheFilled = false;
+                    renderState('initial');
+                    return;
+                }
+
+                if (action === 'request1') {
+                    isCacheFilled = true;
+                    renderState('request1');
+                    return;
+                }
+
+                if (action === 'request2') {
+                    if (!isCacheFilled) {
+                        explanation.innerHTML = `
+                            <div class="cs-cache__explanation-title" style="color:#e65100;">
+                                Сначала сделайте «Запрос 1»
+                            </div>
+                            <div class="cs-cache__explanation-text">
+                                Кэш пуст — браузеру нечего использовать. Сначала заполните кэш первым запросом.
+                            </div>
+                        `;
+                        return;
+                    }
+                    renderState('request2');
+                    return;
+                }
+
+                if (action === 'invalidate') {
+                    isCacheFilled = false;
+                    renderState('invalidate');
+                    return;
+                }
+            });
+        });
+
+        // ─── Первичный рендер ───
+        renderState('initial');
+    });
+
+    // ═══ COOKIES SIMULATOR — интерактивность ═══
+    panel.querySelectorAll('.cs-cookies').forEach(cookiesEl => {
+        if (cookiesEl._tabInit) return;
+        cookiesEl._tabInit = true;
+
+        const sim = tabData.cookiesSim;
+        if (!sim) return;
+
+        const checkboxes = cookiesEl.querySelectorAll('.cs-cookie-flag__input');
+        const cookieTable = cookiesEl.querySelector('#cookieTable');
+        const requestHeaders = cookiesEl.querySelector('#cookieRequestHeaders');
+        const responseHeaders = cookiesEl.querySelector('#cookieResponseHeaders');
+        const explanation = cookiesEl.querySelector('#cookieExplanation');
+
+        // ═══ Функция обновления всего ═══
+        function updateSim() {
+            // Собираем активные флаги
+            const flags = {};
+            checkboxes.forEach(cb => {
+                flags[cb.dataset.flagId] = cb.checked;
+            });
+
+            // ─── Cookie-строка ───
+            let cookieParts = [sim.token];
+            if (flags.httpOnly) cookieParts.push('HttpOnly');
+            if (flags.secure)   cookieParts.push('Secure');
+            if (flags.sameSite) cookieParts.push('SameSite=Lax');
+
+            const cookieString = cookieParts.join('; ');
+            const domain = 'example.com';
+            const expires = flags.sameSite ? 'Session' : 'Session';
+
+            // ─── Cookie-таблица ───
+            cookieTable.innerHTML = `
+                <div class="cs-cookie-row">
+                    <span class="cs-cookie-row__name">token</span>
+                    <span class="cs-cookie-row__value">${escapeHtml(sim.token)}</span>
+                    <span class="cs-cookie-row__flags">
+                        ${flags.httpOnly ? '<span class="cs-flag-chip cs-flag-chip--ok">HttpOnly</span>' : '<span class="cs-flag-chip cs-flag-chip--missing">no HttpOnly</span>'}
+                        ${flags.secure   ? '<span class="cs-flag-chip cs-flag-chip--ok">Secure</span>'   : '<span class="cs-flag-chip cs-flag-chip--missing">no Secure</span>'}
+                        ${flags.sameSite ? '<span class="cs-flag-chip cs-flag-chip--ok">SameSite=Lax</span>' : '<span class="cs-flag-chip cs-flag-chip--missing">no SameSite</span>'}
+                    </span>
+                </div>
+            `;
+
+            // ─── Request Headers ───
+            requestHeaders.innerHTML = `
+                <div class="cs-header-line">
+                    <span class="cs-header-key">${sim.requestBase.split(' ')[0]}</span>
+                    <span class="cs-header-value">${escapeHtml(sim.requestBase.split(' ').slice(1).join(' '))}</span>
+                </div>
+                <div class="cs-header-line">
+                    <span class="cs-header-key">Cookie:</span>
+                    <span class="cs-header-value ${flags.httpOnly ? 'cs-header-ok' : 'cs-header-warn'}">
+                        token=xxx
+                    </span>
+                </div>
+            `;
+
+            // ─── Response Headers ───
+            responseHeaders.innerHTML = `
+                <div class="cs-header-line">
+                    <span class="cs-header-key">${sim.responseBase.split(' ')[0]}</span>
+                    <span class="cs-header-value cs-header-ok">${escapeHtml(sim.responseBase.split(' ').slice(1).join(' '))}</span>
+                </div>
+                <div class="cs-header-line">
+                    <span class="cs-header-key">Set-Cookie:</span>
+                    <span class="cs-header-value">${escapeHtml(cookieString)}</span>
+                </div>
+            `;
+
+            // ─── Обновляем статусы угроз ───
+            sim.threats.forEach(threat => {
+                const threatEl = cookiesEl.querySelector(`[data-threat-id="${threat.id}"]`);
+                if (!threatEl) return;
+
+                let isProtected = false;
+                if (threat.id === 'xss')  isProtected = flags.httpOnly;
+                if (threat.id === 'mitm') isProtected = flags.secure;
+                if (threat.id === 'csrf') isProtected = flags.sameSite;
+
+                const statusEl = threatEl.querySelector('.cs-cookie-threat__status');
+                threatEl.classList.toggle('protected', isProtected);
+                threatEl.classList.toggle('vulnerable', !isProtected);
+
+                if (statusEl) {
+                    statusEl.textContent = isProtected ? '✅ Защищено' : '⚠️ Уязвимо';
+                }
+            });
+
+            // ─── Объяснение ───
+            const activeFlags = Object.entries(flags)
+                .filter(([_, v]) => v)
+                .map(([k]) => k);
+
+            const total = Object.keys(flags).length;
+            const active = activeFlags.length;
+
+            if (active === total) {
+                explanation.innerHTML = `
+                    <div class="cs-cookies__explanation-title" style="color:#2e7d32;">
+                        ✅ Все флаги включены — cookie максимально защищена
+                    </div>
+                    <div class="cs-cookies__explanation-text">
+                        Так должен выглядеть токен авторизации в продакшене:
+                        <code>token=xxx; HttpOnly; Secure; SameSite=Lax</code>
+                    </div>
+                `;
+            } else if (active === 0) {
+                explanation.innerHTML = `
+                    <div class="cs-cookies__explanation-title" style="color:#c62828;">
+                        ❌ Все флаги выключены — cookie абсолютно уязвима
+                    </div>
+                    <div class="cs-cookies__explanation-text">
+                        Любая XSS-атака, MITM-перехват или CSRF-подделка заберут токен. <strong>Никогда так не делайте в проде!</strong>
+                    </div>
+                `;
+            } else {
+                explanation.innerHTML = `
+                    <div class="cs-cookies__explanation-title" style="color:#e65100;">
+                        ⚠️ Включено ${active} из ${total} флагов
+                    </div>
+                    <div class="cs-cookies__explanation-text">
+                        Отключённые флаги создают уязвимости. Включите все три — и cookie будет безопасна.
+                    </div>
+                `;
+            }
+        }
+
+        // ═══ Навешиваем обработчики ═══
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateSim);
+        });
+
+        // ═══ Клик по флагу для показа объяснения ═══
+        cookiesEl.querySelectorAll('.cs-cookie-flag').forEach(flagEl => {
+            flagEl.addEventListener('click', function(e) {
+                if (e.target.tagName === 'INPUT') return; // клик по самому чекбоксу
+
+                const flagId = this.dataset.flagId;
+                const flag = sim.flags.find(f => f.id === flagId);
+                if (!flag) return;
+
+                const cb = this.querySelector('.cs-cookie-flag__input');
+                cb.checked = !cb.checked;
+                updateSim();
+
+                // Показать объяснение конкретного флага
+                const isOn = cb.checked;
+                explanation.innerHTML = `
+                    <div class="cs-cookies__explanation-title">
+                        ${flag.icon} ${escapeHtml(flag.label)}
+                    </div>
+                    <div class="cs-cookies__explanation-text">
+                        ${isOn ? flag.explainOn : flag.explainOff}
+                    </div>
+                `;
+            });
+        });
+
+        // ═══ Первичный рендер ═══
+        updateSim();
+    });
+
+    // ═══════════════════════════════════════════════════════════
+    //  WEB PAGE SIMULATOR — интерактивность
+    //  (переключение табов HTML/CSS/JS + подсветка кода при hover)
+    // ═══════════════════════════════════════════════════════════
+    panel.querySelectorAll('.wpv').forEach(wpvEl => {
+        if (wpvEl._wpvInit) return;    // Защита от повторной инициализации
+        wpvEl._wpvInit = true;
+
+        console.log('✅ wpv: инициализация');
+
+        const blocks = wpvEl.querySelectorAll('.wpv-block');
+        const codePanels = wpvEl.querySelectorAll('.wpv-code-panel');
+        const codeTabs = wpvEl.querySelectorAll('.wpv-code-tab');
+        const explanationTitle = wpvEl.querySelector('.wpv-explanation-title');
+        const explanationText = wpvEl.querySelector('.wpv-explanation-text');
+        const explanationBox = wpvEl.querySelector('#wpvExplanation');
+
+        // ═══════════════════════════════════════════════════════
+        //  1. ПЕРЕКЛЮЧЕНИЕ ТАБОВ HTML / CSS / JavaScript
+        // ═══════════════════════════════════════════════════════
+        console.log('📑 Найдено табов:', codeTabs.length);
+        console.log('📑 Найдено панелей:', codePanels.length);
+
+        codeTabs.forEach(tabBtn => {
+            // Убираем старый обработчик, если был
+            tabBtn.onclick = null;
+
+            tabBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                const tabId = this.dataset.codeTab;
+                console.log('🔀 Клик по табу:', tabId);
+
+                // Убираем active у всех табов
+                codeTabs.forEach(t => t.classList.remove('active'));
+                // Ставим active текущему
+                this.classList.add('active');
+
+                // Показываем нужную панель
+                codePanels.forEach(p => {
+                    if (p.dataset.codePanel === tabId) {
+                        p.classList.add('active');
+                    } else {
+                        p.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  2. HOVER ПО БЛОКУ СЛЕВА → ПОДСВЕТКА КОДА + ОБЪЯСНЕНИЕ
+        // ═══════════════════════════════════════════════════════
+        console.log('📦 Найдено блоков:', blocks.length);
+
+        // Берём данные из tabData (это объект webPageSim)
+        const simData = tabData && tabData.webPageSim;
+        if (!simData) {
+            console.warn('⚠️ tabData.webPageSim не найден — hover не будет работать');
+            return;
+        }
+
+        blocks.forEach(block => {
+            const blockId = block.dataset.blockId;
+            const blockData = simData.structure.find(b => b.id === blockId);
+            if (!blockData) return;
+
+            // ⚡ Убираем старые обработчики
+            block.onmouseenter = null;
+            block.onclick = null;
+
+            const handleHover = () => {
+                console.log('🖱 Hover по блоку:', blockId);
+
+                // Убираем активные со всех блоков
+                blocks.forEach(b => b.classList.remove('active'));
+                // Убираем подсветку со всех строк
+                wpvEl.querySelectorAll('.wpv-code-line').forEach(l => l.classList.remove('active'));
+
+                // Подсвечиваем текущий блок
+                block.classList.add('active');
+
+                // ⚡ Подсвечиваем строки кода (только HTML-таб)
+                if (blockData.code && blockData.code.html) {
+                    // Убедимся, что активен именно HTML-таб
+                    const htmlTab = wpvEl.querySelector('.wpv-code-tab[data-code-tab="html"]');
+                    const htmlPanel = wpvEl.querySelector('.wpv-code-panel[data-code-panel="html"]');
+
+                    if (htmlTab && !htmlTab.classList.contains('active')) {
+                        // Переключаем на HTML
+                        codeTabs.forEach(t => t.classList.remove('active'));
+                        codePanels.forEach(p => p.classList.remove('active'));
+                        htmlTab.classList.add('active');
+                        if (htmlPanel) htmlPanel.classList.add('active');
+                    }
+
+                    // Подсвечиваем строки
+                    blockData.code.html.forEach(lineNum => {
+                        const line = wpvEl.querySelector(`.wpv-code-line[data-line-num="${lineNum}"]`);
+                        if (line) {
+                            line.classList.add('active');
+                            console.log(`   Подсвечена строка ${lineNum}`);
+                        }
+                    });
+                }
+
+                // ⚡ Обновляем блок объяснения
+                if (explanationTitle) {
+                    explanationTitle.textContent = `<${blockData.tag}>`;
+                }
+                if (explanationText) {
+                    explanationText.textContent = blockData.explanation;
+                }
+                if (explanationBox) {
+                    explanationBox.classList.add('visible');
+                    explanationBox.style.borderLeftColor = '#00897b';
+                    explanationBox.style.background = '#f0f9f8';
+                }
+            };
+
+            block.addEventListener('mouseenter', handleHover);
+            block.addEventListener('click', handleHover);   // для тач-устройств
+        });
+
+        // ═══════════════════════════════════════════════════════
+        //  3. СБРОС ПРИ УХОДЕ КУРСОРА СО ВСЕЙ ОБЛАСТИ
+        // ═══════════════════════════════════════════════════════
+        wpvEl.addEventListener('mouseleave', () => {
+            blocks.forEach(b => b.classList.remove('active'));
+            wpvEl.querySelectorAll('.wpv-code-line').forEach(l => l.classList.remove('active'));
+
+            if (explanationTitle) explanationTitle.textContent = 'Объяснение';
+            if (explanationText) {
+                explanationText.textContent = 'Наведите курсор на элемент слева, и здесь появится подробное описание его назначения и кода.';
+            }
+            if (explanationBox) {
+                explanationBox.classList.remove('visible');
+                explanationBox.style.borderLeftColor = '';
+                explanationBox.style.background = '';
+            }
+        });
+
+        console.log('✅ wpv: обработчики навешаны');
+    });
+
+    // ═══ DEVTOOLS SIMULATOR ═══
+    panel.querySelectorAll('.cs-devtools').forEach(dtEl => {
+        if (dtEl._tabInit) return;
+        dtEl._tabInit = true;
+
+        const buttons = dtEl.querySelectorAll('.cs-devtools__btn');
+        const tabs = dtEl.querySelectorAll('.cs-devtools__tab');
+        const output = dtEl.querySelector('#devtoolsOutput');
+        const dataBox = dtEl.querySelector('#devtoolsData');
+        const tip = dtEl.querySelector('#devtoolsTip');
+
+        const sim = tabData.devtoolsSim;
+        let currentTab = sim.defaultTab;
+        let lastAction = null;
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateTip() {
+            const tabData = sim.tabs.find(t => t.id === currentTab);
+            if (!tabData || !tip) return;
+            tip.innerHTML = `
+                <strong>Что это?</strong>
+                <p>${tabData.info}</p>
+                <strong>Что делать тестировщику?</strong>
+                <p>${tabData.qa}</p>
+            `;
+        }
+
+        function renderOutput() {
+            if (!output) return;
+
+            // ─── Если ничего не нажато — показываем дефолт текущей вкладки ───
+            if (!lastAction) {
+                const defaults = sim.defaults && sim.defaults[currentTab];
+                if (defaults) {
+                    output.innerHTML = renderByTab(currentTab, defaults);
+                } else {
+                    output.innerHTML = `<div class="cs-devtools__hint">Нажмите одну из кнопок слева, чтобы увидеть результат.</div>`;
+                }
+                return;
+            }
+
+            // ─── Иначе — результат последнего действия ───
+            const actionData = sim.outputs[lastAction];
+            if (!actionData) return;
+
+            const tabOut = actionData[currentTab] || [];
+            output.innerHTML = renderByTab(currentTab, tabOut);
+        }
+
+        // ─── Универсальный рендер по типу вкладки ───
+        function renderByTab(tabId, data) {
+            switch (tabId) {
+
+                case 'network':
+                    if (!data || data.length === 0) {
+                        return `<div class="cs-devtools__hint">Пока нет запросов. Нажмите «Получить данные».</div>`;
+                    }
+                    return `
+                        <div class="cs-devtools__table-header">
+                            <span>Name</span>
+                            <span>Status</span>
+                            <span>Type</span>
+                        </div>
+                        ${data.map(req => `
+                            <div class="cs-devtools__req ${req.status >= 400 ? 'error' : 'ok'}">
+                                <span class="cs-devtools__req-name">${escapeHtml(req.url)}</span>
+                                <span class="cs-devtools__req-status">${req.status}</span>
+                                <span class="cs-devtools__req-type">${escapeHtml(req.type || 'fetch')}</span>
+                            </div>
+                        `).join('')}
+                    `;
+
+                case 'console':
+                    if (!data || data.length === 0) {
+                        return `<div class="cs-devtools__hint">Консоль пуста.</div>`;
+                    }
+                    return data.map(log => `
+                        <div class="cs-devtools__log cs-devtools__log--${log.type}">
+                            ${escapeHtml(log.text)}
+                        </div>
+                    `).join('');
+
+                case 'elements':
+                    if (!data || !data.html) {
+                        return `<div class="cs-devtools__hint">Нет HTML-содержимого.</div>`;
+                    }
+                    return `
+                        <div class="cs-devtools__section-title">DOM-дерево:</div>
+                        <div class="cs-devtools__tree">${escapeHtml(data.tree || '')}</div>
+                        <div class="cs-devtools__section-title" style="margin-top:14px;">HTML:</div>
+                        <pre class="cs-devtools__html">${escapeHtml(data.html)}</pre>
+                    `;
+
+                case 'application':
+                    if (!data || (!data.cookies?.length && !data.storage?.length && !data.cache?.length)) {
+                        return `<div class="cs-devtools__hint">Хранилища пусты.</div>`;
+                    }
+                    return `
+                        ${data.cookies && data.cookies.length ? `
+                            <div class="cs-devtools__section-title">Cookies:</div>
+                            ${data.cookies.map(c => `<div class="cs-devtools__list-item">${escapeHtml(c)}</div>`).join('')}
+                        ` : ''}
+                        ${data.storage && data.storage.length ? `
+                            <div class="cs-devtools__section-title" style="margin-top:12px;">LocalStorage:</div>
+                            ${data.storage.map(s => `<div class="cs-devtools__list-item">${escapeHtml(s)}</div>`).join('')}
+                        ` : ''}
+                        ${data.cache && data.cache.length ? `
+                            <div class="cs-devtools__section-title" style="margin-top:12px;">Cache Storage:</div>
+                            ${data.cache.map(c => `<div class="cs-devtools__list-item">${escapeHtml(c)}</div>`).join('')}
+                        ` : ''}
+                    `;
+
+                case 'sources':
+                    if (!data || !data.files || data.files.length === 0) {
+                        return `<div class="cs-devtools__hint">Файлы не загружены.</div>`;
+                    }
+                    return `
+                        <div class="cs-devtools__section-title">Загруженные файлы:</div>
+                        <pre class="cs-devtools__tree">${data.files.map(f => escapeHtml(f)).join('\n')}</pre>
+                    `;
+
+                case 'performance':
+                    if (!data || !data.bars || data.bars.length === 0) {
+                        return `<div class="cs-devtools__hint">Нет данных производительности.</div>`;
+                    }
+                    return `
+                        <div class="cs-devtools__section-title">Performance Timeline:</div>
+                        <div class="cs-devtools__perf">
+                            ${data.bars.map(b => `
+                                <div class="cs-devtools__perf-row">
+                                    <span class="cs-devtools__perf-label">${escapeHtml(b.label)}</span>
+                                    <div class="cs-devtools__perf-track">
+                                        <div class="cs-devtools__perf-fill" style="width:${b.width}; background:${b.color};"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+
+                case 'memory':
+                    if (!data || !data.snapshots || data.snapshots.length === 0) {
+                        return `<div class="cs-devtools__hint">Снимков памяти нет.</div>`;
+                    }
+                    return `
+                        <div class="cs-devtools__section-title">Heap Snapshots:</div>
+                        ${data.snapshots.map(s => `
+                            <div class="cs-devtools__list-item">
+                                <span class="cs-devtools__mem-name">${escapeHtml(s.name)}</span>
+                                <span class="cs-devtools__mem-size">${escapeHtml(s.size)}</span>
+                            </div>
+                        `).join('')}
+                    `;
+
+                case 'security':
+                    if (!data) {
+                        return `<div class="cs-devtools__hint">Нет данных безопасности.</div>`;
+                    }
+                    let html = `<div class="cs-devtools__section-title">Security Overview</div>`;
+                    if (data.status) {
+                        html += `<div class="cs-devtools__security-status">${escapeHtml(data.status)}</div>`;
+                    }
+                    if (data.certificate) {
+                        html += `
+                            <div class="cs-devtools__section-title" style="margin-top:14px;">Certificate</div>
+                            <div class="cs-devtools__list-item">Subject: ${escapeHtml(data.certificate.subject)}</div>
+                            <div class="cs-devtools__list-item">Issuer: ${escapeHtml(data.certificate.issuer)}</div>
+                            <div class="cs-devtools__list-item">Valid until: ${escapeHtml(data.certificate.validUntil)}</div>
+                        `;
+                    }
+                    if (data.note) {
+                        html += `<div class="cs-devtools__note">${escapeHtml(data.note)}</div>`;
+                    }
+                    if (data.warning) {
+                        html += `<div class="cs-devtools__warning">${escapeHtml(data.warning)}</div>`;
+                    }
+                    return html;
+
+                default:
+                    return `<div class="cs-devtools__hint">Нет данных для этой вкладки.</div>`;
+            }
+        }
+
+        // Клик по кнопкам
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                lastAction = this.dataset.devtoolsAction;
+
+                // Обновляем блок "Данные от сервера"
+                if (dataBox) {
+                    const data = sim.outputs[lastAction].data;
+
+                    // ⚡ Скрываем старую плашку ошибки
+                    const oldBanner = document.getElementById('devtoolsErrorBanner');
+                    if (oldBanner) oldBanner.style.display = 'none';
+
+                    if (lastAction === 'clear') {
+                        dataBox.textContent = 'Данные от сервера появятся здесь...';
+                        dataBox.className = 'cs-devtools__data-box';
+                    } else if (lastAction === 'fetch' && data) {
+                        dataBox.innerHTML = `
+                            <div class="cs-devtools__data-item">👤 ${escapeHtml(data.userName)}</div>
+                            <div class="cs-devtools__data-item">🆔 ${escapeHtml(data.userId)}</div>
+                            <div class="cs-devtools__data-item">📧 ${escapeHtml(data.email)}</div>
+                            <div class="cs-devtools__data-item">📦 Заказов: ${data.orders}</div>
+                        `;
+                        dataBox.className = 'cs-devtools__data-box cs-devtools__data-box--success';
+                    } else if (lastAction === 'error') {
+                        dataBox.innerHTML = `<div style="color:#f44336;">❌ Не удалось получить данные.</div>`;
+                        dataBox.className = 'cs-devtools__data-box cs-devtools__data-box--error';
+
+                        // ⚡ Красная плашка под data-box
+                        let errorBanner = document.getElementById('devtoolsErrorBanner');
+                        if (!errorBanner) {
+                            errorBanner = document.createElement('div');
+                            errorBanner.id = 'devtoolsErrorBanner';
+                            errorBanner.className = 'cs-devtools__error-banner';
+                            dataBox.parentNode.insertBefore(errorBanner, dataBox.nextSibling);
+                        }
+                        errorBanner.textContent = 'Ошибка загрузки данных!';
+                        errorBanner.style.display = 'block';
+                    }
+                }
+
+                // Автопереключение на подходящую вкладку
+                if (lastAction === 'fetch') {
+                    currentTab = 'network';
+                } else if (lastAction === 'error') {
+                    currentTab = 'console';
+                }
+
+                // Обновляем активную вкладку
+                tabs.forEach(t => {
+                    t.classList.toggle('active', t.dataset.devtoolsTab === currentTab);
+                });
+
+                updateTip();
+                renderOutput();
+            });
+        });
+
+        // Клик по вкладкам
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function(e) {
+                e.stopPropagation();
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentTab = this.dataset.devtoolsTab;
+                updateTip();
+                renderOutput();
+            });
+        });
+
+        // Первичный рендер
+        updateTip();
+        renderOutput();
+    });
+
+    // ═══ TEST CASE STRUCTURE ═══
+    panel.querySelectorAll('.cs-tc').forEach(tcEl => {
+        if (tcEl._tabInit) return;
+        tcEl._tabInit = true;
+        
+        const info = tcEl.querySelector('#tcInfo');
+        const fields = tcEl.querySelectorAll('[data-tc-field]');
+        const defaultInfo = info.innerHTML;
+        
+        fields.forEach(field => {
+            field.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const fieldKey = this.dataset.tcField;
+                const fieldData = tabData.testCase.info[fieldKey];
+                if (!fieldData) return;
+                
+                // Подсветка активного блока
+                fields.forEach(f => f.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Обновление правой панели
+                info.innerHTML = `
+                    <h3>${fieldData.title}</h3>
+                    <p>${fieldData.text}</p>
+                `;
+                info.classList.remove('visible');
+                setTimeout(() => info.classList.add('visible'), 50);
+            });
+        });
+        
+        // Клик вне — сброс
+        tcEl.addEventListener('click', function(e) {
+            if (!e.target.closest('[data-tc-field]')) {
+                fields.forEach(f => f.classList.remove('active'));
+                info.innerHTML = defaultInfo;
+            }
+        });
+    });
+
+    // ─── EQUIVALENCE SCALE ───
+    panel.querySelectorAll('.cs-scale').forEach(scaleEl => {
+        if (scaleEl._tabInit) return;
+        scaleEl._tabInit = true;
+        
+        const tabs = scaleEl.querySelectorAll('.cs-scale__tab');
+        const points = scaleEl.querySelectorAll('.cs-scale__point');
+        const segments = scaleEl.querySelectorAll('.cs-scale__segment');
+        const info = scaleEl.querySelector('.cs-scale__info');
+        
+        let currentMethod = '2';
+        
+        // Переключение метода
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                currentMethod = this.dataset.scaleMethod;
+                
+                info.innerHTML = `
+                    <strong>Метод ${currentMethod}-х значений</strong>
+                    <p>${currentMethod === '2' 
+                        ? 'Проверяем саму границу и следующее значение за ней.' 
+                        : 'Проверяем значение перед границей, саму границу и значение после.'}</p>
+                `;
+            });
+        });
+        
+        // Клик по точке
+        points.forEach(point => {
+            point.addEventListener('click', function() {
+                const val = this.dataset.value;
+                const type = this.classList.contains('cs-scale__point--invalid') ? 'невалидное' : 
+                            this.classList.contains('cs-scale__point--boundary') ? 'граничное' : 'валидное';
+                
+                info.innerHTML = `
+                    <strong>Значение: ${val}</strong>
+                    <p>Тип: ${type}. ${type === 'невалидное' 
+                        ? 'Система должна отклонить это значение.' 
+                        : 'Система должна принять это значение.'}</p>
+                `;
+            });
+        });
+        
+        // Клик по цветному сегменту
+        segments.forEach(seg => {
+            seg.addEventListener('click', function() {
+                info.innerHTML = `
+                    <strong>${this.dataset.label}</strong>
+                    <p>Диапазон: от ${this.dataset.from} до ${this.dataset.to}. 
+                    Все значения в этом классе обрабатываются одинаково.</p>
+                `;
+            });
+        });
+    });
+
+    // ─── ANIMATED FLOW ───
+    panel.querySelectorAll('.cs-ani').forEach(aniEl => {
+        if (aniEl._tabInit) return;
+        aniEl._tabInit = true;
+        if (tabData && tabData.animatedFlow) {
+            initAnimatedFlow(aniEl, tabData.animatedFlow);
+        }
+    });
+
+    // ─── STEPS ───
+    panel.querySelectorAll('.cs-steps').forEach(stepsEl => {
+        if (stepsEl._tabInit) return;
+        stepsEl._tabInit = true;
+        if (tabData && tabData.steps) {
+            initStepsBlock(stepsEl, tabData.steps.stages);
+        }
+    });
+
+    // ─── QUIZ ───
+    panel.querySelectorAll('.cs-quiz').forEach(quizEl => {
+        if (quizEl._tabInit) return;
+        quizEl._tabInit = true;
+        if (tabData && tabData.quiz) {
+            initQuizBlock(quizEl, tabData.quiz);
+        }
+    });
+
+    // ─── DIAGRAM ───
+    panel.querySelectorAll('.cs-diagram').forEach(diagEl => {
+        if (diagEl._tabInit) return;
+        diagEl._tabInit = true;
+        if (tabData && tabData.diagram) {
+            initDiagramBlock(diagEl, tabData.diagram.nodes);
+        }
+    });
+
+    // ─── COMPARE ───
+    panel.querySelectorAll('.cs-compare__card').forEach(card => {
+        if (card._tabInit) return;
+        card._tabInit = true;
+        card.addEventListener('click', function() {
+            const allCards = panel.querySelectorAll('.cs-compare__card');
+            const isActive = this.classList.contains('active');
+            allCards.forEach(c => c.classList.remove('active', 'dimmed'));
+            if (!isActive) {
+                this.classList.add('active');
+                allCards.forEach(c => { if (c !== this) c.classList.add('dimmed'); });
+            }
+        });
+    });
+
+    // ─── ACCORDION ───
+    panel.querySelectorAll('.cs-acc-header').forEach(header => {
+        if (header._tabInit) return;
+        header._tabInit = true;
+        header.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const itemEl = this.closest('.cs-acc-item');
+            if (!itemEl) return;
+            const isOpen = itemEl.classList.contains('open');
+            const acc = this.closest('.cs-accordion') || panel;
+            acc.querySelectorAll('.cs-acc-item').forEach(el => el.classList.remove('open'));
+            if (!isOpen) itemEl.classList.add('open');
+        });
+    });
+
+    // ─── REVEAL ───
+    panel.querySelectorAll('.cs-reveal').forEach(el => {
+        const btn = el.querySelector('[data-reveal-btn]');
+        if (!btn || btn._tabInit) return;
+        btn._tabInit = true;
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            el.classList.toggle('open');
+            const isOpen = el.classList.contains('open');
+            this.querySelector('.cs-reveal__btn-text').textContent = isOpen ? 'Скрыть ответ' : 'Показать ответ';
+            this.querySelector('.cs-reveal__btn-icon').textContent = isOpen ? '▲' : '▼';
+        });
+    });
+
+    // ─── KANBAN TASKS ───
+    panel.querySelectorAll('.cs-kanban-task').forEach(task => {
+        if (task._tabInit) return;
+        task._tabInit = true;
+        task.addEventListener('click', function() {
+            const parent = this.closest('.cs-kanban-col');
+            if (!parent) return;
+            parent.querySelectorAll('.cs-kanban-task').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // ─── MINI CARDS ───
+    panel.querySelectorAll('.cs-mini-card').forEach(card => {
+        if (card._tabInit) return;
+        card._tabInit = true;
+        card.addEventListener('click', function() {
+            const parent = this.parentElement;
+            const isActive = this.classList.contains('active');
+            parent.querySelectorAll('.cs-mini-card').forEach(c => c.classList.remove('active'));
+            if (!isActive) this.classList.add('active');
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STEPS
+// ═══════════════════════════════════════════════════════════
+
+function initStepsBlock(container, stages) {
+    const stage = container.querySelector('.cs-steps__stage');
+    const dots = container.querySelectorAll('.cs-steps__dot');
+    const fill = container.querySelector('.cs-steps__progress-fill');
+    const prevBtn = container.querySelector('[data-steps-nav="prev"]');
+    const nextBtn = container.querySelector('[data-steps-nav="next"]');
+
+    let current = 0;
+    const total = stages.length;
+
+    function render() {
+        stage.classList.remove('visible');
+        setTimeout(() => {
+            stage.innerHTML = `<strong>${stages[current].title}</strong>${stages[current].text}`;
+            stage.classList.add('visible');
+        }, 150);
+
+        dots.forEach((dot, i) => {
+            dot.classList.remove('active', 'done');
+            if (i < current) dot.classList.add('done');
+            if (i === current) dot.classList.add('active');
+        });
+
+        const percent = total > 1 ? (current / (total - 1)) * 100 : 100;
+        fill.style.width = percent + '%';
+
+        prevBtn.disabled = current === 0;
+        nextBtn.disabled = current === total - 1;
+    }
+
+    prevBtn.addEventListener('click', () => { if (current > 0) { current--; render(); } });
+    nextBtn.addEventListener('click', () => { if (current < total - 1) { current++; render(); } });
+    dots.forEach((dot, i) => dot.addEventListener('click', () => { current = i; render(); }));
+
+    render();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  QUIZ
+// ═══════════════════════════════════════════════════════════
+
+function initQuizBlock(container, quiz) {
+    const options = container.querySelectorAll('.cs-quiz__option');
+    const explainEl = container.querySelector('.cs-quiz__explain');
+
+    options.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.optIdx, 10);
+            const opt = quiz.options[idx];
+
+            options.forEach(b => b.disabled = true);
+
+            options.forEach((b, i) => {
+                if (quiz.options[i].correct) b.classList.add('correct');
+                else if (i === idx && !opt.correct) b.classList.add('wrong');
+            });
+
+            explainEl.innerHTML = opt.explain || '';
+            explainEl.classList.add('visible');
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DIAGRAM
+// ═══════════════════════════════════════════════════════════
+
+function initDiagramBlock(container, nodes) {
+    const nodeEls = container.querySelectorAll('.cs-diagram__node');
+    const detailEl = container.querySelector('.cs-diagram__detail');
+
+    nodeEls.forEach((nodeEl, idx) => {
+        nodeEl.addEventListener('click', function() {
+            const isActive = this.classList.contains('active');
+            nodeEls.forEach(n => n.classList.remove('active'));
+
+            if (!isActive) {
+                this.classList.add('active');
+                detailEl.classList.remove('visible');
+                setTimeout(() => {
+                    detailEl.innerHTML = nodes[idx].detail;
+                    detailEl.classList.add('visible');
+                }, 120);
+            } else {
+                detailEl.classList.remove('visible');
+            }
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FLOW — схема со стрелками и hover-подсказками
+// ═══════════════════════════════════════════════════════════
+
+function initFlowBlock(container, nodes) {
+    const nodeEls = container.querySelectorAll('.cs-flow__node');
+    const detailEl = container.querySelector('.cs-flow__detail');
+
+    nodeEls.forEach((nodeEl, idx) => {
+        const show = () => {
+            const node = nodes[idx];
+            detailEl.innerHTML = `<strong>${node.label}</strong>${node.detail}`;
+            detailEl.classList.add('visible');
+            nodeEl.classList.add('active');
+        };
+        const hide = () => {
+            detailEl.classList.remove('visible');
+            nodeEl.classList.remove('active');
+        };
+
+        nodeEl.addEventListener('mouseenter', show);
+        nodeEl.addEventListener('mouseleave', hide);
+        nodeEl.addEventListener('click', show);
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ЗАПУСК
+// ═══════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderCsCatalog();
+    setupCsFilters();
+
+    const backBtn = document.getElementById('csBackBtn');
+    if (backBtn) backBtn.addEventListener('click', closeCsDetail);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  ANIMATED FLOW — анимированная схема процесса
+// ═══════════════════════════════════════════════════════════
+
+function initAnimatedFlow(container, data) {
+    const nodes = data.nodes;
+    const arrows = data.arrows || [];
+    const nodeEls = container.querySelectorAll('.cs-ani__node');
+    const arrowEls = container.querySelectorAll('.cs-ani__arrow');
+    const detail = container.querySelector('.cs-ani__detail');
+    const progressFill = container.querySelector('.cs-ani__progress-fill');
+    const playBtn = container.querySelector('[data-ani-action="play"]');
+    const resetBtn = container.querySelector('[data-ani-action="reset"]');
+
+    let currentStep = -1;
+    let isPlaying = false;
+    let isPaused = false;
+    let timer = null;
+
+    function updateArrow(fromIdx, toIdx) {
+        // Ищем стрелку между узлами
+        const arrow = arrows.find(a => a.from === fromIdx && a.to === toIdx);
+        if (!arrow) return;
+        const arrowEl = arrowEls[arrows.indexOf(arrow)];
+        if (!arrowEl) return;
+        const fill = arrowEl.querySelector('.cs-ani__arrow-fill');
+        fill.style.width = '100%';
+        arrowEl.classList.add('filled');
+    }
+
+    function clearArrows() {
+        arrowEls.forEach(el => {
+            el.querySelector('.cs-ani__arrow-fill').style.width = '0';
+            el.classList.remove('filled');
+        });
+    }
+
+    function renderStep(step) {
+        // Узлы: done / active / обычные
+        nodeEls.forEach((el, i) => {
+            el.classList.remove('active', 'done');
+            if (i < step) el.classList.add('done');
+            if (i === step) el.classList.add('active');
+        });
+
+        // Стрелки
+        clearArrows();
+        for (let i = 0; i < step; i++) {
+            updateArrow(i, i + 1);
+        }
+
+        // Прогресс-бар
+        const percent = nodes.length > 1
+            ? ((step + 1) / nodes.length) * 100
+            : 100;
+        progressFill.style.width = percent + '%';
+
+        // Описание
+        const node = nodes[step];
+
+        // ⚡ Убираем <strong>...</strong> из начала detail, если дублирует label
+        let detailText = node.detail || '';
+        const strongRegex = /^\s*<strong>(.*?)<\/strong>[\s:.\-–—]*/i;
+        const match = detailText.match(strongRegex);
+        if (match) {
+            const strongText = match[1].trim();
+            const labelText = (node.label || '').trim();
+            const normalize = (s) => s.toLowerCase()
+                .replace(/[.,:;\-–—!?()]/g, '')
+                .replace(/\s+/g, ' ').trim();
+            if (normalize(strongText) === normalize(labelText) ||
+                normalize(strongText).startsWith(normalize(labelText)) ||
+                normalize(labelText).startsWith(normalize(strongText))) {
+                detailText = detailText.replace(strongRegex, '').trim();
+            }
+        }
+
+        // ⚡ Собираем HTML блока
+        let html = `
+            <span class="cs-ani__detail-step">Шаг ${step + 1} / ${nodes.length}</span>
+            <span class="cs-ani__detail-title">${node.label}</span>
+        `;
+
+        // Определение
+        if (detailText) {
+            html += `<div class="cs-ani__detail-section cs-ani__detail-section--def">
+                <span class="cs-ani__detail-label">Определение</span>
+                <div class="cs-ani__detail-content">${detailText}</div>
+            </div>`;
+        }
+
+        // Пример
+        if (node.example) {
+            html += `<div class="cs-ani__detail-section cs-ani__detail-section--example">
+                <span class="cs-ani__detail-label">Пример</span>
+                <div class="cs-ani__detail-content">${node.example}</div>
+            </div>`;
+        }
+
+        // Что делать QA
+        if (node.qa) {
+            html += `<div class="cs-ani__detail-section cs-ani__detail-section--qa">
+                <span class="cs-ani__detail-label">Что делает QA</span>
+                <div class="cs-ani__detail-content">${node.qa}</div>
+            </div>`;
+        }
+
+        // Дополнительно
+        if (node.extra) {
+            html += `<div class="cs-ani__detail-section cs-ani__detail-section--extra">
+                <span class="cs-ani__detail-label">Дополнительно</span>
+                <div class="cs-ani__detail-content">${node.extra}</div>
+            </div>`;
+        }
+
+        detail.classList.remove('active');
+        setTimeout(() => {
+            detail.innerHTML = html;
+            detail.classList.add('active');
+        }, 150);
+    }
+
+    function nextStep() {
+        if (currentStep >= nodes.length - 1) {
+            stop();
+            return;
+        }
+        currentStep++;
+        renderStep(currentStep);
+    }
+
+    function play() {
+        if (isPaused) {
+            isPaused = false;
+            isPlaying = true;
+            playBtn.classList.remove('paused');
+            playBtn.innerHTML = 'Пауза';
+            nextStep();
+            timer = setInterval(nextStep, data.stepDelay || 1800);
+            return;
+        }
+
+        // Начинаем с нуля
+        reset();
+        isPlaying = true;
+        playBtn.classList.add('paused');
+        playBtn.innerHTML = 'Пауза';
+        currentStep = -1;
+        setTimeout(() => {
+            nextStep();
+            timer = setInterval(nextStep, data.stepDelay || 1800);
+        }, 200);
+    }
+
+    function pause() {
+        isPaused = true;
+        isPlaying = false;
+        clearInterval(timer);
+        playBtn.classList.remove('paused');
+        playBtn.innerHTML = 'Продолжить';
+    }
+
+    function stop() {
+        isPlaying = false;
+        isPaused = false;
+        clearInterval(timer);
+        playBtn.classList.remove('paused');
+        playBtn.innerHTML = 'Запустить заново';
+    }
+
+    function reset() {
+        clearInterval(timer);
+        currentStep = -1;
+        isPlaying = false;
+        isPaused = false;
+        nodeEls.forEach(el => el.classList.remove('active', 'done'));
+        clearArrows();
+        progressFill.style.width = '0';
+        playBtn.classList.remove('paused');
+        playBtn.innerHTML = 'Запустить анимацию';
+        detail.classList.remove('active');
+        detail.innerHTML = `
+            <span class="cs-ani__detail-step">Шаг 0 / ${nodes.length}</span>
+            <span class="cs-ani__detail-title">Готово к запуску</span>
+            Нажмите «Запустить анимацию», чтобы пошагово увидеть процесс.
+        `;
+    }
+
+    // ─── Кнопки управления ───
+    playBtn.addEventListener('click', () => {
+        if (isPlaying) pause();
+        else play();
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    // ─── Клик по узлу — прыжок на него ───
+    nodeEls.forEach((nodeEl, idx) => {
+        nodeEl.addEventListener('click', () => {
+            clearInterval(timer);
+            isPlaying = false;
+            isPaused = false;
+            playBtn.classList.remove('paused');
+            playBtn.innerHTML = 'Запустить анимацию';
+            currentStep = idx;
+            renderStep(currentStep);
+        });
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER TAB CONTENT — контент внутри вкладки
+// ═══════════════════════════════════════════════════════════
+
+function renderTabContent(tab) {
+    let html = '';
+
+    // ═══ POSTMAN SIMULATOR ═══
+    if (tab.postmanSim) {
+        const ps = tab.postmanSim;
+
+        // ─── Левая панель: коллекции ───
+        const collectionsHtml = ps.collections.map(col => `
+            <div class="postman-collection" data-col-id="${col.id}">
+                <div class="postman-collection__title">
+                    <span class="postman-collection__folder">📁</span>
+                    ${escapeHtml(col.title)}
+                </div>
+                <div class="postman-collection__requests">
+                    ${col.requests.map(req => `
+                        <div class="postman-request${req.id === ps.defaultRequest ? ' active' : ''}"
+                             data-req-id="${req.id}">
+                            <span class="postman-method postman-method--${req.method.toLowerCase()}">
+                                ${req.method}
+                            </span>
+                            <span class="postman-request__label">${escapeHtml(req.label)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        html += `
+            <div class="postman-sim">
+                <div class="postman-sim__layout">
+
+                    <!-- ═══ ЛЕВАЯ ПАНЕЛЬ: Коллекции ═══ -->
+                    <aside class="postman-sidebar">
+                        <div class="postman-sidebar__header">
+                            <span>📚 Коллекции</span>
+                        </div>
+                        <div class="postman-sidebar__body">
+                            ${collectionsHtml}
+                        </div>
+                    </aside>
+
+                    <!-- ═══ ПРАВАЯ ПАНЕЛЬ: Запрос / Ответ ═══ -->
+                    <section class="postman-main">
+
+                        <!-- Строка запроса -->
+                        <div class="postman-request-bar">
+                            <span class="postman-method-badge" id="postmanMethodBadge">GET</span>
+                            <input class="postman-url-input" id="postmanUrl" type="text" readonly value="">
+                            <button class="postman-send-btn" id="postmanSendBtn" type="button">
+                                Send ▸
+                            </button>
+                        </div>
+
+                        <!-- Вкладки запроса -->
+                        <div class="postman-tabs">
+                            <button class="postman-tab active" data-postman-tab="params">Params</button>
+                            <button class="postman-tab" data-postman-tab="headers">Headers</button>
+                            <button class="postman-tab" data-postman-tab="body">Body</button>
+                        </div>
+
+                        <!-- Панели запроса -->
+                        <div class="postman-tab-panel active" data-postman-panel="params">
+                            <div class="postman-kv" id="postmanParams"></div>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel="headers">
+                            <div class="postman-kv" id="postmanHeaders"></div>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel="body">
+                            <pre class="postman-body" id="postmanBody"></pre>
+                        </div>
+
+                        <!-- Разделитель -->
+                        <div class="postman-divider">
+                            <span class="postman-divider__label">Response</span>
+                        </div>
+
+                        <!-- Статус ответа -->
+                        <div class="postman-response-meta" id="postmanResponseMeta">
+                            <span class="postman-response__status">—</span>
+                            <span class="postman-response__time">Time: —</span>
+                            <span class="postman-response__size">Size: —</span>
+                        </div>
+
+                        <!-- Вкладки ответа -->
+                        <div class="postman-tabs">
+                            <button class="postman-tab active" data-postman-tab-res="body">Body</button>
+                            <button class="postman-tab" data-postman-tab-res="headers">Headers</button>
+                        </div>
+
+                        <div class="postman-tab-panel active" data-postman-panel-res="body">
+                            <pre class="postman-response-body" id="postmanResponseBody"></pre>
+                        </div>
+                        <div class="postman-tab-panel" data-postman-panel-res="headers">
+                            <div class="postman-kv" id="postmanResponseHeaders"></div>
+                        </div>
+
+                    </section>
+                </div>
+
+                <div class="postman-explanation" id="postmanExplanation">
+                    💡 Нажмите на запрос в левой панели — увидите его содержимое и ответ.
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  WEB PAGE SIMULATOR
+    // ═══════════════════════════════════════════════════════
+    if (tab.webPageSim) {
+        const sim = tab.webPageSim;
+
+        // ═══ Левая панель: структура ═══
+        const structureHtml = sim.structure.map(block => {
+            let itemsHtml = '';
+
+            if (block.items && block.items.length) {
+                itemsHtml = `<div class="wpv-block-body">${block.items.map(it => {
+                    if (it.isHeading) return `<div class="wpv-heading">${it.text}</div>`;
+                    if (it.type === 'form') {
+                        return `
+                            <div class="wpv-form">
+                                <div class="wpv-form-title">${it.title}</div>
+                                ${it.fields.map(f => `
+                                    <div class="wpv-form-field">
+                                        <label class="wpv-form-label">${f.label}</label>
+                                        <input class="wpv-form-input" type="${f.inputType || 'text'}" disabled>
+                                    </div>
+                                `).join('')}
+                                <button class="wpv-form-btn" disabled>${it.button}</button>
+                            </div>
+                        `;
+                    }
+                    return `<p class="wpv-text">${it.text}</p>`;
+                }).join('')}</div>`;
+            }
+
+            return `
+                <div class="wpv-block wpv-block--${block.id}"
+                     data-block-id="${block.id}"
+                     style="margin-left: ${block.indent * 20}px;">
+                    <div class="wpv-block-header">
+                        <span class="wpv-block-tag">&lt;${block.tag}&gt;</span>
+                        ${block.label ? `<span class="wpv-block-label">${block.label}</span>` : ''}
+                    </div>
+                    ${itemsHtml}
+                </div>
+            `;
+        }).join('');
+
+        // ═══ Правая панель: табы кода ═══
+        const tabsNav = sim.codeTabs.map((t, i) => `
+            <button class="wpv-code-tab${i === 0 ? ' active' : ''}" data-code-tab="${t.id}">
+                ${t.label}
+            </button>
+        `).join('');
+
+        const tabsPanels = sim.codeTabs.map((t, i) => `
+            <div class="wpv-code-panel${i === 0 ? ' active' : ''}" data-code-panel="${t.id}">
+                <pre class="wpv-code-pre">${t.lines.map(line => `
+                    <div class="wpv-code-line" data-line-num="${line.num}">
+                        <span class="wpv-code-num">${line.num}</span>
+                        <span class="wpv-code-text">${escapeHtml(line.code)}</span>
+                        ${line.comment ? `<span class="wpv-code-comment">// ${escapeHtml(line.comment)}</span>` : ''}
+                    </div>
+                `).join('')}</pre>
+            </div>
+        `).join('');
+
+        html += `
+            <div class="wpv">
+                <div class="wpv__header">
+                    <h3 class="wpv__title">${escapeHtml(tab.title)}</h3>
+                    <p class="wpv__subtitle">${escapeHtml(tab.subtitle)}</p>
+                </div>
+
+                <div class="wpv__layout">
+                    <div class="wpv__structure">
+                        <div class="wpv-structure-inner">
+                            ${structureHtml}
+                        </div>
+                    </div>
+
+                    <div class="wpv__code">
+                        <div class="wpv-code-tabs">
+                            ${tabsNav}
+                        </div>
+                        <div class="wpv-code-content">
+                            ${tabsPanels}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wpv__explanation" id="wpvExplanation">
+                    <div class="wpv-explanation-title">Объяснение</div>
+                    <div class="wpv-explanation-text">Наведите курсор на элемент слева, и здесь появится подробное описание его назначения и кода.</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ─── PYRAMID (классический вид) ───
+    if (tab.pyramid) {
+        const p = tab.pyramid;
+        html += `
+            <div class="cs-pyramid">
+                <div class="cs-pyramid__visual">
+                    <div class="cs-pyramid__levels">
+                        ${p.levels.map((lvl, idx) => `
+                            <div class="cs-pyramid__level${idx === p.levels.length - 1 ? ' active' : ''}"
+                                 data-pyramid-id="${lvl.id}"
+                                 style="--lvl-color: ${lvl.color}; --lvl-text: ${lvl.textColor};">
+                                ${lvl.label}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="cs-pyramid__axis">
+                        ${p.axis.map(a => `
+                            <span>${a.label} <strong>${a.arrow}</strong></span>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="cs-pyramid__info" id="pyramidInfo">
+                    <h3>${p.infoTitle}</h3>
+                    <p>${p.infoText}</p>
+                    <div class="cs-pyramid__hint">${p.infoHint}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  GIT FLOW SIMULATOR
+    // ═══════════════════════════════════════════════════════
+    if (tab.gitGraphSim) {
+        const gs = tab.gitGraphSim;
+
+        // ═══ Горизонтальные линии ═══
+        const horizontalLines = gs.branches
+            .filter(b => b.type === 'horizontal')
+            .map(b => `
+                <div class="cs-git-line"
+                    style="left:${b.x}%; top:${b.y}%; width:${b.width}%; background:${b.color};">
+                    <span class="cs-git-line__arrow" style="border-left-color:${b.color};"></span>
+                </div>
+            `).join('');
+
+        // ═══ Вертикальные линии ═══
+        const verticalLines = gs.branches
+            .filter(b => b.type === 'branch-down')
+            .map(b => `
+                <div class="cs-git-vline"
+                    style="left:${b.endX}%; top:${b.y}%; height:${b.endY - b.y}%; background:${b.color};">
+                </div>
+            `).join('');
+
+        // ═══ Пунктирные коннекторы ═══
+        const connectors = gs.stages.map(s => {
+            const parent = gs.branches.find(b => b.id === s.parentBranch);
+            if (!parent) return '';
+            const parentY = parent.type === 'branch-down' ? parent.endY : parent.y;
+            return `
+                <div class="cs-git-connector"
+                    style="left:${s.x}%; top:${parentY + 2}%; height:${Math.max(4, s.y - parentY - 4)}%;">
+                </div>
+            `;
+        }).join('');
+
+        // ═══ Узлы веток ═══
+        const branchNodes = gs.branches.map(b => {
+            if (b.type === 'horizontal') {
+                return `
+                    <div class="cs-git-branch cs-git-branch--horizontal"
+                        data-git-id="${b.id}"
+                        style="left:${b.x}%; top:${b.y}%; background:${b.color}; color:#fff;">
+                        ${b.label}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="cs-git-branch cs-git-branch--down"
+                        data-git-id="${b.id}"
+                        style="left:${b.endX}%; top:${b.endY}%; background:${b.color}; color:#fff;">
+                        ${b.label}
+                    </div>
+                `;
+            }
+        }).join('');
+
+        // ═══ Узлы этапов ═══
+        const stageNodes = gs.stages.map(s => `
+            <div class="cs-git-stage"
+                data-git-id="${s.id}"
+                style="left:${s.x}%; top:${s.y}%;">
+                ${s.label}
+            </div>
+        `).join('');
+
+        // ═══ Легенда ═══
+        const legend = `
+            <div class="cs-git-legend">
+                <div class="cs-git-legend__item">
+                    <span class="cs-git-legend__line cs-git-legend__line--solid"></span>
+                    <span>Ветка</span>
+                </div>
+                <div class="cs-git-legend__item">
+                    <span class="cs-git-legend__line cs-git-legend__line--dashed"></span>
+                    <span>Этап тестирования</span>
+                </div>
+                <div class="cs-git-legend__item">
+                    <span class="cs-git-legend__line cs-git-legend__line--merge"></span>
+                    <span>Слияние (merge)</span>
+                </div>
+            </div>
+        `;
+
+        // ═══ Merge-стрелки ═══
+        const mergeArrows = (gs.merges || []).map(m => {
+            const path = m.path;
+            let segments = '';
+            let hitZones = '';
+
+            const lastPoint = path[path.length - 1];
+            const prevPoint = path[path.length - 2];
+
+            for (let i = 0; i < path.length - 1; i++) {
+                const from = path[i];
+                const to = path[i + 1];
+                const isHorizontal = Math.abs(from.y - to.y) < 0.5;
+                const isVertical = Math.abs(from.x - to.x) < 0.5;
+
+                if (isHorizontal) {
+                    const left = Math.min(from.x, to.x);
+                    const width = Math.abs(to.x - from.x);
+                    segments += `
+                        <div class="cs-git-merge-segment"
+                             style="left:${left}%; top:${from.y}%;
+                                    width:${width}%; height:3px;
+                                    background:${m.color};
+                                    transform:translateY(-50%);">
+                        </div>
+                    `;
+                    hitZones += `
+                        <div class="cs-git-merge-hit"
+                             style="left:${left}%; top:${from.y}%;
+                                    width:${width}%; height:20px;
+                                    transform:translateY(-50%);">
+                        </div>
+                    `;
+                } else if (isVertical) {
+                    const top = Math.min(from.y, to.y);
+                    const height = Math.abs(to.y - from.y);
+                    segments += `
+                        <div class="cs-git-merge-segment"
+                             style="left:${from.x}%; top:${top}%;
+                                    width:3px; height:${height}%;
+                                    background:${m.color};
+                                    transform:translateX(-50%);">
+                        </div>
+                    `;
+                    hitZones += `
+                        <div class="cs-git-merge-hit"
+                             style="left:${from.x}%; top:${top}%;
+                                    width:20px; height:${height}%;
+                                    transform:translateX(-50%);">
+                        </div>
+                    `;
+                }
+            }
+
+            let arrowRotation = 0;
+            if (Math.abs(lastPoint.x - prevPoint.x) > 0.5) {
+                arrowRotation = lastPoint.x > prevPoint.x ? 0 : 180;
+            } else {
+                arrowRotation = lastPoint.y > prevPoint.y ? 90 : -90;
+            }
+
+            const arrow = `
+                <div class="cs-git-merge-arrow"
+                     style="left:${lastPoint.x}%; top:${lastPoint.y}%;
+                            transform: translate(-50%, -50%) rotate(${arrowRotation}deg);
+                            border-left-color: ${m.color};">
+                </div>
+            `;
+
+            return `
+                <div class="cs-git-merge-group" data-merge-id="${m.id}">
+                    ${segments}
+                    ${arrow}
+                    ${hitZones}
+                </div>
+            `;
+        }).join('');
+
+        // ═══ Собираем HTML ═══
+        html += `
+            <div class="cs-git">
+                <div class="cs-git__header">
+                    <h3 class="cs-git__title">${escapeHtml(tab.title)}</h3>
+                    <p class="cs-git__subtitle">${escapeHtml(tab.subtitle)}</p>
+                </div>
+
+                <div class="cs-git__layout">
+                    <div class="cs-git__diagram">
+                        ${legend}
+                        ${horizontalLines}
+                        ${verticalLines}
+                        ${connectors}
+                        ${mergeArrows}
+                        ${branchNodes}
+                        ${stageNodes}
+                    </div>
+
+                    <div class="cs-git__info" id="gitInfo">
+                        <h3>${gs.defaultInfo.title}</h3>
+                        <p>${gs.defaultInfo.text}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  BRANCHES (карточки веток)
+    // ═══════════════════════════════════════════════════════
+    if (tab.branches) {
+        html += `
+            <div class="cs-branches">
+                ${tab.branches.map(b => `
+                    <div class="cs-branch-card" data-branch-id="${b.id}">
+                        <div class="cs-branch-card__header" style="border-left-color: ${b.color};">
+                            <span class="cs-branch-card__icon">${b.icon}</span>
+                            <span class="cs-branch-card__title" style="color: ${b.color};">${b.label}</span>
+                        </div>
+                        <div class="cs-branch-card__purpose">${b.purpose}</div>
+
+                        <div class="cs-branch-card__rows">
+                            <div class="cs-branch-card__row">
+                                <span class="cs-branch-card__label">↗ Ответвляется от:</span>
+                                <span class="cs-branch-card__value">${b.from}</span>
+                            </div>
+                            <div class="cs-branch-card__row">
+                                <span class="cs-branch-card__label">↙ Мержится в:</span>
+                                <span class="cs-branch-card__value">${b.mergeTo}</span>
+                            </div>
+                            <div class="cs-branch-card__row">
+                                <span class="cs-branch-card__label">👥 Кто работает:</span>
+                                <span class="cs-branch-card__value">${b.who}</span>
+                            </div>
+                        </div>
+
+                        <div class="cs-branch-card__qa">
+                            <div class="cs-branch-card__qa-title">Задачи QA</div>
+                            <ul class="cs-branch-card__qa-list">
+                                ${b.qa.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // ═══════════════════════════════════════════════════════
+    //  RULES (карточки правил)
+    // ═══════════════════════════════════════════════════════
+    if (tab.rules) {
+        html += `
+            <div class="cs-rules">
+                ${tab.rules.map(r => `
+                    <div class="cs-rule-card">
+                        <div class="cs-rule-card__header" style="border-left-color: ${r.color};">
+                            <span class="cs-rule-card__icon">${r.icon}</span>
+                            <span class="cs-rule-card__title" style="color: ${r.color};">${r.category}</span>
+                        </div>
+                        <ul class="cs-rule-card__list">
+                            ${r.items.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+
+    // ═══ CACHE SIMULATOR ═══
+    if (tab.cacheSim) {
+        const cs = tab.cacheSim;
+
+        // ─── Левая панель: кнопки + статус кэша ───
+        const buttonsHtml = cs.buttons.map(btn => `
+            <button class="cs-cache-btn"
+                    data-action="${btn.id}"
+                    style="background:${btn.color};">
+                ${btn.label}
+            </button>
+        `).join('');
+
+        html += `
+            <div class="cs-cache">
+                <div class="cs-cache__header">
+                    <h3 class="cs-cache__title">${escapeHtml(tab.title)}</h3>
+                    <p class="cs-cache__subtitle">${escapeHtml(tab.subtitle)}</p>
+                </div>
+
+                <div class="cs-cache__layout">
+
+                    <!-- ═══ ЛЕВАЯ ПАНЕЛЬ: кнопки + статус кэша ═══ -->
+                    <div class="cs-cache__left">
+                        <div class="cs-cache__section-title">
+                            <span></span> Действия
+                        </div>
+                        <div class="cs-cache__buttons">
+                            ${buttonsHtml}
+                        </div>
+
+                        <div class="cs-cache__section-title" style="margin-top:18px;">
+                            <span></span> Состояние кэша
+                        </div>
+                        <div class="cs-cache-status" id="cacheStatus">
+                            <div class="cs-cache__hint">Кэш пуст</div>
+                        </div>
+                    </div>
+
+                    <!-- ═══ ПРАВАЯ ПАНЕЛЬ: request / response ═══ -->
+                    <div class="cs-cache__right">
+
+                        <div class="cs-cache__panel-header">
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__dot"></span>
+                            <span class="cs-cache__panel-title">DevTools — Network</span>
+                        </div>
+
+                        <div class="cs-cache__content">
+                            <div class="cs-cache__section-title-sm">Request</div>
+                            <div class="cs-cache-headers" id="cacheRequest">
+                                <div class="cs-cache__hint">Нажмите кнопку слева, чтобы увидеть запрос.</div>
+                            </div>
+
+                            <div class="cs-cache__section-title-sm" style="margin-top:16px;">
+                                Response
+                            </div>
+                            <div class="cs-cache-headers" id="cacheResponse">
+                                <div class="cs-cache__hint">Ответ сервера появится здесь.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ═══ Объяснение ═══ -->
+                <div class="cs-cache__explanation" id="cacheExplanation">
+                    <div class="cs-cache__explanation-title">Что происходит</div>
+                    <div class="cs-cache__explanation-text">
+                        Нажимайте кнопки слева, чтобы пошагово увидеть, как работает кэш браузера.
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    
+    // ═══ DEVTOOLS SIMULATOR ═══
+    if (tab.devtoolsSim) {
+        const d = tab.devtoolsSim;
+        html += `
+            <div class="cs-devtools">
+                <div class="cs-devtools__left">
+                    <div class="cs-devtools__profile">
+                        <h3>Профиль пользователя</h3>
+                        <div class="cs-devtools__user">
+                            <div class="cs-devtools__avatar">${d.profile.avatarLetter}</div>
+                            <div class="cs-devtools__user-info">
+                                <strong>${d.profile.name}</strong>
+                                <span>${d.profile.email}</span>
+                            </div>
+                            <div class="cs-devtools__status">
+                                <span class="cs-devtools__dot"></span>${d.profile.status}
+                            </div>
+                        </div>
+                        <div class="cs-devtools__data-box" id="devtoolsData">
+                            Данные от сервера появятся здесь...
+                        </div>
+                        <div class="cs-devtools__buttons">
+                            ${d.buttons.map(btn => `
+                                <button class="cs-devtools__btn"
+                                        data-devtools-action="${btn.id}"
+                                        style="background:${btn.color};">
+                                    ${btn.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="cs-devtools__right">
+                    <div class="cs-devtools__panel">
+                        <div class="cs-devtools__tabs">
+                            ${d.tabs.map(t => `
+                                <button class="cs-devtools__tab${t.id === d.defaultTab ? ' active' : ''}"
+                                        data-devtools-tab="${t.id}">
+                                    ${t.label}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="cs-devtools__content">
+                            <div class="cs-devtools__tip" id="devtoolsTip">
+                                <strong>Что это?</strong>
+                                <p>${d.tabs.find(t => t.id === d.defaultTab).info}</p>
+                                <strong>Что делать тестировщику?</strong>
+                                <p>${d.tabs.find(t => t.id === d.defaultTab).qa}</p>
+                            </div>
+                            <div class="cs-devtools__output" id="devtoolsOutput">
+                                <div class="cs-devtools__hint">Нажмите одну из кнопок слева, чтобы увидеть результат.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ TEST CASE STRUCTURE ═══
+    if (tab.testCase) {
+        const tc = tab.testCase;
+        html += `
+            <div class="cs-tc">
+                <div class="cs-tc__left">
+                    <!-- Заголовок -->
+                    <div class="cs-tc__header">
+                        <h3 class="cs-tc__title">${tc.title}</h3>
+                        <span class="cs-tc__id">${tc.id}</span>
+                    </div>
+                    
+                    <!-- Метаданные (3 колонки) -->
+                    <div class="cs-tc__meta">
+                        ${tc.meta.map(m => `
+                            <div class="cs-tc__meta-item" data-tc-field="${m.field}">
+                                <span class="cs-tc__meta-label">${m.label}:</span>
+                                <span class="cs-tc__meta-value">${m.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Preconditions -->
+                    <div class="cs-tc__block" data-tc-field="${tc.preconditions.field}">
+                        <div class="cs-tc__block-label">${tc.preconditions.label}</div>
+                        <p class="cs-tc__block-text">${tc.preconditions.text}</p>
+                    </div>
+                    
+                    <!-- Таблица Шаги / Ожидаемый результат -->
+                    <div class="cs-tc__table" data-tc-field="${tc.table.field}">
+                        <div class="cs-tc__table-header">
+                            <div class="cs-tc__table-th">${tc.table.stepsTitle}</div>
+                            <div class="cs-tc__table-th">${tc.table.expectedTitle}</div>
+                        </div>
+                        <div class="cs-tc__table-body">
+                            <div class="cs-tc__table-col cs-tc__table-col--steps">
+                                ${tc.table.steps.map(s => `<div class="cs-tc__step">${s}</div>`).join('')}
+                            </div>
+                            <div class="cs-tc__table-col cs-tc__table-col--expected">
+                                ${tc.table.expected.map(e => `<div class="cs-tc__expected">${e}</div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Postconditions -->
+                    <div class="cs-tc__block" data-tc-field="${tc.postconditions.field}">
+                        <div class="cs-tc__block-label">${tc.postconditions.label}</div>
+                        <p class="cs-tc__block-text">${tc.postconditions.text}</p>
+                    </div>
+                </div>
+                
+                <div class="cs-tc__right">
+                    <div class="cs-tc__info" id="tcInfo">
+                        <h3>${tc.info.default.title}</h3>
+                        <p>${tc.info.default.text}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ═══ EQUIVALENCE SCALE ═══
+    if (tab.scale) {
+        const s = tab.scale;
+        const minVal = -20;
+        const maxVal = 140;
+        const range = maxVal - minVal;
+        
+        html += `
+            <div class="cs-scale">
+                <h3 class="cs-scale__title">${s.title}</h3>
+                
+                <div class="cs-scale__tabs">
+                    ${Object.entries(s.methods).map(([key, m]) => `
+                        <button class="cs-scale__tab${key === '2' ? ' active' : ''}" data-scale-method="${key}">
+                            ${m.name}
+                        </button>
+                    `).join('')}
+                </div>
+                
+                <div class="cs-scale__axis">
+                    ${s.segments.map(seg => {
+                        const left = ((seg.from - minVal) / range) * 100;
+                        const width = ((seg.to - seg.from) / range) * 100;
+                        return `<div class="cs-scale__segment" 
+                                    style="left:${left}%; width:${width}%; background:${seg.color};"
+                                    data-label="${seg.label}"
+                                    data-from="${seg.from}"
+                                    data-to="${seg.to}"></div>`;
+                    }).join('')}
+                    
+                    ${s.points.map((p, i) => {
+                        const left = ((p.value - minVal) / range) * 100;
+                        return `
+                            <div class="cs-scale__point cs-scale__point--${p.type}" 
+                                style="left:${left}%;"
+                                data-value="${p.value}"
+                                data-idx="${i}">
+                                <span class="cs-scale__point-label">${p.label}</span>
+                                <span class="cs-scale__point-dot"></span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <div class="cs-scale__info" id="scaleInfo">
+                    <strong>Интерактивная шкала</strong>
+                    <p>Выберите метод выше, а затем нажмите на точку или цветной класс на шкале, чтобы увидеть пояснение.</p>
+                </div>
+            </div>
+        `;
+    }
+
+    // ─── COMPARE ───
+    if (tab.compare) {
+        html += `<div class="cs-compare">`;
+        tab.compare.forEach((block, idx) => {
+            html += `
+                <div class="cs-compare__card" data-block-idx="${idx}">
+                    <h3 class="cs-compare__title">${block.title}</h3>
+                    ${block.question ? `<p class="cs-compare__question">${block.question}</p>` : ''}
+                    <p class="cs-compare__text">${block.text}</p>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    // ─── QUIZ ───
+    if (tab.quiz) {
+        html += `
+            <div class="cs-quiz">
+                <h3 class="cs-quiz__question">${tab.quiz.question}</h3>
+                <div class="cs-quiz__options">
+                    ${tab.quiz.options.map((opt, idx) => `
+                        <button class="cs-quiz__option" data-opt-idx="${idx}">${opt.text}</button>
+                    `).join('')}
+                </div>
+                <div class="cs-quiz__explain"></div>
+            </div>
+        `;
+    }
+
+    // ─── DIAGRAM ───
+    if (tab.diagram) {
+        html += `
+            <div class="cs-diagram">
+                <h3 class="cs-diagram__title">${tab.diagram.title}</h3>
+                <div class="cs-diagram__row">
+                    ${tab.diagram.nodes.map((node, idx) => `
+                        <div class="cs-diagram__node" data-node-idx="${idx}">${node.label}</div>
+                        ${idx < tab.diagram.nodes.length - 1 ? '<span class="cs-diagram__arrow">→</span>' : ''}
+                    `).join('')}
+                </div>
+                <div class="cs-diagram__detail"></div>
+            </div>
+        `;
+    }
+
+    // ─── MINI CARDS ───
+    if (tab.cards) {
+        html += `<div class="cs-cards">`;
+        tab.cards.forEach((card, i) => {
+            html += `
+                <div class="cs-mini-card" data-mini-card-idx="${i}">
+                    <h5 class="cs-mini-card__title">
+                        ${card.icon ? `<span class="cs-mini-card__icon">${card.icon}</span>` : ''}${card.title}
+                    </h5>
+                    <p class="cs-mini-card__text">${card.text}</p>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    // ─── SPRINT CALENDAR ───
+    if (tab.sprintCalendar) {
+        const cal = tab.sprintCalendar;
+        html += `
+            <div class="cs-sprint-calendar">
+                ${cal.weeks.map(week => `
+                    <div class="cs-sprint-week">
+                        ${week.map(day => `
+                            <div class="cs-sprint-day">
+                                ${day.num ? `<span class="cs-sprint-day__num">${day.num}</span>` : ''}
+                                ${(day.events || []).map(ev => `
+                                    <span class="cs-sprint-day__event cs-sprint-day__event--${ev.type}">${ev.label}</span>
+                                `).join('')}
+                            </div>
+                        `).join('')}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        if (cal.legend) {
+            html += `
+                <div class="cs-sprint-legend">
+                    ${cal.legend.map(item => `
+                        <span class="cs-sprint-legend__item">
+                            <span class="cs-sprint-legend__dot cs-sprint-day__event--${item.type}"></span>
+                            ${item.label}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    // ─── KANBAN ───
+    if (tab.kanban) {
+        html += `<div class="cs-kanban-mini">`;
+        tab.kanban.columns.forEach((col, ci) => {
+            html += `
+                <div class="cs-kanban-col">
+                    <div class="cs-kanban-col__title">${col.title}</div>
+                    ${col.tasks.map((task, ti) => `
+                        <div class="cs-kanban-task" data-col="${ci}" data-task="${ti}">${task}</div>
+                    `).join('')}
+                    ${col.wip ? `<span class="cs-kanban-col__wip">WIP: ${col.wip}</span>` : ''}
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    // ─── INNER ACCORDION ───
+    if (tab.accordion) {
+        html += `<div class="cs-accordion">`;
+        tab.accordion.forEach((acc, i) => {
+            html += `
+                <div class="cs-acc-item" data-acc-idx="${i}">
+                    <button class="cs-acc-header">
+                        <span>${acc.title}</span>
+                        <span class="cs-acc-icon">+</span>
+                    </button>
+                    <div class="cs-acc-body">
+                        <div class="cs-acc-body__inner">${acc.body}</div>
+                    </div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    // ─── INNER REVEAL ───
+    if (tab.reveal) {
+        tab.reveal.forEach((item, i) => {
+            html += `
+                <div class="cs-reveal" data-reveal-idx="${i}">
+                    <h3 class="cs-reveal__q">${item.question}</h3>
+                    <button class="cs-reveal__btn" data-reveal-btn>
+                        <span class="cs-reveal__btn-text">Показать ответ</span>
+                        <span class="cs-reveal__btn-icon">▼</span>
+                    </button>
+                    <div class="cs-reveal__a">${item.answer}</div>
+                </div>
+            `;
+        });
+    }
+
+    // ─── INNER STEPS ───
+    if (tab.steps) {
+        const stepsId = 'tabsteps_' + Math.random().toString(36).slice(2, 8);
+        html += `
+            <div class="cs-steps" id="${stepsId}">
+                <h3 class="cs-steps__title">${tab.steps.title}</h3>
+                <div class="cs-steps__progress">
+                    <div class="cs-steps__progress-fill" style="width:0%;"></div>
+                    ${tab.steps.stages.map((_, i) => `
+                        <div class="cs-steps__dot" data-step="${i}">${i + 1}</div>
+                    `).join('')}
+                </div>
+                <div class="cs-steps__stage"></div>
+                <div class="cs-steps__controls">
+                    <button class="cs-steps__btn cs-steps__btn--prev" data-steps-nav="prev" disabled>← Назад</button>
+                    <button class="cs-steps__btn cs-steps__btn--next" data-steps-nav="next">Далее →</button>
+                </div>
+            </div>
+        `;
+    }
+
+    // ─── INNER ANIMATED FLOW ───
+    if (tab.animatedFlow) {
+        const ani = tab.animatedFlow;
+        html += `
+            <div class="cs-ani">
+                <h3 class="cs-ani__title">${ani.title}</h3>
+                <p class="cs-ani__hint">${ani.hint || '🎬 Нажмите «Запустить»'}</p>
+                <div class="cs-ani__canvas">
+                    <div class="cs-ani__progress">
+                        <div class="cs-ani__progress-fill"></div>
+                    </div>
+                    ${(ani.arrows || []).map((arrow, i) => `
+                        <div class="cs-ani__arrow" data-arrow-idx="${i}"
+                             style="left:${arrow.x}%; top:${arrow.y}%; width:${arrow.w}%; transform:rotate(${arrow.r || 0}deg);">
+                            <div class="cs-ani__arrow-fill"></div>
+                        </div>
+                    `).join('')}
+                    ${ani.nodes.map((node, i) => `
+                        <div class="cs-ani__node" data-node-idx="${i}"
+                             style="left:${node.x}%; top:${node.y}%;">
+                            ${node.label}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="cs-ani__detail">
+                    <span class="cs-ani__detail-step">Шаг 0 / ${ani.nodes.length}</span>
+                    <span class="cs-ani__detail-title">Готово к запуску</span>
+                    Нажмите «Запустить анимацию».
+                </div>
+                <div class="cs-ani__controls">
+                    <button class="cs-ani__btn cs-ani__btn--play" data-ani-action="play">Запустить анимацию</button>
+                    <button class="cs-ani__btn cs-ani__btn--reset" data-ani-action="reset">Сброс</button>
+                </div>
+            </div>
+        `;
+    }
+
+    return html;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+//  ШПАРГАЛКИ — ЕДИНАЯ СВОРАЧИВАЕМАЯ СЕКЦИЯ
+// ═══════════════════════════════════════════════════════════
+(function setupCheatsheetsCollapse() {
+    function init() {
+        const toggle = document.getElementById('cheatsheetsToggle');
+        const content = document.getElementById('cheatsheetsContent');
+
+        if (!toggle || !content) {
+            setTimeout(init, 200);
+            return;
+        }
+        if (toggle._init) return;
+        toggle._init = true;
+
+        // ⚡ ВСЕГДА сворачиваем при загрузке — НЕ восстанавливаем из localStorage
+        content.classList.add('collapsed');
+        toggle.setAttribute('aria-expanded', 'false');
+
+        // ⚡ Клик по заголовку — свернуть/развернуть
+        toggle.addEventListener('click', function() {
+            const collapsed = content.classList.toggle('collapsed');
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            // Можно сохранять в localStorage, но НЕ восстанавливать
+            localStorage.setItem('cheatsheetsCollapsed', String(collapsed));
+        });
+
+        console.log('✅ Шпаргалки: сворачивание активно (всегда свёрнуто при загрузке)');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    setTimeout(init, 500);
+    setTimeout(init, 1500);
+})();
