@@ -1,30 +1,29 @@
 {
   "theory": [
-    "SDLC_STLC.pdf",
-    "Верификация и валидация.pdf",
-    "Принципы тестирования.pdf",
-    "Уровни_тестирования.pdf",
-    "Что такое тестирование, QC и QA_.pdf"
+    "Chek-list_po_testirovaniyu_formy_registracii.pdf",
+    "Bazovye_proverki_elementov_veb_stranic.pdf",
+    "Testovye_idei_dlya_zapolneniya_raznyh_vidov_polej.pdf",
+    "Chek_list_po_testirovaniyu_HTML_verstki.pdf",
+    "Chek_list_po_testirovaniyu_dizajna_sajta.pdf",
+    "Cheklist_verstki_i_elementov.pdf",
+    "Chek-list_po_API_proverkam.pdf",
+    "Chit-list_dlya_testirovaniya_API.pdf"
+  ],
+  "requirements": [
+    "Requirements.pdf"
   ],
   "formal": [],
   "scenario": [],
   "methods": [],
   "levels": [],
   "functional": [],
-  "nonfunctional": [
-    "Testing_Types.pdf"
-  ],
+  "nonfunctional": [],
   "testdesign": [],
   "documentation": [],
   "api": [],
   "web": [],
-  "scrum": [
-    "SCRUM.pdf"
-  ],
+  "scrum": [],
   "kanban": [],
-  "requirements": [
-    "Requirements.pdf"
-  ],
   "sql": [],
   "python": [],
   "interview": [],
