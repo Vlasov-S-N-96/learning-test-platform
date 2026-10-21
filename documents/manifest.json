@@ -1,16 +1,17 @@
 {
   "theory": [
-    "Chek-list_po_testirovaniyu_formy_registracii.pdf",
-    "Bazovye_proverki_elementov_veb_stranic.pdf",
-    "Testovye_idei_dlya_zapolneniya_raznyh_vidov_polej.pdf",
-    "Chek_list_po_testirovaniyu_HTML_verstki.pdf",
-    "Chek_list_po_testirovaniyu_dizajna_sajta.pdf",
-    "Cheklist_verstki_i_elementov.pdf",
-    "Chek-list_po_API_proverkam.pdf",
-    "Chit-list_dlya_testirovaniya_API.pdf"
+    "checklist_registration_form.pdf",
+    "testing_registration_form.pdf",
+    "web_elements_basic_checks.pdf",
+    "test_ideas_for_input_fields.pdf",
+    "checklist_html_layout.pdf",
+    "checklist_web_design.pdf",
+    "checklist_layout_and_elements.pdf",
+    "checklist_api_testing.pdf",
+    "cheatsheet_api_testing.pdf"
   ],
   "requirements": [
-    "Requirements.pdf"
+    "requirements.pdf"
   ],
   "formal": [],
   "scenario": [],
