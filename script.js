@@ -1,3 +1,21 @@
+// ═══════════════════════════════════════════════════════════
+//  ГЛОБАЛЬНОЕ ОТКЛЮЧЕНИЕ ЛОГОВ
+//  Если DEBUG = false — все console.log, .info, .warn игнорируются
+//  console.error остаётся для отладки реальных ошибок
+// ═══════════════════════════════════════════════════════════
+window.DEBUG = false;
+
+(function() {
+    if (window.DEBUG) return;
+
+    const originalLog = console.log;
+    console.log = function() {};
+    console.info = function() {};
+    console.debug = function() {};
+    console.warn = function() {};    // ⚡ убирает и предупреждения
+    // console.error оставляем — он покажет реальные ошибки
+})();
+
 const TERMS_DATA = [
     // ============================================================
     //  1. ТЕОРИЯ ТЕСТИРОВАНИЯ (theory) — 17 терминов (ID: 1-17)
@@ -6282,6 +6300,8 @@ const TERMS_DATA = [
     }
 ];
 
+
+
 // ============================================================
 //  МИГРАЦИЯ: помечаем существующие темы/подтемы как "старые"
 //  (старые — только скрывать, новые — скрывать + удалять)
@@ -8575,10 +8595,8 @@ if (testBtn) {
         e.preventDefault();
         toggleAllTests();
     };
-    console.log('✅ Кнопка "Проверь себя" найдена, обработчик привязан');
-} else {
-    console.warn('⚠️ Кнопка #toggleAllTestBtn не найдена. Добавьте в HTML: <button id="toggleAllTestBtn">Проверь себя</button>');
-}
+} 
+
 
 // ================================================================
 //  ФИЛЬТРАЦИЯ И ПОИСК
@@ -9731,7 +9749,7 @@ safeAdd('exportBtn', 'click', function () {
         //  ДОКУМЕНТЫ, ССЫЛКИ И ФОТО
         // ═══════════════════════════════════════════════════════════
         docLinks: (function() {
-            const links = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+            const links = JSON.parse(localStorage.getItem('myLocalLinks_v2') || '[]');
             const seen = new Set();
             return links.filter(function(l) {
                 const url = (l.url || '').toLowerCase().trim();
@@ -9740,8 +9758,7 @@ safeAdd('exportBtn', 'click', function () {
                 return true;
             });
         })(),
-        localDocs: JSON.parse(localStorage.getItem('myLocalDocs_v2') || '[]'),
-        customPhotos: JSON.parse(localStorage.getItem('myCustomPhotos') || '{}'),
+        localDocs: [], // Локальные файлы теперь в IndexedDB, пропускаем
 
         // === НАСТРОЙКИ ===
         dashboardCollapsed: localStorage.getItem('dashboardCollapsed') || 'true'
@@ -11930,16 +11947,15 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 
 
 // ============================================================
-//  МОДУЛЬ ФОТО (ФИНАЛЬНАЯ ВЕРСИЯ С КЭШЕМ И ЛЕНИВОЙ ЗАГРУЗКОЙ)
+//  МОДУЛЬ ФОТО (ПОИСК ПО ID: images/{категория}/{id}/)
 // ============================================================
 (function setupPhotoModuleSimple() {
     'use strict';
 
-    const EXTENSIONS = ['png', 'jpg'];
-    const MAX_USER_PHOTOS = 5;
+    const MAX_USER_PHOTOS = 15;
     const STORAGE_KEY = 'myCustomPhotos';
-    const PHOTO_CACHE_KEY = 'myPhotoCache_v1';
-    const PHOTO_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 дней
+    const PHOTO_CACHE_KEY = 'myPhotoCache_v2';
+    const PHOTO_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
 
     const CATEGORY_TO_FOLDER = {
         'theory': 'theory', 'formal': 'formal', 'scenario': 'scenario',
@@ -11957,15 +11973,19 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         'python_algorithms': 'python', 'python_files': 'python',
         'python_requests': 'python', 'python_pandas': 'python',
         'python_db': 'python', 'python_interview': 'python',
-        'interview': 'interview', 'interview_testdesign': 'interview',
-        'interview_documentation': 'interview', 'interview_web': 'interview',
-        'interview_api': 'interview', 'interview_data': 'interview',
-        'interview_mobile': 'mobile', 'interview_cases': 'interview','documents': 'documents',
+        
+        // ⚡ ИСПРАВЛЕНИЕ: Теперь карточки из собеседований будут искать фото в папках api, web, data и т.д.
+        'interview': 'interview', 
+        'interview_testdesign': 'testdesign',
+        'interview_documentation': 'documentation', 
+        'interview_web': 'web',
+        'interview_api': 'api', 
+        'interview_data': 'data',
+        'interview_mobile': 'mobile', 
+        'interview_cases': 'interview',
     };
 
-    // ============================================================
-    //  КЭШ ФОТО (localStorage)
-    // ============================================================
+    // ─── Кэш фото ───
     let photoCache = {};
     try {
         const raw = localStorage.getItem(PHOTO_CACHE_KEY);
@@ -11979,33 +11999,22 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             try {
                 localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(photoCache));
             } catch (e) {
-                // Если переполнено — чистим устаревшие записи
                 const now = Date.now();
                 for (const key in photoCache) {
-                    if (now - (photoCache[key].ts || 0) > PHOTO_CACHE_TTL) {
-                        delete photoCache[key];
-                    }
+                    if (now - (photoCache[key].ts || 0) > PHOTO_CACHE_TTL) delete photoCache[key];
                 }
-                try {
-                    localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(photoCache));
-                } catch (e2) {
-                    console.error('❌ Не удалось сохранить кэш фото:', e2);
-                }
+                try { localStorage.setItem(PHOTO_CACHE_KEY, JSON.stringify(photoCache)); } catch (e2) {}
             }
         }, 500);
     }
 
-    // Публичная функция для очистки кэша
     window.clearPhotoCache = function() {
         photoCache = {};
         localStorage.removeItem(PHOTO_CACHE_KEY);
-        console.log('🗑 Фото-кэш очищен');
         location.reload();
     };
 
-    // ============================================================
-    //  ХРАНИЛИЩЕ ПОЛЬЗОВАТЕЛЬСКИХ ФОТО
-    // ============================================================
+    // ─── Пользовательские фото ───
     function getUserPhotos(cardId) {
         try {
             const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
@@ -12016,20 +12025,13 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     function setUserPhotos(cardId, photos) {
         try {
             const all = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            if (photos && photos.length) {
-                all[cardId] = photos;
-            } else {
-                delete all[cardId];
-            }
+            if (photos && photos.length) all[cardId] = photos;
+            else delete all[cardId];
             localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-        } catch (e) {
-            console.warn('Не удалось сохранить фото:', e);
-        }
+        } catch (e) {}
     }
 
-    // ============================================================
-    //  ЗАГРУЗКА ФОТО ИЗ ПАПОК (с кэшем)
-    // ============================================================
+    // ─── Загрузка ───
     function tryLoadImage(url) {
         return new Promise(resolve => {
             const img = new Image();
@@ -12039,127 +12041,55 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         });
     }
 
-   // ═══════════════════════════════════════════════════════════
-    //  ТРАНСЛИТЕРАЦИЯ КИРИЛЛИЦЫ В ЛАТИНИЦУ
-    //  (один раз объявляем рядом с функцией)
-    // ═══════════════════════════════════════════════════════════
-    function transliterate(str) {
-        const map = {
-            'а':'a','б':'b','в':'v','г':'g','д':'d','е':'e','ё':'e','ж':'zh','з':'z',
-            'и':'i','й':'y','к':'k','л':'l','м':'m','н':'n','о':'o','п':'p','р':'r',
-            'с':'s','т':'t','у':'u','ф':'f','х':'h','ц':'ts','ч':'ch','ш':'sh','щ':'sch',
-            'ъ':'','ы':'y','ь':'','э':'e','ю':'yu','я':'ya',
-            'А':'A','Б':'B','В':'V','Г':'G','Д':'D','Е':'E','Ё':'E','Ж':'Zh','З':'Z',
-            'И':'I','Й':'Y','К':'K','Л':'L','М':'M','Н':'N','О':'O','П':'P','Р':'R',
-            'С':'S','Т':'T','У':'U','Ф':'F','Х':'H','Ц':'Ts','Ч':'Ch','Ш':'Sh','Щ':'Sch',
-            'Ъ':'','Ы':'Y','Ь':'','Э':'E','Ю':'Yu','Я':'Ya'
-        };
-        return str.split('').map(ch => map[ch] !== undefined ? map[ch] : ch).join('');
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  ПОИСК ФОТО (расширенный — до 10+ вариантов имени)
-    // ═══════════════════════════════════════════════════════════
-    async function findAllBaseImages(folder, term) {
-        const cacheKey = `${folder}::${term}`;
+    async function findAllBaseImages(category, cardId) {
+        const cacheKey = `photos_${category}_${cardId}`;
         const cached = photoCache[cacheKey];
+        if (cached && (Date.now() - cached.ts < PHOTO_CACHE_TTL)) return cached.photos;
 
-        // Если есть в кэше и не устарел — возвращаем мгновенно
-        if (cached && (Date.now() - cached.ts < PHOTO_CACHE_TTL)) {
-            return cached.photos;
+        const folderPath = `images/${category}/${cardId}`;
+        const found = [];
+        const extensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+
+        // ⚡ ШАГ 1: Ищем стандартные имена (1.jpg, 2.jpg, 1.png и т.д.)
+        for (let i = 1; i <= 20; i++) {
+            let loaded = false;
+            const names = [`${i}`, `photo${i}`, `img${i}`, `image${i}`, `pic${i}`];
+
+            for (const name of names) {
+                for (const ext of extensions) {
+                    const url = `${folderPath}/${name}.${ext}`;
+                    const result = await tryLoadImage(url);
+                    if (result) { found.push(url); loaded = true; break; }
+                }
+                if (loaded) break;
+            }
+            if (!loaded && i > 3 && found.length < i - 3) break;
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  ГОТОВИМ 10+ ВАРИАНТОВ ИМЕНИ ФАЙЛА
-        // ═══════════════════════════════════════════════════════════
-        const cleanTerm    = term.replace(/[()]/g, '').trim();      // убираем скобки
-        const dashedTerm   = term.replace(/\s+/g, '-');             // пробелы → дефисы
-        const dashedClean  = cleanTerm.replace(/\s+/g, '-');
-        const latin        = transliterate(cleanTerm);              // "Kontrol kachestva QC"
-        const latinDash    = latin.replace(/\s+/g, '-');            // "Kontrol-kachestva-QC"
-        const latinUnder   = latin.replace(/\s+/g, '_');            // "Kontrol_kachestva_QC"
-
-        const names = [
-            // 1. Оригинал
-            term,
-
-            // 2. Пробелы → подчёркивания (кириллица)
-            term.replace(/\s+/g, '_'),
-
-            // 3. Кириллица без скобок + подчёркивания
-            cleanTerm.replace(/\s+/g, '_'),
-
-            // 4. Кириллица без скобок и без подчёркиваний
-            cleanTerm,
-
-            // 5. Кириллица в нижнем регистре
-            term.toLowerCase(),
-
-            // 6. Кириллица в нижнем регистре с подчёркиваниями
-            term.replace(/\s+/g, '_').toLowerCase(),
-
-            // 7. Латиница с заглавными буквами, пробелы → подчёркивания
-            latinUnder,                                     // "Kontrol_kachestva_QC"
-
-            // 8. Латиница в нижнем регистре с подчёркиваниями
-            latinUnder.toLowerCase(),                       // "kontrol_kachestva_qc"
-
-            // 9. Латиница с заглавными буквами, пробелы → дефисы
-            latinDash,                                      // "Kontrol-kachestva-QC"
-
-            // 10. Латиница в нижнем регистре с дефисами
-            latinDash.toLowerCase(),                        // "kontrol-kachestva-qc"
-
-            // 11. Латиница как есть (с пробелами)
-            latin,                                          // "Kontrol kachestva QC"
-
-            // 12. Латиница как есть в нижнем регистре
-            latin.toLowerCase()                             // "kontrol kachestva qc"
-        ];
-
-        // Убираем дубликаты из массива (на случай, если term был уже латиницей)
-        const uniqueNames = [...new Set(names)];
-
-        const found = [];
-        const suffixes = ['', '_1', '_2', '_3', '_4', '_5'];
-
-        for (const suffix of suffixes) {
-            let foundUrl = null;
-            for (const name of uniqueNames) {
-                const nameWithSuffix = name + suffix;
-                for (const ext of EXTENSIONS) {
-                    const url = `images/${folder}/${nameWithSuffix}.${ext}`;
-                    const result = await tryLoadImage(url);
-                    if (result) {
-                        foundUrl = result;
-                        break;
+        // ⚡ ШАГ 2: Если стандартные не найдены, ищем по маске "Как_тестировать_API_X.jpg"
+        if (found.length === 0) {
+            // Пробуем найти файлы с префиксом
+            const prefixes = ['Как_тестировать_API_', 'Как_тестировать_', 'API_'];
+            for (const prefix of prefixes) {
+                for (let i = 1; i <= 20; i++) {
+                    for (const ext of extensions) {
+                        const url = `${folderPath}/${prefix}${i}.${ext}`;
+                        const result = await tryLoadImage(url);
+                        if (result && !found.includes(url)) {
+                            found.push(url);
+                        }
                     }
                 }
-                if (foundUrl) break;
+                if (found.length > 0) break; // Если нашли по этому префиксу, дальше не ищем
             }
-            if (foundUrl) found.push(foundUrl);
         }
 
-        // Сортировка по номеру в имени
-        found.sort((a, b) => {
-            const numA = parseInt(a.match(/_(\d+)\./)?.[1] || '0');
-            const numB = parseInt(b.match(/_(\d+)\./)?.[1] || '0');
-            return numA - numB;
-        });
-
-        // Сохраняем в кэш
-        photoCache[cacheKey] = {
-            photos: found,
-            ts: Date.now()
-        };
+        photoCache[cacheKey] = { photos: found, ts: Date.now() };
         savePhotoCache();
-
         return found;
     }
 
-    // ============================================================
-    //  СЖАТИЕ ФОТО
-    // ============================================================
+    // ─── Сжатие ───
     function readAndCompress(file, maxWidth = 1200, quality = 0.8) {
         return new Promise(resolve => {
             const reader = new FileReader();
@@ -12168,12 +12098,8 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     let { width, height } = img;
-                    if (width > maxWidth) {
-                        height = Math.round(height * (maxWidth / width));
-                        width = maxWidth;
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
+                    if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; }
+                    canvas.width = width; canvas.height = height;
                     canvas.getContext('2d').drawImage(img, 0, 0, width, height);
                     resolve(canvas.toDataURL('image/jpeg', quality));
                 };
@@ -12194,10 +12120,8 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         document.body.removeChild(link);
     }
 
-    // ============================================================
-    //  ИНЪЕКЦИЯ ФОТО
-    // ============================================================
-    const basePhotoCache = new Map();  // in-memory на текущую сессию
+    // ─── Инъекция ───
+    const basePhotoCache = new Map();
 
     async function injectPhotosIntoCard(card) {
         if (card._photosInjected) return;
@@ -12207,153 +12131,138 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const category = card.dataset.category;
         if (!id || !category) return;
 
-        const folder = CATEGORY_TO_FOLDER[category];
-        if (!folder) return;
-
-        const termEl = card.querySelector('.term');
-        if (!termEl) return;
-        const term = termEl.textContent.trim();
-
         let basePhotos = [];
         if (basePhotoCache.has(id)) {
             basePhotos = basePhotoCache.get(id);
         } else {
-            basePhotos = await findAllBaseImages(folder, term);
+            basePhotos = await findAllBaseImages(category, id);
             basePhotoCache.set(id, basePhotos);
         }
 
         const userPhotos = getUserPhotos(id);
         const allPhotos = [...basePhotos, ...userPhotos];
 
-        if (allPhotos.length === 0) {
-            card._hasPhotos = false;
-            return;
-        }
-
         if (card.querySelector('.card-photos-wrapper')) return;
 
         const wrapper = document.createElement('div');
         wrapper.className = 'card-photos-wrapper';
+
+        // ⚡ Всегда показываем кнопку "Фото ▼", независимо от количества
         wrapper.innerHTML = `
-            <button type="button" class="photos-toggle-btn" data-card-id="${id}">
-                Фото (${allPhotos.length}) <span class="arrow">▼</span>
+            <button type="button" class="photos-toggle-btn" data-card-id="${id}" style="width: 100%; text-align: center; padding: 8px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; color: #0a1929;">
+                Фото <span class="arrow" style="display:inline-block; transition: transform 0.2s;">▼</span>
             </button>
+            <!-- ⚡ Убрали style="display: none !important" -->
             <div class="card-photos-block" id="photos_${id}">
-                <div class="card-photos">
-                    ${allPhotos.map((src, idx) => `
-                        <div class="card-photo-thumb" data-photo-src="${src}" data-photo-idx="${idx}">
-                            <img src="${src}" alt="Фото ${idx + 1}" loading="lazy">
-                            <span class="photo-zoom-hint">🔍</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="text-align: center; padding: 10px 0;">
-                    <button type="button" class="photo-add-user-btn" data-card-id="${id}" data-term="${term}" data-folder="${folder}">
-                        📷 Добавить фото
+                ${allPhotos.length > 0 ? `
+                    <div class="card-photos" style="margin-bottom: 12px;">
+                        ${allPhotos.map((src, idx) => `
+                            <div class="card-photo-thumb" data-photo-src="${src}" data-photo-idx="${idx}">
+                                <img src="${src}" alt="Фото ${idx + 1}" loading="lazy">
+                                <span class="photo-zoom-hint">🔍</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ``}
+                <div style="display: flex; gap: 10px; justify-content: center; padding-bottom: 5px; width: 100%; align-items: stretch;">
+                    <button type="button" class="photo-path-btn" data-card-id="${id}" data-category="${category}" 
+                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 38px; min-height: 38px; max-height: 38px; box-sizing: border-box; margin: 0; padding: 0 10px; font-size: 0.75rem; font-weight: 600; border-radius: 20px; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc !important; color: #475569 !important; outline: none; white-space: nowrap; vertical-align: middle; box-shadow: none !important;">
+                        📁 Путь
+                    </button>
+                    <button type="button" class="photo-add-user-btn" data-card-id="${id}" data-category="${category}" 
+                        style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 38px; min-height: 38px; max-height: 38px; box-sizing: border-box; margin: 0; padding: 0 10px; font-size: 0.75rem; font-weight: 600; border-radius: 20px; cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc !important; color: #475569 !important; outline: none; white-space: nowrap; vertical-align: middle; box-shadow: none !important;">
+                        ➕ Добавить
                     </button>
                 </div>
             </div>
         `;
 
-        const quizWrapper = card.querySelector('.quiz-toggle-wrapper');
-        if (quizWrapper) {
-            // ⚡ Вставляем ПОСЛЕ "Проверь себя" (перед .card-actions)
-            const actionsWrapper = card.querySelector('.card-actions');
-            if (actionsWrapper) {
-                card.insertBefore(wrapper, actionsWrapper);
-            } else {
-                card.appendChild(wrapper);
-            }
-        } else {
-            card.appendChild(wrapper);
-        }
+        const actionsWrapper = card.querySelector('.card-actions');
+        if (actionsWrapper) card.insertBefore(wrapper, actionsWrapper);
+        else card.appendChild(wrapper);
 
         card._hasPhotos = true;
 
-        // Блокируем события на обёртке (capture) — карточка их не получит
-        const eventsToBlock = [
-            'pointerdown', 'pointerup', 'pointermove', 'pointercancel',
-            'mousedown', 'mouseup', 'mousemove',
-            'touchstart', 'touchend', 'touchmove', 'touchcancel'
-        ];
+        const eventsToBlock = ['pointerdown', 'pointerup', 'pointermove', 'pointercancel', 'mousedown', 'mouseup', 'mousemove', 'touchstart', 'touchend', 'touchmove', 'touchcancel'];
+        eventsToBlock.forEach(evt => wrapper.addEventListener(evt, e => e.stopPropagation(), true));
 
-        eventsToBlock.forEach(function(evt) {
-            wrapper.addEventListener(evt, function(e) {
-                e.stopPropagation();
-            }, true);
-        });
+        // ⚡ ПРИНУДИТЕЛЬНО СКРЫВАЕМ БЛОК ПРИ СОЗДАНИИ
+        const photosBlock = wrapper.querySelector('.card-photos-block');
+        if (photosBlock) {
+            photosBlock.style.setProperty('display', 'none', 'important');
+        }
 
-        // ═══ 1. Кнопка "Фото (N)" ═══
+        // 1. Кнопка "Фото (N)"
         const toggleBtn = wrapper.querySelector('.photos-toggle-btn');
-        if (toggleBtn) {
+        if (toggleBtn && photosBlock) {
             toggleBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.stopImmediatePropagation();
+                e.stopPropagation(); 
+                e.stopImmediatePropagation(); 
                 e.preventDefault();
-
+                
                 const isOpen = wrapper.classList.contains('open');
-                const count = wrapper.querySelectorAll('.card-photo-thumb').length;
-
+                
                 if (isOpen) {
-                    wrapper.classList.remove('open');
+                    // Сворачиваем
+                    wrapper.classList.remove('open'); 
                     card.classList.remove('photos-open');
-                    toggleBtn.innerHTML = `Фото (${count}) <span class="arrow">▼</span>`;
+                    photosBlock.style.setProperty('display', 'none', 'important');
+                    toggleBtn.innerHTML = `Фото <span class="arrow">▼</span>`;
                 } else {
-                    wrapper.classList.add('open');
+                    // Разворачиваем
+                    wrapper.classList.add('open'); 
                     card.classList.add('photos-open');
-                    toggleBtn.innerHTML = `Фото (${count}) <span class="arrow">▲</span>`;
+                    photosBlock.style.setProperty('display', 'block', 'important');
+                    toggleBtn.innerHTML = `Фото <span class="arrow">▲</span>`;
                 }
-
-                setTimeout(() => {
-                    if (typeof scheduleUpdateExpandButton === 'function') {
-                        scheduleUpdateExpandButton(card);
-                    }
-                }, 100);
+                if (typeof scheduleUpdateExpandButton === 'function') scheduleUpdateExpandButton(card);
             });
         }
 
-        // ═══ 2. Миниатюры — открыть галерею ═══
+        // 2. Миниатюры
         wrapper.querySelectorAll('.card-photo-thumb').forEach(thumb => {
             thumb.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                e.preventDefault();
-
+                e.stopPropagation(); e.stopImmediatePropagation(); e.preventDefault();
                 const all = card.querySelectorAll('.card-photo-thumb');
                 const photos = Array.from(all).map(t => t.dataset.photoSrc);
                 const idx = parseInt(this.dataset.photoIdx) || 0;
-
-                if (typeof window.openPhotoViewer === 'function') {
-                    window.openPhotoViewer(photos, idx);
-                } else {
-                    console.error('❌ openPhotoViewer не найден!');
-                }
+                if (typeof window.openPhotoViewer === 'function') window.openPhotoViewer(photos, idx);
             });
         });
 
-        // ═══ 3. Кнопка "Добавить фото" ═══
+        // 2.5. Кнопка "Куда кидать?"
+        const pathBtn = wrapper.querySelector('.photo-path-btn');
+        if (pathBtn) {
+            pathBtn.addEventListener('click', function(e) {
+                // ⚡ Жестко блокируем переворот карточки
+                e.stopPropagation();      
+                e.stopImmediatePropagation();
+                e.preventDefault();
+                
+                const cat = this.dataset.category;
+                const cardId = this.dataset.cardId;
+                
+                // Ищем папку в словаре (если нет — используем саму категорию)
+                const folder = CATEGORY_TO_FOLDER[cat] || cat;
+                const path = `images/${folder}/${cardId}/`;
+                
+                alert(`📁 Путь для фото:\n\n${path}\n\nПросто положи туда файл 1.jpg или 1.png`);
+            });
+        }
+        
+
+        // 3. Добавить фото
         const addBtn = wrapper.querySelector('.photo-add-user-btn');
         if (addBtn) {
             addBtn.addEventListener('click', async function(e) {
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                e.preventDefault();
-
+                e.stopPropagation(); e.stopImmediatePropagation(); e.preventDefault();
                 const cardId = parseInt(this.dataset.cardId);
-                const term = this.dataset.term;
-                const folder = this.dataset.folder;
-
+                const category = this.dataset.category;
                 const current = getUserPhotos(cardId);
-                if (current.length >= MAX_USER_PHOTOS) {
-                    alert(`Максимум ${MAX_USER_PHOTOS} своих фото`);
-                    return;
-                }
+                if (current.length >= MAX_USER_PHOTOS) { alert(`Максимум ${MAX_USER_PHOTOS} своих фото`); return; }
 
                 const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/*';
-                input.multiple = true;
-                input.style.display = 'none';
+                input.type = 'file'; input.accept = 'image/*'; input.multiple = true; input.style.display = 'none';
                 document.body.appendChild(input);
 
                 input.onchange = async (ev) => {
@@ -12366,29 +12275,17 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                     const newPhotos = [...current];
 
                     for (const file of toProcess) {
-                        if (file.size > 5 * 1024 * 1024) {
-                            alert(`❌ "${file.name}" больше 5 МБ`);
-                            continue;
-                        }
+                        if (file.size > 5 * 1024 * 1024) { alert(`❌ "${file.name}" больше 5 МБ`); continue; }
                         const dataUrl = await readAndCompress(file);
                         if (dataUrl) newPhotos.push(dataUrl);
                     }
 
                     setUserPhotos(cardId, newPhotos);
 
-                    // Скачиваем ВСЕ новые фото с правильными именами
-                    if (newPhotos.length > 0) {
-                        const addedCount = toProcess.length;
-                        const startIdx = newPhotos.length - addedCount;
-
-                        for (let i = 0; i < addedCount; i++) {
-                            const photo = newPhotos[startIdx + i];
-                            const num = startIdx + i + 1;
-                            const suffix = num === 1 ? '' : `_${num}`;
-                            const safeTerm = term.replace(/\s+/g, '_');
-                            const fileName = `${safeTerm}${suffix}.png`;
-                            downloadPhoto(photo, fileName);
-                        }
+                    const addedCount = toProcess.length;
+                    const startIdx = newPhotos.length - addedCount;
+                    for (let i = 0; i < addedCount; i++) {
+                        downloadPhoto(newPhotos[startIdx + i], `${startIdx + i + 1}.png`);
                     }
 
                     card._photosInjected = false;
@@ -12398,63 +12295,43 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 
                     const newWrapper = card.querySelector('.card-photos-wrapper');
                     if (newWrapper) {
-                        newWrapper.classList.add('open');
-                        card.classList.add('photos-open');
+                        newWrapper.classList.add('open'); card.classList.add('photos-open');
                         const btn = newWrapper.querySelector('.photos-toggle-btn');
                         const count = newWrapper.querySelectorAll('.card-photo-thumb').length;
                         if (btn) btn.innerHTML = `Фото (${count}) <span class="arrow">▲</span>`;
                     }
-
-                    alert(`📸 Фото добавлено!\n\nЧтобы оно появилось на GitHub:\n1. Скачайте файлы ${term}.png, ${term}_2.png...\n2. Положите в images/${folder}/\n3. Загрузите на GitHub`);
                 };
-
                 input.click();
             });
         }
     }
 
-    // ============================================================
-    //  ЛЕНИВАЯ ЗАГРУЗКА ФОТО (только для видимых карточек)
-    // ============================================================
+    // ─── Ленивая загрузка ───
     function observeCards() {
         const grid = document.getElementById('cardsGrid');
         if (!grid) return;
 
-        // IntersectionObserver — срабатывает, когда карточка появляется в зоне видимости
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     const card = entry.target;
-                    if (!card._photosInjected) {
-                        injectPhotosIntoCard(card);
-                    }
+                    if (!card._photosInjected) injectPhotosIntoCard(card);
                     observer.unobserve(card);
                 }
             });
-        }, {
-            rootMargin: '70px',   // Начинаем загрузку за 70px до появления
-            threshold: 0.01
-        });
+        }, { rootMargin: '70px', threshold: 0.01 });
 
-        // Наблюдаем за всеми карточками
         const scan = () => {
             grid.querySelectorAll('.card:not(.hidden)').forEach(card => {
-                if (!card._photosObserved) {
-                    card._photosObserved = true;
-                    observer.observe(card);
-                }
+                if (!card._photosObserved) { card._photosObserved = true; observer.observe(card); }
             });
         };
-
         scan();
-
         const mutationObs = new MutationObserver(() => setTimeout(scan, 100));
         mutationObs.observe(grid, { childList: true, subtree: false });
     }
 
-    // ============================================================
-    //  ГАЛЕРЕЯ
-    // ============================================================
+    // ─── Галерея ───
     let viewerPhotos = [];
     let viewerIndex = 0;
     let globalResetZoom = function() {};
@@ -12462,32 +12339,20 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     function openPhotoViewer(photos, startIdx) {
         const v = document.getElementById('photoViewer');
         const img = document.getElementById('photoViewerImg');
-        if (!v || !img || !photos || !photos.length) {
-            console.error('❌ Галерея не найдена или фото пустые');
-            return;
-        }
-
+        if (!v || !img || !photos || !photos.length) return;
         if (typeof globalResetZoom === 'function') globalResetZoom();
-
         viewerPhotos = photos.slice();
         viewerIndex = startIdx || 0;
         updateViewerImage();
-
-        v.classList.add('photo-viewer');
         v.classList.add('photo-viewer--open');
         v.style.setProperty('display', 'flex', 'important');
         v.style.setProperty('position', 'fixed', 'important');
         v.style.setProperty('top', '0', 'important');
         v.style.setProperty('left', '0', 'important');
-        v.style.setProperty('right', '0', 'important');
-        v.style.setProperty('bottom', '0', 'important');
         v.style.setProperty('width', '100vw', 'important');
         v.style.setProperty('height', '100vh', 'important');
-        v.style.setProperty('background', 'rgba(0, 0, 0, 0.95)', 'important');
+        v.style.setProperty('background', 'rgba(0,0,0,0.95)', 'important');
         v.style.setProperty('z-index', '2147483647', 'important');
-        v.style.setProperty('align-items', 'center', 'important');
-        v.style.setProperty('justify-content', 'center', 'important');
-
         document.body.style.overflow = 'hidden';
     }
     window.openPhotoViewer = openPhotoViewer;
@@ -12498,51 +12363,26 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const p = document.getElementById('photoViewerPrev');
         const n = document.getElementById('photoViewerNext');
         if (!img || !viewerPhotos[viewerIndex]) return;
-
         if (typeof globalResetZoom === 'function') globalResetZoom();
-
         img.src = viewerPhotos[viewerIndex];
-        if (c) {
-            if (viewerPhotos.length > 1) {
-                c.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`;
-                c.classList.remove('hidden');
-            } else c.classList.add('hidden');
-        }
-        if (p && n) {
-            if (viewerPhotos.length <= 1) {
-                p.classList.add('hidden'); n.classList.add('hidden');
-            } else {
-                p.classList.remove('hidden'); n.classList.remove('hidden');
-            }
-        }
+        if (c) { if (viewerPhotos.length > 1) { c.textContent = `${viewerIndex + 1} / ${viewerPhotos.length}`; c.classList.remove('hidden'); } else c.classList.add('hidden'); }
+        if (p && n) { if (viewerPhotos.length <= 1) { p.classList.add('hidden'); n.classList.add('hidden'); } else { p.classList.remove('hidden'); n.classList.remove('hidden'); } }
     }
 
-    function showPrev() {
-        if (viewerPhotos.length <= 1) return;
-        viewerIndex = (viewerIndex - 1 + viewerPhotos.length) % viewerPhotos.length;
-        updateViewerImage();
-    }
-    function showNext() {
-        if (viewerPhotos.length <= 1) return;
-        viewerIndex = (viewerIndex + 1) % viewerPhotos.length;
-        updateViewerImage();
-    }
+    function showPrev() { if (viewerPhotos.length <= 1) return; viewerIndex = (viewerIndex - 1 + viewerPhotos.length) % viewerPhotos.length; updateViewerImage(); }
+    function showNext() { if (viewerPhotos.length <= 1) return; viewerIndex = (viewerIndex + 1) % viewerPhotos.length; updateViewerImage(); }
     function closeViewer() {
         const v = document.getElementById('photoViewer');
         if (!v) return;
-
         v.classList.remove('photo-viewer--open');
         v.style.setProperty('display', 'none', 'important');
         v.style.setProperty('position', '');
         v.style.setProperty('top', '');
         v.style.setProperty('left', '');
-        v.style.setProperty('right', '');
-        v.style.setProperty('bottom', '');
         v.style.setProperty('width', '');
         v.style.setProperty('height', '');
         v.style.setProperty('background', '');
         v.style.setProperty('z-index', '');
-
         document.body.style.overflow = '';
         viewerPhotos = [];
         viewerIndex = 0;
@@ -12550,9 +12390,6 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     }
     window.closePhotoViewer = closeViewer;
 
-    // ============================================================
-    //  ОБРАБОТЧИКИ ГАЛЕРЕИ
-    // ============================================================
     function setupViewerButtons() {
         const v = document.getElementById('photoViewer');
         if (!v) return;
@@ -12561,100 +12398,38 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const n = document.getElementById('photoViewerNext');
         const img = document.getElementById('photoViewerImg');
 
-        // ═══════════════════════════════════════════════════════
-        //  1. ЗУМ И ПАНОРАМИРОВАНИЕ (переменные)
-        // ═══════════════════════════════════════════════════════
-        let zoomLevel = 1;
-        let panX = 0, panY = 0;
-
-        function applyZoom() {
-            if (!img) return;
-            img.style.transform = `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`;
-            img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
-            v.classList.toggle('zoomed', zoomLevel > 1);
-        }
-
-        function resetZoom() {
-            zoomLevel = 1;
-            panX = 0;
-            panY = 0;
-            applyZoom();
-        }
-
+        let zoomLevel = 1, panX = 0, panY = 0;
+        function applyZoom() { if (!img) return; img.style.transform = `scale(${zoomLevel}) translate(${panX}px, ${panY}px)`; img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in'; v.classList.toggle('zoomed', zoomLevel > 1); }
+        function resetZoom() { zoomLevel = 1; panX = 0; panY = 0; applyZoom(); }
         globalResetZoom = resetZoom;
 
-        // ═══════════════════════════════════════════════════════
-        //  2. ПРОВЕРКА: ГАЛЕРЕЯ ОТКРЫТА?
-        // ═══════════════════════════════════════════════════════
-        function isViewerOpen() {
-            return v.classList.contains('photo-viewer--open');
-        }
+        function isViewerOpen() { return v.classList.contains('photo-viewer--open'); }
 
-        // ═══════════════════════════════════════════════════════
-        //  3. УНИВЕРСАЛЬНЫЙ ОБРАБОТЧИК ДЛЯ СТРЕЛОК И КРЕСТИКА
-        //     Используем pointerdown — один раз на любое устройство
-        // ═══════════════════════════════════════════════════════
         function bindButton(btn, action) {
             if (!btn) return;
-
             let lastTrigger = 0;
-            const DEBOUNCE_MS = 250;
-
-            // Убираем старые click-обработчики, если есть
-            btn.onclick = null;
-
             const handler = function(e) {
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
-
-                const now = Date.now();
-                if (now - lastTrigger < DEBOUNCE_MS) return;
-                lastTrigger = now;
-
-                e.stopPropagation();
-                e.preventDefault();
-
-                action();
+                const now = Date.now(); if (now - lastTrigger < 250) return; lastTrigger = now;
+                e.stopPropagation(); e.preventDefault(); action();
             };
-
             btn.addEventListener('pointerdown', handler);
-
-            btn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') handler(e);
-            });
+            btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') handler(e); });
         }
 
         bindButton(c, closeViewer);
         bindButton(p, showPrev);
         bindButton(n, showNext);
 
-        // ═══════════════════════════════════════════════════════
-        //  4. ЗАКРЫТИЕ ПО КЛИКУ НА ФОН
-        // ═══════════════════════════════════════════════════════
-        v.addEventListener('click', function(e) {
-            if (e.target === v) closeViewer();
-        });
-
-        // ═══════════════════════════════════════════════════════
-        //  5. КЛАВИАТУРА (ПК): ESC, ←, →
-        // ═══════════════════════════════════════════════════════
-        document.addEventListener('keydown', function(e) {
+        v.addEventListener('click', e => { if (e.target === v) closeViewer(); });
+        document.addEventListener('keydown', e => {
             if (!isViewerOpen()) return;
-            if (e.key === 'Escape') {
-                e.preventDefault();
-                closeViewer();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                showPrev();
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                showNext();
-            }
+            if (e.key === 'Escape') { e.preventDefault(); closeViewer(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); showPrev(); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); showNext(); }
         });
 
-        // ═══════════════════════════════════════════════════════
-        //  6. ЗУМ КОЛЁСИКОМ МЫШИ (ПК)
-        // ═══════════════════════════════════════════════════════
-        v.addEventListener('wheel', function(e) {
+        v.addEventListener('wheel', e => {
             if (!isViewerOpen()) return;
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.15 : 0.15;
@@ -12663,115 +12438,55 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             applyZoom();
         }, { passive: false });
 
-        // ═══════════════════════════════════════════════════════
-        //  7. ДВОЙНОЙ КЛИК + ПЕРЕТАСКИВАНИЕ МЫШЬЮ
-        // ═══════════════════════════════════════════════════════
         if (img) {
-            img.addEventListener('dblclick', function(e) {
+            img.addEventListener('dblclick', e => {
                 e.stopPropagation();
-                if (zoomLevel > 1) {
-                    resetZoom();
-                } else {
-                    zoomLevel = 2;
-                    applyZoom();
-                }
+                if (zoomLevel > 1) resetZoom();
+                else { zoomLevel = 2; applyZoom(); }
             });
-
-            let isDragging = false;
-            let dragStartX = 0, dragStartY = 0;
-            let startPanX = 0, startPanY = 0;
-
-            img.addEventListener('mousedown', function(e) {
+            let isDragging = false, dragStartX = 0, dragStartY = 0, startPanX = 0, startPanY = 0;
+            img.addEventListener('mousedown', e => {
                 if (zoomLevel <= 1) return;
-                e.preventDefault();
-                isDragging = true;
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
-                startPanX = panX;
-                startPanY = panY;
+                e.preventDefault(); isDragging = true;
+                dragStartX = e.clientX; dragStartY = e.clientY;
+                startPanX = panX; startPanY = panY;
                 v.classList.add('dragging');
             });
-
-            document.addEventListener('mousemove', function(e) {
+            document.addEventListener('mousemove', e => {
                 if (!isDragging) return;
                 panX = startPanX + (e.clientX - dragStartX);
                 panY = startPanY + (e.clientY - dragStartY);
                 applyZoom();
             });
-
-            document.addEventListener('mouseup', function() {
-                if (isDragging) {
-                    isDragging = false;
-                    v.classList.remove('dragging');
-                }
-            });
+            document.addEventListener('mouseup', () => { if (isDragging) { isDragging = false; v.classList.remove('dragging'); } });
         }
 
-        // ═══════════════════════════════════════════════════════
-        //  8. TOUCH: СВАЙП, ПИНЧ, ТАП
-        // ═══════════════════════════════════════════════════════
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartDist = 0;
-        let touchPanStartX = 0;
-        let touchPanStartY = 0;
-        let touchZoomStart = 1;
-        let touchStartTime = 0;
-        let isSwiping = false;
-        let touchOnButton = false;
+        let touchStartX = 0, touchStartY = 0, touchStartDist = 0, touchPanStartX = 0, touchPanStartY = 0, touchZoomStart = 1, touchStartTime = 0, isSwiping = false, touchOnButton = false;
 
-        v.addEventListener('touchstart', function(e) {
+        v.addEventListener('touchstart', e => {
             if (!isViewerOpen()) return;
-
-            // ⚡ Если палец на кнопке — не считаем это свайпом
-            touchOnButton = !!(e.target.closest &&
-                e.target.closest('#photoViewerClose, #photoViewerPrev, #photoViewerNext'));
+            touchOnButton = !!(e.target.closest && e.target.closest('#photoViewerClose, #photoViewerPrev, #photoViewerNext'));
             if (touchOnButton) return;
-
-            touchStartTime = Date.now();
-            isSwiping = false;
-
+            touchStartTime = Date.now(); isSwiping = false;
             if (e.touches.length === 1) {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-
-                if (zoomLevel > 1) {
-                    touchPanStartX = panX;
-                    touchPanStartY = panY;
-                }
+                touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY;
+                if (zoomLevel > 1) { touchPanStartX = panX; touchPanStartY = panY; }
             } else if (e.touches.length === 2) {
-                touchStartDist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
+                touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 touchZoomStart = zoomLevel;
             }
         }, { passive: true });
 
-        v.addEventListener('touchmove', function(e) {
+        v.addEventListener('touchmove', e => {
             if (!isViewerOpen() || touchOnButton) return;
-
             if (e.touches.length === 1 && zoomLevel > 1) {
-                // Панорамирование при зуме
-                const dx = e.touches[0].clientX - touchStartX;
-                const dy = e.touches[0].clientY - touchStartY;
-                panX = touchPanStartX + dx;
-                panY = touchPanStartY + dy;
-                applyZoom();
+                const dx = e.touches[0].clientX - touchStartX, dy = e.touches[0].clientY - touchStartY;
+                panX = touchPanStartX + dx; panY = touchPanStartY + dy; applyZoom();
             } else if (e.touches.length === 1 && zoomLevel === 1) {
-                // Горизонтальный свайп — перелистывание
-                const dx = Math.abs(e.touches[0].clientX - touchStartX);
-                const dy = Math.abs(e.touches[0].clientY - touchStartY);
-                if (dx > 10 && dx > dy) {
-                    isSwiping = true;
-                    if (e.cancelable) e.preventDefault();
-                }
+                const dx = Math.abs(e.touches[0].clientX - touchStartX), dy = Math.abs(e.touches[0].clientY - touchStartY);
+                if (dx > 10 && dx > dy) { isSwiping = true; if (e.cancelable) e.preventDefault(); }
             } else if (e.touches.length === 2) {
-                // Пинч-зум
-                const dist = Math.hypot(
-                    e.touches[0].clientX - e.touches[1].clientX,
-                    e.touches[0].clientY - e.touches[1].clientY
-                );
+                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 const scale = dist / touchStartDist;
                 zoomLevel = Math.max(1, Math.min(5, touchZoomStart * scale));
                 if (zoomLevel === 1) { panX = 0; panY = 0; }
@@ -12779,33 +12494,18 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
             }
         }, { passive: false });
 
-        v.addEventListener('touchend', function(e) {
-            if (!isViewerOpen() || touchOnButton) {
-                touchOnButton = false;
-                return;
-            }
+        v.addEventListener('touchend', e => {
+            if (!isViewerOpen() || touchOnButton) { touchOnButton = false; return; }
             if (e.changedTouches.length !== 1) return;
-
             const touch = e.changedTouches[0];
-            const dx = touch.clientX - touchStartX;
-            const dy = touch.clientY - touchStartY;
-            const dur = Date.now() - touchStartTime;
-
-            // Свайп для перелистывания
+            const dx = touch.clientX - touchStartX, dy = touch.clientY - touchStartY, dur = Date.now() - touchStartTime;
             if (zoomLevel === 1 && isSwiping && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                if (dx < 0) showNext();
-                else showPrev();
-                isSwiping = false;
-                return;
+                if (dx < 0) showNext(); else showPrev();
+                isSwiping = false; return;
             }
-
-            // Тап по картинке — закрыть
             if (!isSwiping && Math.abs(dx) < 10 && Math.abs(dy) < 10 && dur < 300) {
-                if (e.target && e.target.tagName === 'IMG') {
-                    closeViewer();
-                }
+                if (e.target && e.target.tagName === 'IMG') closeViewer();
             }
-
             isSwiping = false;
         }, { passive: true });
     }
@@ -12813,7 +12513,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     function init() {
         observeCards();
         setupViewerButtons();
-        console.log('✅ Модуль фото активен (с кэшем и ленивой загрузкой)');
+        console.log('✅ Модуль фото активен (поиск по images/{category}/{id}/)');
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
@@ -12951,405 +12651,100 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
 })();
 
 // ============================================================
-//  МОДУЛЬ ДОКУМЕНТОВ v3 — ФИНАЛЬНАЯ ВЕРСИЯ
-//  - автопоиск файлов из папки documents/{category}/
-//  - кэш в localStorage (7 дней)
-//  - кастомный дропдаун темы
-//  - рабочее переключение табов
-//  - локальные файлы через UI
-//  - внешние ссылки через UI
-//  - мобильная адаптация
+//  МОДУЛЬ ДОКУМЕНТОВ (IndexedDB + Ссылки + Автопоиск)
 // ============================================================
 (function setupDocumentsModule() {
     'use strict';
 
-    // ═══════════════════════════════════════════════════════════
-    //  ДОСТУП К ДОКУМЕНТАМ
-    // ═══════════════════════════════════════════════════════════
-    const DOCS_PASSWORD_HASH = 'c1541cdc6a01b6b79cd54d2493ee59105c7e4b2c633397a952ef635ae6ae2af8';
-    const DOCS_AUTH_KEY = 'myDocsAuth_v1';
+    const DOC_CACHE_KEY = 'myDocsCache_v6';
+    const DOC_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+    const LOCAL_LINKS_KEY = 'myLocalLinks_v2';
+    const DB_NAME = 'QA_DocumentsDB';
+    const DB_STORE = 'files';
 
-    // Проверка: авторизован ли пользователь в текущей сессии
-    function isDocsAuthorized() {
-        try {
-            return sessionStorage.getItem(DOCS_AUTH_KEY) === 'true';
-        } catch (e) {
-            return false;
-        }
-    }
+    const CATEGORIES = {
+        'theory': 'Теория', 'formal': 'Формализация', 'scenario': 'Сценарии',
+        'methods': 'Методы', 'levels': 'Уровни', 'functional': 'Функциональное',
+        'nonfunctional': 'Нефункциональное', 'testdesign': 'Тест-дизайн',
+        'documentation': 'Документация', 'api': 'API', 'web': 'Веб-приложения',
+        'scrum': 'Scrum', 'kanban': 'Kanban', 'requirements': 'Требования',
+        'sql': 'SQL', 'python': 'Python', 'interview': 'Собеседование', 'mobile': 'Мобильные'
+    };
 
-    // Запомнить авторизацию (до закрытия браузера)
-    function setDocsAuthorized() {
-        try {
-            sessionStorage.setItem(DOCS_AUTH_KEY, 'true');
-        } catch (e) {}
-    }
+    let docsCache = {};
+    let localLinks = [];
+    let localFiles = [];
+    let db = null;
+    let currentDocCategory = 'all';
+    let currentDocSearch = '';
+    let isLoadingDocs = false;
 
-    // Проверка пароля: считаем SHA-256 хэш ввода и сравниваем с сохранённым
-    async function checkDocsPassword(input) {
-        try {
-            const data = new TextEncoder().encode(input);
-            const buffer = await crypto.subtle.digest('SHA-256', data);
-            const hash = Array.from(new Uint8Array(buffer))
-                .map(b => b.toString(16).padStart(2, '0'))
-                .join('');
-            return hash === DOCS_PASSWORD_HASH;
-        } catch (e) {
-            console.error('Ошибка проверки пароля:', e);
-            return false;
-        }
-    }
-
-    // Показать модалку с паролем. Возвращает Promise<boolean>
-    function requestDocsPassword() {
-        return new Promise(resolve => {
-            const overlay = document.createElement('div');
-            overlay.className = 'docs-password-overlay';
-            overlay.innerHTML = `
-                <div class="docs-password-modal" role="dialog" aria-modal="true"
-                    aria-labelledby="docsPassTitle">
-                    <h3 id="docsPassTitle">🔒 Доступ к документам</h3>
-                    <p class="docs-password-modal__sub">
-                        Введите пароль, чтобы открыть раздел с документами
-                    </p>
-                    <input type="password"
-                        class="docs-password-modal__input"
-                        id="docsPassInput"
-                        placeholder="Пароль"
-                        autocomplete="current-password">
-                    <p class="docs-password-modal__error" id="docsPassError">
-                        ❌ Неверный пароль
-                    </p>
-                    <div class="docs-password-modal__actions">
-                        <button class="docs-password-modal__btn docs-password-modal__btn--cancel"
-                                id="docsPassCancel" type="button">Отмена</button>
-                        <button class="docs-password-modal__btn docs-password-modal__btn--ok"
-                                id="docsPassOk" type="button">Войти</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-
-            const input = overlay.querySelector('#docsPassInput');
-            const errorEl = overlay.querySelector('#docsPassError');
-            const btnOk = overlay.querySelector('#docsPassOk');
-            const btnCancel = overlay.querySelector('#docsPassCancel');
-
-            // Автофокус на поле ввода
-            setTimeout(() => input.focus(), 50);
-
-            function close(result) {
-                overlay.style.opacity = '0';
-                overlay.style.transition = 'opacity 0.2s ease';
-                setTimeout(() => overlay.remove(), 200);
-                resolve(result);
-            }
-
-            // ⚡ Теперь checkPassword — асинхронная (считает хэш)
-            async function checkPassword() {
-                const value = input.value;
-
-                if (!value) {
-                    // Пустое поле — просто тряхнуть
-                    errorEl.classList.remove('visible');
-                    void errorEl.offsetWidth;
-                    errorEl.classList.add('visible');
-                    input.focus();
-                    return;
+    function initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(DB_STORE)) {
+                    db.createObjectStore(DB_STORE, { keyPath: 'id', autoIncrement: true });
                 }
-
-                // ⚡ Блокируем кнопку на время проверки
-                btnOk.disabled = true;
-                btnOk.textContent = '...';
-
-                const isValid = await checkDocsPassword(value);
-
-                btnOk.disabled = false;
-                btnOk.textContent = 'Войти';
-
-                if (isValid) {
-                    setDocsAuthorized();
-                    close(true);
-                } else {
-                    // Ошибка: показать сообщение + shake
-                    errorEl.classList.remove('visible');
-                    void errorEl.offsetWidth;   // reflow для перезапуска анимации
-                    errorEl.classList.add('visible');
-                    input.value = '';
-                    input.focus();
-                }
-            }
-
-            btnOk.addEventListener('click', checkPassword);
-            btnCancel.addEventListener('click', () => close(false));
-
-            // Клик по фону — закрыть
-            overlay.addEventListener('click', e => {
-                if (e.target === overlay) close(false);
-            });
-
-            // Enter — проверить, Esc — отмена
-            input.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    checkPassword();
-                } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    close(false);
-                }
-            });
+            };
+            request.onsuccess = (e) => { db = e.target.result; resolve(); };
+            request.onerror = (e) => { console.error('Ошибка IndexedDB:', e.target.error); reject(e.target.error); };
         });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  КОНСТАНТЫ
-    // ═══════════════════════════════════════════════════════════
-    const DOC_EXTENSIONS = ['pdf', 'docx', 'doc', 'txt', 'xlsx', 'xls', 'pptx', 'ppt', 'csv', 'zip'];
-    const DOC_CACHE_KEY = 'myDocsCache_v2';
-    const DOC_LINKS_KEY = 'myDocLinks_v2';
-    const LOCAL_DOCS_KEY = 'myLocalDocs_v2';
-    const DOC_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;  // 7 дней
+    function getAllLocalFiles() {
+        return new Promise((resolve) => {
+            if (!db) return resolve([]);
+            const transaction = db.transaction(DB_STORE, 'readonly');
+            const store = transaction.objectStore(DB_STORE);
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => resolve([]);
+        });
+    }
 
-    const MAX_FILE_SIZE = 2 * 1024 * 1024;          // 2 МБ на файл
-    const MAX_LOCAL_DOCS = 20;                       // макс. локальных документов
+    function saveFileToDB(file, category) {
+        return new Promise((resolve, reject) => {
+            if (!db) return reject('DB не инициализирована');
+            const transaction = db.transaction(DB_STORE, 'readwrite');
+            const store = transaction.objectStore(DB_STORE);
+            const fileData = {
+                title: file.name,
+                name: file.name,
+                category: category,
+                type: file.type,
+                ext: file.name.split('.').pop().toLowerCase(),
+                size: file.size,
+                blob: file
+            };
+            const request = store.add(fileData);
+            request.onsuccess = () => resolve();
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
 
-    // Категории (папки) — латиница
-    const CATEGORIES = {
-        'theory': 'Теория',
-        'formal': 'Формализация',
-        'scenario': 'Сценарии',
-        'methods': 'Методы',
-        'levels': 'Уровни',
-        'functional': 'Функциональное',
-        'nonfunctional': 'Нефункциональное',
-        'testdesign': 'Тест-дизайн',
-        'documentation': 'Документация',
-        'api': 'API',
-        'web': 'Веб-приложения',
-        'scrum': 'Scrum',
-        'kanban': 'Kanban',
-        'requirements': 'Требования',
-        'sql': 'SQL',
-        'python': 'Python',
-        'interview': 'Собеседование',
-        'mobile': 'Мобильные'
-    };
-
-    // ⚡ Термины для поиска в каждой папке
-    // Это имена файлов (без расширения) — соответствуют названиям карточек
-    const TERMS_BY_CATEGORY = {
-        'theory': ['Тестирование ПО', 'Тестирование_ПО', 'Обеспечение качества', 'Обеспечение_качества', 'Контроль качества', 'Контроль_качества', 'QA QC Testing', 'Отладка', 'Цели тестирования', 'Цели_тестирования', 'Верификация', 'Валидация', 'Управление качеством', 'Управление_качеством', 'Принципы тестирования', 'Принципы_тестирования', 'SDLC', 'STLC', 'V-модель', 'Водопадная модель', 'Водопадная_модель', 'Итерационная модель', 'Спиральная модель', 'Спиральная_модель', 'Agile'],
-        'formal': ['На основе тест-кейсов', 'На_основе_тест-кейсов', 'Исследовательское', 'Свободное', 'Ad-hoc'],
-        'scenario': ['Happy Path', 'Happy_Path', 'Негативный сценарий', 'Негативный_сценарий', 'Деструктивный сценарий', 'Деструктивный_сценарий'],
-        'methods': ['Чёрный ящик', 'Чёрный_ящик', 'Белый ящик', 'Белый_ящик', 'Серый ящик', 'Серый_ящик'],
-        'levels': ['Модульное', 'Интеграционное', 'Системное', 'Приемочное', 'Приёмочное', 'UAT', 'OAT', 'Big Bang', 'Big_Bang', 'Top-Down', 'Bottom-Up', 'Sandwich'],
-        'functional': ['Дымовое', 'Санитарное', 'Регрессионное', 'GUI', 'Инсталляционное', 'Безопасность'],
-        'nonfunctional': ['Производительность', 'Нагрузочное', 'Стрессовое', 'Объёмное', 'Масштабируемость', 'Конкурентное', 'Безопасность', 'Удобство', 'Usability', 'Совместимость', 'Надёжность', 'Локализация', 'Интернационализация'],
-        'testdesign': ['Анализ тестирования', 'Анализ_тестирования', 'Проектирование теста', 'Проектирование_теста', 'Эквивалентное разбиение', 'Эквивалентное_разбиение', 'Анализ граничных значений', 'Анализ_граничных_значений', 'Попарное тестирование', 'Попарное_тестирование', 'Pairwise', 'Таблицы решений', 'Таблицы_решений', 'Диаграмма переходов', 'Диаграмма_переходов', 'Предположение об ошибках', 'Предположение_об_ошибках'],
-        'documentation': ['Тест-план', 'Тест_план', 'Тест-кейс', 'Тест_кейс', 'Чек-лист', 'Чек_лист', 'Баг-репорт', 'Баг_репорт', 'Отчет о тестировании', 'Отчет_о_тестировании', 'Traceability Matrix', 'Traceability_Matrix', 'Тестовая стратегия', 'Тестовая_стратегия'],
-        'api': ['SOAP', 'WSDL', 'XSD', 'REST', 'JSON', 'Swagger', 'Как тестировать API', 'Как_тестировать_API', 'Правила синтаксиса XML', 'Правила_синтаксиса_XML'],
-        'web': ['URL', 'DNS', 'IP-адрес', 'IP_адрес', 'MAC-адрес', 'MAC_адрес', 'OSI', 'TCP/IP', 'TCP_IP', 'TCP', 'UDP', 'QUIC', 'HTTP', 'HTTPS', 'CRUD', 'Коды ответа HTTP', 'Коды_ответа_HTTP', 'Cookies', 'LocalStorage', 'SessionStorage', 'DevTools'],
-        'scrum': ['Scrum', 'Product Owner', 'Product_Owner', 'Scrum Master', 'Scrum_Master', 'Sprint', 'Sprint Planning', 'Sprint_Planning', 'Daily Scrum', 'Daily_Scrum', 'Sprint Review', 'Sprint_Review', 'Sprint Retrospective', 'Sprint_Retrospective', 'Product Backlog', 'Product_Backlog', 'Sprint Backlog', 'Sprint_Backlog', 'Increment', 'Story Points', 'Story_Points', 'Покер планирования', 'Покер_планирования', 'Velocity', 'Backlog Refinement', 'Backlog_Refinement'],
-        'kanban': ['Kanban', 'WIP-лимит', 'WIP_лимит', 'Lead Time', 'Lead_Time', 'Delivery Rate', 'Delivery_Rate', 'Менеджер Запросов', 'Менеджер_Запросов', 'Менеджер Поставки', 'Менеджер_Поставки', 'XP'],
-        'requirements': ['Бизнес-требования', 'Бизнес_требования', 'Пользовательские требования', 'Пользовательские_требования', 'Функциональные требования', 'Функциональные_требования', 'Нефункциональные требования', 'Нефункциональные_требования', 'User Story', 'User_Story', 'Use Case', 'Use_Case', 'Mockup', 'Свойства качественных требований', 'Свойства_качественных_требований'],
-        'sql': ['SELECT', 'WHERE', 'JOIN', 'GROUP BY', 'GROUP_BY', 'NULL', 'CREATE TABLE', 'CREATE_TABLE', 'INSERT', 'UPDATE', 'DELETE', 'Индексы', 'Транзакции', 'Нормализация'],
-        'python': ['Типы данных Python', 'Типы_данных_Python', 'Списки', 'Кортежи', 'Словари', 'Множества', 'Функции', 'Классы', 'Декораторы', 'Генераторы', 'Итераторы', 'GIL', 'Pandas', 'requests'],
-        'interview': ['Тестирование QA QC', 'Тестирование_QA_QC', 'Отладка', 'SDLC', 'STLC', 'Верификация Валидация', 'Верификация_Валидация', 'Принципы тестирования', 'Принципы_тестирования', 'Уровни тестирования', 'Уровни_тестирования', 'Smoke Sanity', 'Smoke_Sanity', 'Ретест Регрессия', 'Ретест_Регрессия', 'API тестирование', 'API_тестирование', 'SQL вопросы', 'SQL_вопросы'],
-        'mobile': ['Типы мобильных приложений', 'Типы_мобильных_приложений', 'Эмуляторы', 'Android Studio', 'Android_Studio', 'Logcat', 'Гайдлайны', 'Жесты', 'Charles Proxy', 'Charles_Proxy', 'Push-уведомления', 'Push_уведомления']
-    };
-
-    // ═══════════════════════════════════════════════════════════
-    //  ХРАНИЛИЩА
-    // ═══════════════════════════════════════════════════════════
-    let docsCache = {};
-    let customLinks = [];
-    let localDocs = [];
-
+    function deleteFileFromDB(id) {
+        return new Promise((resolve) => {
+            if (!db) return resolve();
+            const transaction = db.transaction(DB_STORE, 'readwrite');
+            const store = transaction.objectStore(DB_STORE);
+            const request = store.delete(id);
+            request.onsuccess = () => resolve();
+            request.onerror = () => resolve();
+        });
+    }
 
     try {
         const raw = localStorage.getItem(DOC_CACHE_KEY);
         if (raw) docsCache = JSON.parse(raw);
-    } catch (e) { docsCache = {}; }
+        const linksRaw = localStorage.getItem(LOCAL_LINKS_KEY);
+        if (linksRaw) localLinks = JSON.parse(linksRaw);
+    } catch (e) { docsCache = {}; localLinks = []; }
 
-    try {
-        const raw = localStorage.getItem(DOC_LINKS_KEY);
-        if (raw) customLinks = JSON.parse(raw);
-    } catch (e) { customLinks = []; }
+    function saveCache() { try { localStorage.setItem(DOC_CACHE_KEY, JSON.stringify(docsCache)); } catch (e) {} }
+    function saveLinks() { try { localStorage.setItem(LOCAL_LINKS_KEY, JSON.stringify(localLinks)); } catch (e) {} }
 
-    try {
-        const raw = localStorage.getItem(LOCAL_DOCS_KEY);
-        if (raw) localDocs = JSON.parse(raw);
-    } catch (e) { localDocs = []; }
-
-     // ═══════════════════════════════════════════════════════════
-    //  ЗАГРУЗКА ССЫЛОК ИЗ links.json (публичные ссылки для всех)
-    // ═══════════════════════════════════════════════════════════
-    async function loadLinksFromFile() {
-        try {
-            const response = await fetch('documents/links.json');
-            if (!response.ok) {
-                console.log('📄 links.json не найден — используем только localStorage');
-                return null;
-            }
-            const links = await response.json();
-            console.log('✅ links.json загружен:', links.length, 'ссылок');
-            return links;
-        } catch (e) {
-            console.log('⚠️ links.json недоступен:', e.message);
-            return null;
-        }
-    }
-
-    let saveCacheTimer = null;
-    function saveCache() {
-        clearTimeout(saveCacheTimer);
-        saveCacheTimer = setTimeout(() => {
-            try {
-                localStorage.setItem(DOC_CACHE_KEY, JSON.stringify(docsCache));
-            } catch (e) {
-                console.warn('localStorage переполнен, чистим устаревшие записи документов');
-                const now = Date.now();
-                for (const key in docsCache) {
-                    if (now - (docsCache[key].ts || 0) > DOC_CACHE_TTL) {
-                        delete docsCache[key];
-                    }
-                }
-                try {
-                    localStorage.setItem(DOC_CACHE_KEY, JSON.stringify(docsCache));
-                } catch (e2) {
-                    console.error('❌ Не удалось сохранить кэш документов');
-                }
-            }
-        }, 500);
-    }
-
-    function saveCustomLinks() {
-        try {
-            localStorage.setItem(DOC_LINKS_KEY, JSON.stringify(customLinks));
-        } catch (e) {
-            console.warn('Не удалось сохранить ссылки:', e);
-        }
-    }
-
-    function saveLocalDocs() {
-        try {
-            localStorage.setItem(LOCAL_DOCS_KEY, JSON.stringify(localDocs));
-        } catch (e) {
-            console.warn('Не удалось сохранить локальные документы:', e);
-        }
-    }
-
-    
-    // ═══════════════════════════════════════════════════════════
-    //  ЭКСПОРТ ЛОКАЛЬНЫХ ССЫЛОК В links.json
-    // ═══════════════════════════════════════════════════════════
-    function exportLinksToFile() {
-        const localLinks = JSON.parse(localStorage.getItem(DOC_LINKS_KEY) || '[]');
-        if (localLinks.length === 0) {
-            alert('Нет локальных ссылок для экспорта.\n\nСначала добавьте ссылку через «➕ Добавить».');
-            return;
-        }
-
-        const seen = new Set();
-        const unique = localLinks.filter(l => {
-            const url = (l.url || '').toLowerCase().trim();
-            if (!url || seen.has(url)) return false;
-            seen.add(url);
-            return true;
-        });
-
-        const json = JSON.stringify(unique, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'links.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        console.log('✅ links.json выгружен, ссылок:', unique.length);
-        if (typeof showToast === 'function') {
-            showToast(`📥 links.json (${unique.length} ссылок)`);
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  ЭКСПОРТ ЛОКАЛЬНЫХ ФАЙЛОВ В manifest.json
-    // ═══════════════════════════════════════════════════════════
-    function exportManifestToFile() {
-        const localDocsData = JSON.parse(localStorage.getItem(LOCAL_DOCS_KEY) || '[]');
-        if (localDocsData.length === 0) {
-            alert('Нет локальных файлов для экспорта.\n\nСначала добавьте файл через «➕ Добавить» → вкладка «📤 Файл».');
-            return;
-        }
-
-        const manifest = {};
-        Object.keys(CATEGORIES).forEach(cat => { manifest[cat] = []; });
-
-        localDocsData.forEach(doc => {
-            if (doc.type === 'local' && doc.category && doc.fileName) {
-                manifest[doc.category] = manifest[doc.category] || [];
-                if (!manifest[doc.category].includes(doc.fileName)) {
-                    manifest[doc.category].push(doc.fileName);
-                }
-            }
-        });
-
-        const json = JSON.stringify(manifest, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'manifest.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        console.log('✅ manifest.json выгружен');
-        if (typeof showToast === 'function') {
-            showToast('📥 manifest.json');
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  УТИЛИТЫ
-    // ═══════════════════════════════════════════════════════════
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function getFileIcon(ext) {
-        switch (ext) {
-            case 'pdf': return '📕';
-            case 'doc':
-            case 'docx': return '📘';
-            case 'xls':
-            case 'xlsx':
-            case 'csv': return '📗';
-            case 'ppt':
-            case 'pptx': return '📙';
-            case 'txt': return '📄';
-            case 'zip': return '🗜️';
-            default: return '📎';
-        }
-    }
-
-    function formatSize(bytes) {
-        if (!bytes) return '';
-        if (bytes < 1024) return bytes + ' Б';
-        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' КБ';
-        return (bytes / 1024 / 1024).toFixed(1) + ' МБ';
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  АВТОПОИСК ФАЙЛОВ
-    // ═══════════════════════════════════════════════════════════
     function tryLoadUrl(url) {
         return new Promise(resolve => {
             fetch(url, { method: 'HEAD' })
@@ -13358,215 +12753,148 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         });
     }
 
-    async function findFilesForCategory(category) {
-        const cacheKey = `files::${category}`;
-        const cached = docsCache[cacheKey];
-
-        if (cached && (Date.now() - cached.ts < DOC_CACHE_TTL)) {
-            return cached.files;
+    function getFileIcon(ext) {
+        switch (ext) {
+            case 'pdf': return '📕';
+            case 'doc': case 'docx': return '📘';
+            case 'xls': case 'xlsx': case 'csv': return '📗';
+            case 'ppt': case 'pptx': return '📙';
+            case 'txt': return '📄';
+            case 'zip': return '🗜️';
+            default: return '📎';
         }
+    }
 
-        const terms = TERMS_BY_CATEGORY[category] || [];
+    async function findDocsForCategory(category) {
+        const cacheKey = `docs_${category}`;
+        const cached = docsCache[cacheKey];
+        if (cached && (Date.now() - cached.ts < DOC_CACHE_TTL)) return cached.files;
+
+        const folderPath = `documents/${category}`;
         const found = [];
+        
+        // ⚡ 1. Пытаемся загрузить manifest.json
+        let manifest = null;
+        try {
+            const resp = await fetch('documents/manifest.json');
+            if (resp.ok) manifest = await resp.json();
+        } catch (e) {}
 
-        for (const term of terms) {
-            const baseNames = [
-                term,
-                term.replace(/\s+/g, '_'),
-                term.toLowerCase(),
-                term.replace(/\s+/g, '_').toLowerCase()
-            ];
-            const uniqueNames = [...new Set(baseNames)];
-
-            // Проверяем все варианты: term.ext, term_2.ext, term_3.ext, ...
-            const suffixes = ['', '_2', '_3', '_4', '_5'];
-
-            for (const suffix of suffixes) {
-                let foundUrl = null;
-                for (const name of uniqueNames) {
-                    for (const ext of DOC_EXTENSIONS) {
-                        const url = `documents/${category}/${name}${suffix}.${ext}`;
-                        const ok = await tryLoadUrl(url);
-                        if (ok) {
-                            foundUrl = url;
-                            break;
-                        }
-                    }
-                    if (foundUrl) break;
-                }
-
-                if (foundUrl) {
-                    // Извлекаем чистое название для отображения
-                    const cleanTitle = suffix === ''
-                        ? term.replace(/_/g, ' ')
-                        : `${term.replace(/_/g, ' ')} (${suffix.slice(1)})`;
-
+        if (manifest && manifest[category] && Array.isArray(manifest[category])) {
+            // Если в манифесте есть список файлов для этой категории — используем его
+            for (const filename of manifest[category]) {
+                const url = `${folderPath}/${filename}`;
+                const ok = await tryLoadUrl(url);
+                if (ok) {
+                    const ext = filename.split('.').pop().toLowerCase();
                     found.push({
-                        id: `file_${category}_${term}_${suffix}`,
-                        title: cleanTitle,
-                        url: foundUrl,
-                        category: category,
-                        description: '',
+                        title: filename.replace(/\.[^.]+$/, ''), // Имя без расширения
+                        url: url,
+                        ext: ext,
                         type: 'file',
-                        ext: foundUrl.split('.').pop().toLowerCase()
+                        category: category
                     });
                 }
+            }
+        } else {
+            // ⚡ 2. Если манифеста нет — ищем по номерам (1.pdf, 2.pdf...)
+            const extensions = ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'txt', 'csv', 'zip'];
+            for (let i = 1; i <= 50; i++) {
+                let loaded = false;
+                for (const ext of extensions) {
+                    const url = `${folderPath}/${i}.${ext}`;
+                    const ok = await tryLoadUrl(url);
+                    if (ok) {
+                        found.push({ title: `Документ ${i}`, url: url, ext: ext, type: 'file', category: category });
+                        loaded = true;
+                        break;
+                    }
+                }
+                if (!loaded && i > 10 && found.length < i - 10) break;
             }
         }
 
         docsCache[cacheKey] = { files: found, ts: Date.now() };
         saveCache();
-
         return found;
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  НОВОЕ: Загрузка из manifest.json + fallback на TERMS_BY_CATEGORY
-    // ═══════════════════════════════════════════════════════════
-    async function loadManifest() {
-        try {
-            const response = await fetch('documents/manifest.json');
-            if (!response.ok) {
-                console.log('📄 manifest.json не найден — используем TERMS_BY_CATEGORY');
-                return null;
-            }
-            const manifest = await response.json();
-            console.log('✅ manifest.json загружен:', Object.keys(manifest).length, 'категорий');
-            return manifest;
-        } catch (e) {
-            console.log('⚠️ manifest.json недоступен:', e.message);
-            return null;
-        }
-    }
-
-    async function findAllFiles() {
-        // 1. Пробуем загрузить manifest.json
-        const manifest = await loadManifest();
-
-        if (manifest) {
-            // 2. Используем manifest.json — все файлы оттуда
-            const allFiles = [];
-
-            for (const category in manifest) {
-                const files = manifest[category] || [];
-                const categoryFiles = files.map((filename, idx) => {
-                    // Извлекаем расширение и чистое имя
-                    const ext = filename.split('.').pop().toLowerCase();
-                    const titleWithoutExt = filename.replace(/\.[^.]+$/, '');
-
-                    return {
-                        id: `file_${category}_${idx}_${filename}`,
-                        title: titleWithoutExt,
-                        url: `documents/${category}/${filename}`,
-                        category: category,
-                        description: '',
-                        type: 'file',
-                        ext: ext
-                    };
-                });
-
-                // Сохраняем в кэш
-                docsCache[`files::${category}`] = {
-                    files: categoryFiles,
-                    ts: Date.now()
-                };
-
-                allFiles.push(...categoryFiles);
-            }
-
-            saveCache();
-            console.log('📦 Загружено файлов из manifest:', allFiles.length);
-            return;
-        }
-
-        // 3. Fallback: старая логика через TERMS_BY_CATEGORY
-        console.log('📦 Используем fallback (TERMS_BY_CATEGORY)');
-        const promises = Object.keys(CATEGORIES).map(cat => findFilesForCategory(cat));
+    async function loadAllDocs() {
+        const promises = Object.keys(CATEGORIES).map(cat => findDocsForCategory(cat));
         await Promise.all(promises);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //  СПИСОК ДОКУМЕНТОВ
-    // ═══════════════════════════════════════════════════════════
-    let currentDocCategory = 'all';
-    let currentDocSearch = '';
-
     function getAllDocuments() {
         const files = [];
-        for (const cat in CATEGORIES) {
-            const cacheKey = `files::${cat}`;
-            if (docsCache[cacheKey] && docsCache[cacheKey].files) {
-                files.push(...docsCache[cacheKey].files);
+        // 1. PDF-файлы
+        for (const key in docsCache) {
+            if (key.startsWith('docs_') && docsCache[key].files) {
+                files.push(...docsCache[key].files);
             }
         }
+        // 2. Локальные файлы
+        localFiles.forEach(f => {
+            const url = URL.createObjectURL(f.blob);
+            files.push({ id: f.id, title: f.title, url: url, ext: f.ext, type: 'local', category: f.category, size: f.size });
+        });
+        // 3. Ссылки
+        // Читаем ссылки сразу из двух возможных ключей localStorage
+        const links1 = JSON.parse(localStorage.getItem('myLocalLinks_v2') || '[]');
+        const links2 = JSON.parse(localStorage.getItem('myDocLinks_v2') || '[]');
+        
+        // Объединяем их и убираем дубликаты
+        const allLinks = [...links1, ...links2];
+        const uniqueLinks = [];
+        const seenUrls = new Set();
 
-        const all = [...files, ...localDocs, ...customLinks];
-
-        // ⚡ Дедупликация: по url + title (или только по url)
-        const seen = new Set();
-        const unique = [];
-        all.forEach(doc => {
-            // Нормализуем URL: убираем префиксы, decodeURIComponent и т.д.
-            const key = (doc.url || '').toLowerCase().trim();
-            if (!key) {
-                unique.push(doc);   // документы без url не дедуплицируем
-                return;
-            }
-            if (!seen.has(key)) {
-                seen.add(key);
-                unique.push(doc);
+        allLinks.forEach(l => {
+            const url = (l.url || '').toLowerCase().trim();
+            if (url && !seenUrls.has(url)) {
+                seenUrls.add(url);
+                uniqueLinks.push(l);
             }
         });
 
-        return unique;
+        // Добавляем в общий список
+        uniqueLinks.forEach(l => {
+            files.push({
+                title: l.title || 'Без названия',
+                url: l.url,
+                ext: 'link',
+                type: 'link',
+                category: l.category || 'all',
+                description: l.description,
+                id: l.id || l.url
+            });
+        });
+        return files;
     }
 
     function getFilteredDocuments() {
         let all = getAllDocuments();
-
-        // Фильтр по категории
-        if (currentDocCategory !== 'all') {
-            all = all.filter(d => d.category === currentDocCategory);
-        }
-
-        // Фильтр по поиску
+        if (currentDocCategory !== 'all') all = all.filter(d => d.category === currentDocCategory);
         if (currentDocSearch) {
             const q = currentDocSearch.toLowerCase();
-            all = all.filter(d =>
-                (d.title || '').toLowerCase().includes(q) ||
-                (d.description || '').toLowerCase().includes(q)
-            );
+            all = all.filter(d => (d.title || '').toLowerCase().includes(q));
         }
-
         return all;
     }
 
     function renderDocuments() {
         const list = document.getElementById('documentsList');
         if (!list) return;
-
         const filtered = getFilteredDocuments();
-
         if (filtered.length === 0) {
-            const msg = currentDocSearch
-                ? `По запросу «${escapeHtml(currentDocSearch)}» ничего не найдено`
-                : 'Документов пока нет';
-
-            list.innerHTML = `
-                <div class="documents-empty">
-                    <div class="documents-empty__icon"></div>
-                    <p>${msg}</p>
-                    <p style="font-size:0.8rem; margin-top:8px;">
-                        Нажмите «➕ Добавить ссылку»<br>
-                        или положите файлы в <code>documents/${currentDocCategory === 'all' ? '{тема}' : currentDocCategory}/</code>
-                    </p>
-                </div>
-            `;
+            list.innerHTML = `<div class="documents-empty"><div class="documents-empty__icon">📭</div><p>Документов пока нет</p></div>`;
             return;
         }
 
         list.innerHTML = filtered.map(doc => {
-            const icon = doc.type === 'link' ? '🔗' : getFileIcon(doc.ext);
+            let icon = '📎';
+            if (doc.type === 'link') icon = '🔗';
+            else if (doc.type === 'local') icon = '📁';
+            else icon = getFileIcon(doc.ext);
+            
             const catLabel = CATEGORIES[doc.category] || doc.category || 'Без темы';
             const isLink = doc.type === 'link';
             const isLocal = doc.type === 'local';
@@ -13576,38 +12904,42 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                     <div class="doc-item__icon">${icon}</div>
                     <div class="doc-item__main">
                         <div class="doc-item__title">${escapeHtml(doc.title)}</div>
-                        <div class="doc-item__meta">
-                            <span class="doc-item__category">${escapeHtml(catLabel)}</span>
-                            ${doc.description ? `<span>${escapeHtml(doc.description)}</span>` : ''}
-                            ${doc.fileSize ? `<span>${formatSize(doc.fileSize)}</span>` : ''}
-                        </div>
+                        <div class="doc-item__meta"><span class="doc-item__category">${escapeHtml(catLabel)}</span></div>
                     </div>
                     <div class="doc-item__actions">
-                        <a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener" class="doc-action-btn">
-                            👁 <span class="doc-action-btn__label">Открыть</span>
-                        </a>
-                        ${!isLink ? `<a href="${escapeHtml(doc.url)}" download="${escapeHtml(doc.fileName || '')}" class="doc-action-btn doc-action-btn--download">⬇ <span class="doc-action-btn__label">Скачать</span></a>` : ''}
-                        ${(isLink || isLocal) ? `<button class="doc-action-btn doc-action-btn--delete" data-delete-id="${doc.id}" data-delete-type="${doc.type}" title="Удалить">🗑 <span class="doc-action-btn__label">Удалить</span></button>` : ''}
+                        ${(() => {
+                            // Ссылки открываем всегда
+                            if (isLink) {
+                                return `<a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener" class="doc-action-btn">👁</a>`;
+                            }
+                            // Для файлов: открываем только те, которые браузер умеет показывать
+                            const previewable = ['pdf', 'txt', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+                            if (previewable.includes(doc.ext)) {
+                                return `<a href="${escapeHtml(doc.url)}" target="_blank" rel="noopener" class="doc-action-btn">👁</a>`;
+                            }
+                            // Excel, Word, Zip — только скачивание
+                            return '';
+                        })()}
+                        
+                        ${(!isLink && !isLocal) ? `<a href="${escapeHtml(doc.url)}" download class="doc-action-btn doc-action-btn--download">⬇</a>` : ''}
+                        ${(isLink || isLocal) ? `<button class="doc-action-btn doc-action-btn--delete" data-delete-type="${doc.type}" data-delete-id="${doc.id || doc.url}" title="Удалить">🗑</button>` : ''}
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Обработчики удаления
         list.querySelectorAll('.doc-action-btn--delete').forEach(btn => {
-            btn.addEventListener('click', function(e) {
+            btn.addEventListener('click', async function(e) {
                 e.stopPropagation();
-                const id = this.dataset.deleteId;
                 const type = this.dataset.deleteType;
-                if (!id) return;
-                if (!confirm('Удалить этот документ?')) return;
-
-                if (type === 'local') {
-                    localDocs = localDocs.filter(l => l.id !== id);
-                    saveLocalDocs();
-                } else {
-                    customLinks = customLinks.filter(l => l.id !== id);
-                    saveCustomLinks();
+                const id = this.dataset.deleteId;
+                if (!confirm('Удалить документ?')) return;
+                if (type === 'link') {
+                    localLinks = localLinks.filter(l => l.url !== id);
+                    saveLinks();
+                } else if (type === 'local') {
+                    await deleteFileFromDB(Number(id));
+                    localFiles = await getAllLocalFiles();
                 }
                 renderFilters();
                 renderDocuments();
@@ -13618,20 +12950,15 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     function renderFilters() {
         const filters = document.getElementById('documentsFilters');
         if (!filters) return;
-
         const allDocs = getAllDocuments();
-
         let html = `<button class="documents-filter-btn${currentDocCategory === 'all' ? ' active' : ''}" data-cat="all">Все (${allDocs.length})</button>`;
-
         for (const cat in CATEGORIES) {
             const count = allDocs.filter(d => d.category === cat).length;
             const cls = currentDocCategory === cat ? ' active' : '';
             const disabled = count === 0 ? ' style="opacity:0.5;"' : '';
             html += `<button class="documents-filter-btn${cls}" data-cat="${cat}"${disabled}>${CATEGORIES[cat]}${count > 0 ? ` (${count})` : ''}</button>`;
         }
-
         filters.innerHTML = html;
-
         filters.querySelectorAll('.documents-filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 currentDocCategory = this.dataset.cat;
@@ -13642,52 +12969,219 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  ОТКРЫТИЕ / ЗАКРЫТИЕ
-    // ═══════════════════════════════════════════════════════════
-    let isLoadingDocs = false;
+//  ⚡ ОТКРЫТИЕ ДОКУМЕНТОВ С МОДАЛЬНЫМ ОКНОМ ПАРОЛЯ
+// ═══════════════════════════════════════════════════════════
+async function openDocuments() {
+    const HASHED_PASSWORD = 'c1541cdc6a01b6b79cd54d2493ee59105c7e4b2c633397a952ef635ae6ae2af8';
 
-    async function openDocuments() {
-        const modal = document.getElementById('documentsModal');
-        if (!modal) {
-            console.error('❌ #documentsModal не найден');
+    // ═══ 1. Получаем элементы модалки ═══
+    const overlay = document.getElementById('docsPasswordOverlay');
+    const input   = document.getElementById('docsPasswordInput');
+    const errorEl = document.getElementById('docsPasswordError');
+    const btnOk   = document.getElementById('docsPasswordSubmit');
+    const btnCancel = document.getElementById('docsPasswordCancel');
+
+    if (!overlay || !input) {
+        console.warn('⚠️ Модалка пароля не найдена, используем prompt');
+        const pwd = prompt('Введите пароль:');
+        if (pwd === null) return;
+        const h = await sha256(pwd);
+        if (h !== HASHED_PASSWORD) { alert('Неверный пароль'); return; }
+        return openDocumentsContent();
+    }
+
+    // ═══ 2. Показываем модалку ═══
+    overlay.style.display = 'flex';
+    input.value = '';
+    errorEl.classList.remove('visible');
+    setTimeout(() => input.focus(), 100);
+
+    // ═══ 3. Функция проверки пароля ═══
+    async function trySubmit() {
+        const pwd = input.value;
+        if (!pwd) {
+            errorEl.textContent = '❌ Введите пароль';
+            errorEl.classList.add('visible');
+            input.focus();
             return;
         }
 
-        // ⚡ Убираем фокус с кнопки — чтобы не оставалась подсветка
+        const inputHash = await sha256(pwd);
+
+        if (inputHash !== HASHED_PASSWORD) {
+            // Ошибка: тряска + красный текст
+            errorEl.textContent = '❌ Неверный пароль';
+            errorEl.classList.add('visible');
+            // Перезапуск анимации тряски
+            errorEl.style.animation = 'none';
+            void errorEl.offsetWidth;
+            errorEl.style.animation = '';
+            input.value = '';
+            input.focus();
+            return;
+        }
+
+        // ═══ Успех — закрываем модалку и открываем документы ═══
+        closePasswordModal();
+        await openDocumentsContent();
+    }
+
+    // ═══ 4. Закрытие модалки ═══
+    function closePasswordModal() {
+        overlay.style.display = 'none';
+        input.value = '';
+        errorEl.classList.remove('visible');
+        // Убираем слушатели, чтобы не копились
+        btnOk.removeEventListener('click', trySubmit);
+        btnCancel.removeEventListener('click', closePasswordModal);
+        input.removeEventListener('keydown', onKey);
+        overlay.removeEventListener('click', onOverlayClick);
+        document.removeEventListener('keydown', onEsc);
+    }
+
+    function onKey(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            trySubmit();
+        }
+    }
+
+    function onOverlayClick(e) {
+        if (e.target === overlay) closePasswordModal();
+    }
+
+    function onEsc(e) {
+        if (e.key === 'Escape') closePasswordModal();
+    }
+
+    // ═══ 5. Вешаем обработчики ═══
+    btnOk.addEventListener('click', trySubmit);
+    btnCancel.addEventListener('click', closePasswordModal);
+    input.addEventListener('keydown', onKey);
+    overlay.addEventListener('click', onOverlayClick);
+    document.addEventListener('keydown', onEsc);
+}
+
+    // ═══════════════════════════════════════════════════════════
+    //  ⚡ ЗАГРУЗКА ДОКУМЕНТОВ И ССЫЛОК ИЗ ФАЙЛОВ
+    // ═══════════════════════════════════════════════════════════
+    async function findAllFiles() {
+        const CATEGORIES = {
+            'theory': 'Теория', 'formal': 'Формализация', 'scenario': 'Сценарии',
+            'methods': 'Методы', 'levels': 'Уровни', 'functional': 'Функциональное',
+            'nonfunctional': 'Нефункциональное', 'testdesign': 'Тест-дизайн',
+            'documentation': 'Документация', 'api': 'API', 'web': 'Веб-приложения',
+            'scrum': 'Scrum', 'kanban': 'Kanban', 'requirements': 'Требования',
+            'sql': 'SQL', 'python': 'Python', 'interview': 'Собеседование', 'mobile': 'Мобильные'
+        };
+
+        docsCache = {}; // Очищаем старый кэш
+
+        // ⚡ Проверяем, не загружали ли мы manifest.json вручную
+        const localManifest = localStorage.getItem('myDocsManifest');
+        if (localManifest) {
+            try {
+                const manifest = JSON.parse(localManifest);
+                for (const cat of Object.keys(CATEGORIES)) {
+                    if (manifest[cat] && Array.isArray(manifest[cat]) && manifest[cat].length > 0) {
+                        const files = manifest[cat].map(filename => ({
+                            title: filename.replace(/\.[^.]+$/, ''),
+                            url: `documents/${cat}/${filename}`,
+                            ext: filename.split('.').pop().toLowerCase(),
+                            type: 'file',
+                            category: cat
+                        }));
+                        docsCache[`docs_${cat}`] = { files: files, ts: Date.now() };
+                    }
+                }
+                console.log('✅ PDF-файлы из локального manifest.json загружены');
+                return; // ⚡ Если есть локальный манифест, дальше не идем
+            } catch (e) {
+                console.warn('⚠️ Ошибка чтения локального манифеста', e);
+            }
+        }
+
+        // ═══ 1. ЧИТАЕМ PDF-ФАЙЛЫ ИЗ manifest.json ═══
+        try {
+            const response = await fetch('documents/manifest.json');
+            if (response.ok) {
+                const manifest = await response.json();
+                for (const cat of Object.keys(CATEGORIES)) {
+                    if (manifest[cat] && Array.isArray(manifest[cat]) && manifest[cat].length > 0) {
+                        const files = manifest[cat].map(filename => ({
+                            title: filename.replace(/\.[^.]+$/, ''), // Убираем .pdf из названия
+                            url: `documents/${cat}/${filename}`,
+                            ext: filename.split('.').pop().toLowerCase(),
+                            type: 'file',
+                            category: cat
+                        }));
+                        docsCache[`docs_${cat}`] = { files: files, ts: Date.now() };
+                    }
+                }
+                console.log('✅ PDF-файлы из manifest.json загружены');
+            }
+        } catch (e) {
+            console.warn('⚠️ Не удалось прочитать manifest.json. Запустите через локальный сервер!', e);
+        }
+
+        // ═══ Чтение ссылок из documents/links.json ═══
+        try {
+            const response = await fetch('documents/links.json');
+            if (response.ok) {
+                const fileLinks = await response.json();
+                if (Array.isArray(fileLinks)) {
+                    const existingUrls = new Set(localLinks.map(l => l.url));
+                    let added = 0;
+                    fileLinks.forEach(l => {
+                        if (l.url && !existingUrls.has(l.url)) {
+                            localLinks.push(l);
+                            existingUrls.add(l.url);
+                            added++;
+                        }
+                    });
+                    if (added > 0) {
+                        saveLinks();
+                        console.log(`✅ links.json: загружено ${added} ссылок`);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('📄 links.json не найден — используем только локальные');
+        }
+
+        // Сохраняем кэш файлов в localStorage
+        localStorage.setItem('myDocsCache_v6', JSON.stringify(docsCache));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  ⚡ САМО ОТКРЫТИЕ ДОКУМЕНТОВ
+    // ═══════════════════════════════════════════════════════════
+    async function openDocumentsContent() {
+        const modal = document.getElementById('documentsModal');
+        if (!modal) return;
+
         const docsBtn = document.getElementById('documentsBtn');
         if (docsBtn) docsBtn.blur();
 
-        // ⚡ Сброс поиска при открытии
         const searchInput = document.getElementById('documentsSearchInput');
         const searchClear = document.getElementById('documentsSearchClear');
         if (searchInput) searchInput.value = '';
         if (searchClear) searchClear.classList.remove('visible');
         currentDocSearch = '';
 
-        // Показываем модалку сразу
+        // Показываем модалку и грузим файлы
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
 
-        // Показываем фильтры и "Загрузка..."
         renderFilters();
         const list = document.getElementById('documentsList');
         if (list) {
-            list.innerHTML = `
-                <div class="documents-empty">
-                    <div class="documents-empty__icon">⏳</div>
-                    <p>Загрузка документов...</p>
-                </div>
-            `;
+            list.innerHTML = `<div class="documents-empty"><div class="documents-empty__icon">⏳</div><p>Загрузка документов...</p></div>`;
         }
 
-        // Загружаем файлы (с кэшем)
         if (!isLoadingDocs) {
             isLoadingDocs = true;
-            try {
-                await findAllFiles();
-            } catch (e) {
-                console.warn('Ошибка загрузки документов:', e);
-            }
+            try { await findAllFiles(); } catch (e) { console.warn(e); }
             isLoadingDocs = false;
         }
 
@@ -13695,657 +13189,409 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         renderDocuments();
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  ⚡ ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ SHA-256
+    // ═══════════════════════════════════════════════════════════
+    async function sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function openDocuments() {
+        const HASHED_PASSWORD = 'c1541cdc6a01b6b79cd54d2493ee59105c7e4b2c633397a952ef635ae6ae2af8';
+
+        const overlay = document.getElementById('docsPasswordOverlay');
+        const input = document.getElementById('docsPasswordInput');
+        const errorEl = document.getElementById('docsPasswordError');
+        const btnOk = document.getElementById('docsPasswordSubmit');
+        const btnCancel = document.getElementById('docsPasswordCancel');
+
+        // Если элементов нет — fallback на старый prompt (на случай ошибок в HTML)
+        if (!overlay || !input) {
+            const pwd = prompt('Введите пароль:');
+            if (pwd === null) return;
+            const h = await sha256(pwd);
+            if (h !== HASHED_PASSWORD) { alert('Неверный пароль'); return; }
+            return openDocumentsContent();
+        }
+
+        // Показываем модалку
+        overlay.style.display = 'flex';
+        input.value = '';
+        errorEl.classList.remove('visible');
+        setTimeout(() => input.focus(), 100);
+
+        async function trySubmit() {
+            const pwd = input.value;
+            if (!pwd) {
+                errorEl.textContent = '❌ Введите пароль';
+                errorEl.classList.add('visible');
+                input.focus();
+                return;
+            }
+
+            const inputHash = await sha256(pwd);
+
+            if (inputHash !== HASHED_PASSWORD) {
+                errorEl.textContent = '❌ Неверный пароль';
+                errorEl.classList.add('visible');
+                errorEl.style.animation = 'none';
+                void errorEl.offsetWidth;
+                errorEl.style.animation = '';
+                input.value = '';
+                input.focus();
+                return;
+            }
+
+            closePasswordModal();
+            await openDocumentsContent();
+        }
+
+        function closePasswordModal() {
+            overlay.style.display = 'none';
+            input.value = '';
+            errorEl.classList.remove('visible');
+            btnOk.removeEventListener('click', trySubmit);
+            btnCancel.removeEventListener('click', closePasswordModal);
+            input.removeEventListener('keydown', onKey);
+            overlay.removeEventListener('click', onOverlayClick);
+            document.removeEventListener('keydown', onEsc);
+        }
+
+        function onKey(e) {
+            if (e.key === 'Enter') { e.preventDefault(); trySubmit(); }
+        }
+        function onOverlayClick(e) {
+            if (e.target === overlay) closePasswordModal();
+        }
+        function onEsc(e) {
+            if (e.key === 'Escape') closePasswordModal();
+        }
+
+        btnOk.addEventListener('click', trySubmit);
+        btnCancel.addEventListener('click', closePasswordModal);
+        input.addEventListener('keydown', onKey);
+        overlay.addEventListener('click', onOverlayClick);
+        document.addEventListener('keydown', onEsc);
+    }
+
     function closeDocuments() {
         const modal = document.getElementById('documentsModal');
         if (!modal) return;
         modal.style.display = 'none';
         document.body.style.overflow = '';
-
-        // ⚡ Снимаем выделение с кнопки "Документы"
-        const docsBtn = document.getElementById('documentsBtn');
-        if (docsBtn) {
-            docsBtn.classList.remove('active');
-            docsBtn.blur();                 // ⚡ убираем фокус
-        }
     }
 
-    // Публичный сброс кэша
-    window.clearDocsCache = function() {
-        docsCache = {};
-        localStorage.removeItem(DOC_CACHE_KEY);
-        console.log('🗑 Кэш документов очищен');
-        location.reload();
-    };
+    async function init() {
+        await initDB();
 
-    // ═══════════════════════════════════════════════════════════
-    //  КАСТОМНЫЙ ДРОПДАУН ТЕМЫ
-    // ═══════════════════════════════════════════════════════════
-    function buildCategoryDropdown(containerId, hiddenInputId) {
-        const container = document.getElementById(containerId);
-        if (!container) return;
-
-        // ⚡ Собираем все категории: стандартные + кастомные
-        const allCategories = { ...CATEGORIES };
+                // ═══ Чтение ссылок из documents/links.json ═══
         try {
-            const customThemes = JSON.parse(localStorage.getItem('myCustomThemes') || '[]');
-            customThemes.forEach(theme => {
-                if (theme.id && theme.label) {
-                    allCategories[theme.id] = theme.label;
-                }
-            });
-        } catch (e) {
-            console.warn('Ошибка загрузки кастомных тем:', e);
-        }
-
-        console.log('🔨 buildCategoryDropdown:', 
-                    Object.keys(allCategories).length, 'категорий',
-                    '(кастомных:', Object.keys(allCategories).length - 18, ')');
-
-        container.innerHTML = `
-            <div class="cat-dropdown" id="${containerId}_dd">
-                <button type="button" class="cat-toggle" id="${containerId}_toggle">
-                    <span class="cat-label">Теория</span>
-                    <span class="cat-arrow">▼</span>
-                </button>
-                <div class="cat-menu" id="${containerId}_menu">
-                    ${Object.entries(allCategories).map(([key, label]) => `
-                        <button type="button" class="cat-option" data-value="${key}">${label}</button>
-                    `).join('')}
-                </div>
-                <input type="hidden" id="${hiddenInputId}" value="theory">
-            </div>
-        `;
-
-        const dd = container.querySelector('.cat-dropdown');
-        const toggle = container.querySelector('.cat-toggle');
-        const menu = container.querySelector('.cat-menu');
-        const hidden = document.getElementById(hiddenInputId);
-        const label = container.querySelector('.cat-label');
-
-        toggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-
-            const wasOpen = menu.classList.contains('open');
-            document.querySelectorAll('.cat-menu.open').forEach(m => m.classList.remove('open'));
-            document.querySelectorAll('.cat-toggle.open').forEach(t => t.classList.remove('open'));
-
-            if (!wasOpen) {
-                menu.classList.add('open');
-                toggle.classList.add('open');
-            }
-        });
-
-        menu.querySelectorAll('.cat-option').forEach(opt => {
-            opt.addEventListener('click', function(e) {
-                e.stopPropagation();
-                const value = this.dataset.value;
-                const text = this.textContent.trim();
-                hidden.value = value;
-                label.textContent = text;
-
-                menu.querySelectorAll('.cat-option').forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected');
-
-                menu.classList.remove('open');
-                toggle.classList.remove('open');
-            });
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!dd.contains(e.target)) {
-                menu.classList.remove('open');
-                toggle.classList.remove('open');
-            }
-        });
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  МОДАЛКА ДОБАВЛЕНИЯ
-    // ═══════════════════════════════════════════════════════════
-    let currentTab = 'link';
-
-    function switchDocTab(tab) {
-        currentTab = tab;
-        document.querySelectorAll('.doc-add-tab').forEach(t => {
-            t.classList.toggle('active', t.dataset.tab === tab);
-        });
-        document.querySelectorAll('.doc-add-panel').forEach(p => {
-            p.style.display = p.dataset.panel === tab ? 'flex' : 'none';
-        });
-    }
-
-    function openAddForm() {
-        const addModal = document.getElementById('docAddModal');
-        if (!addModal) return;
-
-        const isMobile = window.innerWidth <= 768;
-
-        // ═══════════════════════════════════════════════════════════
-        //  МОДАЛКА — overlay на весь экран
-        // ═══════════════════════════════════════════════════════════
-        addModal.style.cssText = '';  // ⚡ сброс всего, что было
-        addModal.style.setProperty('display', 'flex', 'important');
-        addModal.style.setProperty('position', 'fixed', 'important');
-        addModal.style.setProperty('top', '0', 'important');
-        addModal.style.setProperty('left', '0', 'important');
-        addModal.style.setProperty('right', '0', 'important');
-        addModal.style.setProperty('bottom', '0', 'important');
-        addModal.style.setProperty('width', '100vw', 'important');
-        addModal.style.setProperty('height', '100vh', 'important');
-        addModal.style.setProperty('padding', '20px', 'important');
-        addModal.style.setProperty('box-sizing', 'border-box', 'important');
-        addModal.style.setProperty('background', 'rgba(0, 0, 0, 0.55)', 'important');
-        addModal.style.setProperty('z-index', '2147483646', 'important');
-        addModal.style.setProperty('visibility', 'visible', 'important');
-        addModal.style.setProperty('opacity', '1', 'important');
-        addModal.style.setProperty('overflow-y', 'auto', 'important');
-
-        // ⚡ Центрирование
-        addModal.style.setProperty('align-items', isMobile ? 'flex-start' : 'center', 'important');
-        addModal.style.setProperty('justify-content', 'center', 'important');
-
-        // ═══════════════════════════════════════════════════════════
-        //  КОНТЕНТ — фиксированный
-        // ═══════════════════════════════════════════════════════════
-        const content = addModal.querySelector('.card-modal-content');
-        if (content) {
-            content.style.cssText = '';  // ⚡ сброс
-
-            if (isMobile) {
-                content.style.setProperty('width', '100%', 'important');
-                content.style.setProperty('max-width', '100%', 'important');
-                content.style.setProperty('height', '100vh', 'important');
-                content.style.setProperty('max-height', '100vh', 'important');
-                content.style.setProperty('min-height', '100vh', 'important');
-                content.style.setProperty('border-radius', '0', 'important');
-                content.style.setProperty('margin', '0', 'important');
-            } else {
-                content.style.setProperty('width', '520px', 'important');
-                content.style.setProperty('max-width', '520px', 'important');
-                content.style.setProperty('min-width', '520px', 'important');   // ⚡ жёстко
-                content.style.setProperty('height', 'auto', 'important');
-                content.style.setProperty('max-height', 'calc(100vh - 40px)', 'important');
-                content.style.setProperty('border-radius', '20px', 'important');
-                content.style.setProperty('margin', '0', 'important');           // ⚡ не auto!
-                content.style.setProperty('flex-shrink', '0', 'important');      // ⚡ не сжимать
-                content.style.setProperty('flex-grow', '0', 'important');        // ⚡ не растягивать
-            }
-
-            content.style.setProperty('display', 'flex', 'important');
-            content.style.setProperty('flex-direction', 'column', 'important');
-            content.style.setProperty('background', '#fff', 'important');
-            content.style.setProperty('box-shadow', '0 20px 60px rgba(0, 0, 0, 0.4)', 'important');
-            content.style.setProperty('overflow', 'hidden', 'important');
-            content.style.setProperty('position', 'relative', 'important');
-            content.style.setProperty('box-sizing', 'border-box', 'important');
-
-            // Внутренние части
-            const header = content.querySelector('.card-modal-header');
-            const body = content.querySelector('.card-modal-body');
-            const footer = content.querySelector('.card-modal-footer');
-
-            if (header) {
-                header.style.setProperty('flex-shrink', '0', 'important');
-                header.style.setProperty('background', '#fff', 'important');
-                header.style.setProperty('border-radius', isMobile ? '0' : '20px 20px 0 0', 'important');
-            }
-            if (body) {
-                body.style.setProperty('flex', '1 1 auto', 'important');
-                body.style.setProperty('min-height', '0', 'important');
-                body.style.setProperty('overflow-y', 'auto', 'important');
-                body.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
-            }
-            if (footer) {
-                footer.style.setProperty('flex-shrink', '0', 'important');
-                footer.style.setProperty('background', '#fff', 'important');
-                footer.style.setProperty('border-radius', isMobile ? '0' : '0 0 20px 20px', 'important');
-            }
-        }
-
-        // ═══════════════════════════════════════════════════════════
-        //  Кнопка "Наверх/Вниз"
-        // ═══════════════════════════════════════════════════════════
-        const scrollBtn = document.getElementById('scrollTopBtn');
-        if (scrollBtn) scrollBtn.style.setProperty('display', 'none', 'important');
-
-        // ═══ Очистка полей ═══
-        ['docLinkTitle', 'docLinkUrl', 'docLinkDescription',
-        'docFileTitle', 'docFileDescription'].forEach(function(id) {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
-        const fileInput = document.getElementById('docFileInput');
-        if (fileInput) fileInput.value = '';
-
-        // ⚡ ШАГ 1: Сначала ПЕРЕСТРАИВАЕМ дропдауны (с кастомными темами)
-        const linkCatContainer = document.getElementById('docLinkCategoryContainer');
-        const fileCatContainer = document.getElementById('docFileCategoryContainer');
-
-        if (linkCatContainer) {
-            buildCategoryDropdown('docLinkCategoryContainer', 'docLinkCategory');
-        }
-        if (fileCatContainer) {
-            buildCategoryDropdown('docFileCategoryContainer', 'docFileCategory');
-        }
-
-        // ⚡ ШАГ 2: ПОТОМ ставим значение по умолчанию
-        const allCategories = getAllCategories();
-        const defaultCat = currentDocCategory === 'all' ? 'theory' : currentDocCategory;
-
-        const linkHidden = document.getElementById('docLinkCategory');
-        const fileHidden = document.getElementById('docFileCategory');
-        if (linkHidden) linkHidden.value = defaultCat;
-        if (fileHidden) fileHidden.value = defaultCat;
-
-        document.querySelectorAll('#docLinkCategoryContainer .cat-label, #docFileCategoryContainer .cat-label').forEach(function(l) {
-            l.textContent = allCategories[defaultCat] || 'Теория';
-        });
-
-        // ⚡ ШАГ 3: Переключить на вкладку "Ссылка"
-        if (typeof switchDocTab === 'function') switchDocTab('link');
-
-        console.log('✅ openAddForm (' + (isMobile ? 'mobile' : 'desktop') + '), default:', defaultCat);
-    }
-
-
-    function closeAddForm() {
-        const addModal = document.getElementById('docAddModal');
-        if (addModal) {
-            addModal.style.display = 'none';
-        }
-        const scrollBtn = document.getElementById('scrollTopBtn');
-        if (scrollBtn) {
-            scrollBtn.style.removeProperty('display');
-        }
-        if (typeof renderFilters === 'function') renderFilters();
-        if (typeof renderDocuments === 'function') renderDocuments();
-    }
-
-    function saveLinkDoc() {
-        const titleEl = document.getElementById('docLinkTitle');
-        const urlEl = document.getElementById('docLinkUrl');
-        const catEl = document.getElementById('docLinkCategory');
-        const descEl = document.getElementById('docLinkDescription');
-
-        const title = titleEl ? titleEl.value.trim() : '';
-        const url = urlEl ? urlEl.value.trim() : '';
-        const category = catEl ? catEl.value : 'theory';
-        const description = descEl ? descEl.value.trim() : '';
-
-        if (!title) { alert('Введите название'); return false; }
-        if (!url || !/^https?:\/\//i.test(url)) {
-            alert('Введите корректную ссылку (http:// или https://)');
-            return false;
-        }
-
-        customLinks.push({
-            id: 'link_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-            title: title,
-            url: url,
-            category: category,
-            description: description,
-            type: 'link',
-            createdAt: Date.now()
-        });
-        saveCustomLinks();
-
-        closeAddForm();
-        renderFilters();
-        renderDocuments();
-
-        if (typeof showToast === 'function') {
-            showToast(`✅ Ссылка «${title}» добавлена`);
-        }
-        return true;
-    }
-
-    async function saveFileDoc() {
-        const inputEl = document.getElementById('docFileInput');
-        const titleEl = document.getElementById('docFileTitle');
-        const catEl = document.getElementById('docFileCategory');
-        const descEl = document.getElementById('docFileDescription');
-
-        const file = inputEl && inputEl.files ? inputEl.files[0] : null;
-        const title = titleEl ? titleEl.value.trim() : '';
-        const category = catEl ? catEl.value : 'theory';
-        const description = descEl ? descEl.value.trim() : '';
-
-        if (!file) { alert('Выберите файл'); return false; }
-        if (!title) { alert('Введите название'); return false; }
-
-        // ⚡ Проверка размера — не больше 20 МБ (для комфортной работы)
-        const MAX_FILE_SIZE = 20 * 1024 * 1024;
-        if (file.size > MAX_FILE_SIZE) {
-            alert(`❌ Файл больше ${MAX_FILE_SIZE / 1024 / 1024} МБ.`);
-            return false;
-        }
-
-        // ⚡ Сохраняем только имя файла, без Base64
-        const safeFileName = file.name.replace(/[^\wа-яё\-\s\.]/gi, '_').trim();
-        const targetPath = `documents/${category}/${safeFileName}`;
-
-        // ⚡ Скачиваем файл на устройство пользователя, чтобы он мог его положить в папку
-        const url = URL.createObjectURL(file);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = safeFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-        // ⚡ Сохраняем запись в localStorage — только метаданные
-        const localDoc = {
-            id: 'local_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-            title: title,
-            url: targetPath,               // ← путь, а не data URL
-            category: category,
-            description: description,
-            type: 'local',
-            ext: safeFileName.split('.').pop().toLowerCase(),
-            fileName: safeFileName,
-            fileSize: file.size,
-            createdAt: Date.now()
-        };
-
-        localDocs.push(localDoc);
-        saveLocalDocs();
-
-        closeAddForm();
-        renderFilters();
-        renderDocuments();
-
-        // ⚡ Показываем инструкцию
-        setTimeout(() => {
-            alert(
-                `📥 Файл «${safeFileName}» скачан на устройство.\n\n` +
-                `Чтобы он открывался в приложении:\n\n` +
-                `1. Скопируйте файл в папку:\n   documents/${category}/\n\n` +
-                `2. Если работаете через GitHub — загрузите файл в репозиторий.\n\n` +
-                `3. Обновите список (кнопка "🔄 Обновить").`
-            );
-        }, 300);
-
-        return true;
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  ИНИЦИАЛИЗАЦИЯ
-    // ═══════════════════════════════════════════════════════════
-    function init() {
-
-         // ⚡ Загружаем публичные ссылки из links.json
-        (async function loadPublicLinks() {
-            const fileLinks = await loadLinksFromFile();
-            if (fileLinks && fileLinks.length) {
-                const localLinks = JSON.parse(localStorage.getItem(DOC_LINKS_KEY) || '[]');
-                const merged = [...fileLinks];
-                const fileUrls = new Set(fileLinks.map(l => (l.url || '').toLowerCase()));
-                localLinks.forEach(l => {
-                    const url = (l.url || '').toLowerCase();
-                    if (!fileUrls.has(url)) {
-                        merged.push(l);
+            const response = await fetch('documents/links.json');
+            if (response.ok) {
+                const fileLinks = await response.json();
+                if (Array.isArray(fileLinks)) {
+                    const existingUrls = new Set(localLinks.map(l => l.url));
+                    let added = 0;
+                    fileLinks.forEach(l => {
+                        if (l.url && !existingUrls.has(l.url)) {
+                            localLinks.push(l);
+                            existingUrls.add(l.url);
+                            added++;
+                        }
+                    });
+                    if (added > 0) {
+                        saveLinks();
+                        console.log(`✅ links.json: загружено ${added} ссылок`);
                     }
-                });
-                customLinks = merged;
-                saveCustomLinks();
-                console.log('🔗 Всего ссылок:', customLinks.length);
-            }
-        })();
-        // 1. Кнопка "Документы" — открывает модалку списка (с проверкой пароля)
-        const btn = document.getElementById('documentsBtn');
-        if (btn) {
-            btn.addEventListener('click', async function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-
-                // ⚡ Проверяем авторизацию
-                if (!isDocsAuthorized()) {
-                    const ok = await requestDocsPassword();
-                    if (!ok) return;         // пользователь отменил — ничего не открываем
                 }
-
-                openDocuments();
-            });
-            console.log('✅ Кнопка "Документы" привязана (с паролем)');
-        } else {
-            console.warn('⚠️ Кнопка #documentsBtn не найдена');
+            }
+        } catch (e) {
+            console.log('📄 links.json не найден — используем только локальные');
         }
 
-        // ═══ Кнопка «📥 links.json» ═══
-        const exportLinksBtn = document.getElementById('exportLinksBtn');
-        if (exportLinksBtn) {
-            exportLinksBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                window.exportLinksToFile();
-            });
-            console.log('✅ Кнопка links.json привязана');
-        } else {
-            console.warn('⚠️ Кнопка #exportLinksBtn не найдена');
-        }
+        const btn = document.getElementById('documentsBtn');
+        if (btn) btn.addEventListener('click', (e) => { e.stopPropagation(); e.preventDefault(); openDocuments(); });
 
-        // ═══ Кнопка «📥 manifest.json» ═══
-        const exportManifestBtn = document.getElementById('exportManifestBtn');
-        if (exportManifestBtn) {
-            exportManifestBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                window.exportManifestToFile();
-            });
-            console.log('✅ Кнопка manifest.json привязана');
-        } else {
-            console.warn('⚠️ Кнопка #exportManifestBtn не найдена');
-        }
-
-        // 2. Кнопка закрытия модалки списка
         const closeBtn = document.getElementById('documentsCloseBtn');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeDocuments();
-            });
-        }
+        if (closeBtn) closeBtn.addEventListener('click', closeDocuments);
 
-        // 3. Клик по фону модалки списка
         const modal = document.getElementById('documentsModal');
-        if (modal) {
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) closeDocuments();
-            });
-        }
+        if (modal) modal.addEventListener('click', e => { if (e.target === modal) closeDocuments(); });
 
-        // 4.1. Кнопка "Обновить" — сброс кэша и перезагрузка списка
         const refreshBtn = document.getElementById('refreshDocsBtn');
         if (refreshBtn) {
-            refreshBtn.addEventListener('click', async function(e) {
-                e.stopPropagation();
+            refreshBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); e.preventDefault();
+                docsCache = {};
+                localStorage.removeItem(DOC_CACHE_KEY);
+                await openDocuments();
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════
+        //  ЗАГРУЗКА links.json (ИМПОРТ)
+        // ═══════════════════════════════════════════════════════
+        const uploadLinksBtn = document.getElementById('uploadLinksBtn');
+        if (uploadLinksBtn) {
+            uploadLinksBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); 
                 e.preventDefault();
+                
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.style.display = 'none';
+                document.body.appendChild(input);
+                
+                input.onchange = (ev) => {
+                    const file = ev.target.files[0];
+                    document.body.removeChild(input);
+                    if (!file) return;
 
-                const btn = this;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '⏳ Загрузка...';
-                btn.disabled = true;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const newLinks = JSON.parse(event.target.result);
+                            if (!Array.isArray(newLinks)) {
+                                alert('❌ Ошибка: файл должен содержать массив ссылок [ {...}, {...} ]');
+                                return;
+                            }
+                            
+                            // Читаем текущие ссылки
+                            let currentLinks = JSON.parse(localStorage.getItem('myLocalLinks_v2')) || [];
+                            
+                            // Объединяем, удаляя дубликаты по URL
+                            const existingUrls = new Set(currentLinks.map(l => l.url));
+                            let addedCount = 0;
+                            
+                            newLinks.forEach(link => {
+                                if (link.url && !existingUrls.has(link.url)) {
+                                    currentLinks.push(link);
+                                    existingUrls.add(link.url);
+                                    addedCount++;
+                                }
+                            });
+                            
+                            // Сохраняем
+                            localStorage.setItem('myLocalLinks_v2', JSON.stringify(currentLinks));
+                            // ⚡ Обновляем переменную в памяти модуля
+                            localLinks = currentLinks;
+                            
+                            alert(`✅ Успешно загружено ссылок: ${addedCount}`);
+                            
+                            // ⚡ ПЕРЕРИСОВЫВАЕМ ИНТЕРФЕЙС, ЧТОБЫ ССЫЛКИ ПОЯВИЛИСЬ
+                            renderFilters();
+                            renderDocuments();
+                            
+                        } catch (err) {
+                            alert('❌ Ошибка чтения JSON: ' + err.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            });
+        }
 
-                try {
-                    // Очищаем кэш
-                    docsCache = {};
-                    localStorage.removeItem(DOC_CACHE_KEY);
-
-                    // Показываем индикатор
-                    const list = document.getElementById('documentsList');
-                    if (list) {
-                        list.innerHTML = `
-                            <div class="documents-empty">
-                                <div class="documents-empty__icon">⏳</div>
-                                <p>Обновление...</p>
-                            </div>
-                        `;
-                    }
-
-                    // Переискиваем файлы
-                    await findAllFiles();
-
-                    // Перерисовываем
-                    renderFilters();
-                    renderDocuments();
-
-                    if (typeof showToast === 'function') {
-                        showToast('✅ Список обновлён');
-                    }
-                } catch (err) {
-                    console.error('Ошибка обновления:', err);
-                    if (typeof showToast === 'function') {
-                        showToast('❌ Ошибка обновления', 'error');
-                    }
-                } finally {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
+        // ═══ Экспорт ссылок в links.json ═══
+        const exportLinksBtn = document.getElementById('exportLinksBtn');
+        if (exportLinksBtn) {
+            exportLinksBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); e.preventDefault();
+                
+                if (!localLinks || localLinks.length === 0) {
+                    alert('Нет ссылок для экспорта. Сначала добавьте ссылку через «➕ Добавить».');
+                    return;
                 }
-            });
-        }
 
-       // ⚡ Кнопка "Добавить" — открывает модалку добавления (только click)
-        const addDocBtn = document.getElementById('addDocumentBtn');
-        if (addDocBtn) {
-            addDocBtn.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                openAddForm();
-            });
-            console.log('✅ Кнопка "Добавить" привязана (только click)');
-        } else {
-            console.warn('⚠️ Кнопка #addDocumentBtn не найдена');
-        }
-
-        // 5. Строим кастомные дропдауны
-        const linkCatSelect = document.getElementById('docLinkCategory');
-        const fileCatSelect = document.getElementById('docFileCategory');
-
-        if (linkCatSelect && linkCatSelect.tagName === 'SELECT') {
-            const wrapper = document.createElement('div');
-            wrapper.id = 'docLinkCategoryContainer';
-            linkCatSelect.parentNode.replaceChild(wrapper, linkCatSelect);
-            buildCategoryDropdown('docLinkCategoryContainer', 'docLinkCategory');
-        }
-
-        if (fileCatSelect && fileCatSelect.tagName === 'SELECT') {
-            const wrapper = document.createElement('div');
-            wrapper.id = 'docFileCategoryContainer';
-            fileCatSelect.parentNode.replaceChild(wrapper, fileCatSelect);
-            buildCategoryDropdown('docFileCategoryContainer', 'docFileCategory');
-        }
-
-        // 6. Табы
-        document.querySelectorAll('.doc-add-tab').forEach(tab => {
-            tab.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-                switchDocTab(this.dataset.tab);
-            });
-        });
-
-        // 7. Кнопки модалки добавления
-        const addClose = document.getElementById('docAddModalClose');
-        const addCancel = document.getElementById('docAddModalCancel');
-        const addSave = document.getElementById('docAddModalSave');
-        const addModal = document.getElementById('docAddModal');
-
-        if (addClose) {
-            addClose.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeAddForm();
-            });
-        }
-        if (addCancel) {
-            addCancel.addEventListener('click', function(e) {
-                e.stopPropagation();
-                closeAddForm();
-            });
-        }
-        if (addModal) {
-            addModal.addEventListener('click', function(e) {
-                // ⚡ Закрываем только если клик реально был по фону, а не синтетический после touchend
-                if (e.target === addModal && e.isTrusted) {
-                    closeAddForm();
-                }
-            });
-        }
-
-        // 8. Кнопка "Добавить"
-        if (addSave) {
-            addSave.addEventListener('click', async function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-
-                if (currentTab === 'link') {
-                    saveLinkDoc();
+                const data = JSON.stringify(localLinks, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'links.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                if (typeof showToast === 'function') {
+                    showToast(`📥 links.json (${localLinks.length} ссылок)`);
                 } else {
-                    await saveFileDoc();
+                    alert(`📥 links.json скачан (${localLinks.length} ссылок)`);
                 }
             });
         }
 
-        // 9. Поиск по документам + кнопка сброса
+        // ═══ Экспорт документов в manifest.json ═══
+        const exportManifestBtn = document.getElementById('exportManifestBtn');
+        if (exportManifestBtn) {
+            exportManifestBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); e.preventDefault();
+
+                const localFilesNow = await getAllLocalFiles();
+                if (!localFilesNow || localFilesNow.length === 0) {
+                    alert('Нет локальных файлов для экспорта.');
+                    return;
+                }
+
+                const manifest = {};
+                Object.keys(CATEGORIES).forEach(cat => { manifest[cat] = []; });
+                
+                localFilesNow.forEach(f => {
+                    if (f.category && f.title) {
+                        manifest[f.category] = manifest[f.category] || [];
+                        manifest[f.category].push(f.title);
+                    }
+                });
+
+                const data = JSON.stringify(manifest, null, 2);
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'manifest.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                if (typeof showToast === 'function') {
+                    showToast('📥 manifest.json скачан');
+                } else {
+                    alert('📥 manifest.json скачан');
+                }
+            });
+        }
+
         const searchInput = document.getElementById('documentsSearchInput');
         const searchClear = document.getElementById('documentsSearchClear');
-
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 currentDocSearch = this.value.trim();
                 renderDocuments();
-
-                // ⚡ Показываем/скрываем крестик
-                if (searchClear) {
-                    searchClear.classList.toggle('visible', this.value.length > 0);
-                }
+                if (searchClear) searchClear.classList.toggle('visible', this.value.length > 0);
             });
         }
-
         if (searchClear) {
             searchClear.addEventListener('click', function(e) {
-                e.stopPropagation();
-                e.preventDefault();
-
-                if (searchInput) {
-                    searchInput.value = '';
-                    searchInput.focus();
-                }
+                e.stopPropagation(); e.preventDefault();
+                if (searchInput) { searchInput.value = ''; searchInput.focus(); }
                 currentDocSearch = '';
                 this.classList.remove('visible');
                 renderDocuments();
             });
         }
 
-        // 10. ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key !== 'Escape') return;
+        const addDocBtn = document.getElementById('addDocumentBtn');
+        const addDocModal = document.getElementById('docAddModal');
+        const addModalClose = document.getElementById('docAddModalClose');
+        const addModalCancel = document.getElementById('docAddModalCancel');
+        const addModalSave = document.getElementById('docAddModalSave');
+        const linkCategory = document.getElementById('docLinkCategory');
+        const fileCategory = document.getElementById('docFileCategory');
 
-            const addModalEl = document.getElementById('docAddModal');
-            const docModalEl = document.getElementById('documentsModal');
+        if (linkCategory && fileCategory) {
+            const options = Object.entries(CATEGORIES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+            linkCategory.innerHTML = options;
+            fileCategory.innerHTML = options;
+        }
 
-            if (addModalEl && addModalEl.style.display === 'flex') {
-                closeAddForm();
-            } else if (docModalEl && docModalEl.style.display === 'flex') {
-                closeDocuments();
-            }
+        document.querySelectorAll('.doc-add-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.doc-add-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.doc-add-panel').forEach(p => {
+                    p.style.display = p.dataset.panel === this.dataset.tab ? 'block' : 'none';
+                });
+            });
         });
 
-        console.log('✅ Модуль документов v3 активен');
+        if (addDocBtn && addDocModal) {
+            addDocBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); e.preventDefault();
+                addDocModal.style.display = 'flex';
+            });
+        }
+
+        [addModalClose, addModalCancel].forEach(btn => {
+            if (btn) btn.addEventListener('click', () => addDocModal.style.display = 'none');
+        });
+
+        if (addDocModal) {
+            addDocModal.addEventListener('click', (e) => {
+                if (e.target === addDocModal) addDocModal.style.display = 'none';
+            });
+        }
+
+        if (addModalSave) {
+            addModalSave.addEventListener('click', async (e) => {
+                e.stopPropagation(); e.preventDefault();
+                const activeTab = document.querySelector('.doc-add-tab.active')?.dataset.tab;
+                
+                if (activeTab === 'link') {
+                    const title = document.getElementById('docLinkTitle')?.value.trim();
+                    const url = document.getElementById('docLinkUrl')?.value.trim();
+                    const cat = document.getElementById('docLinkCategory')?.value;
+                    const desc = document.getElementById('docLinkDescription')?.value.trim();
+
+                    if (!title || !url) { alert('Заполните название и ссылку'); return; }
+                    if (!url.startsWith('http')) { alert('Ссылка должна начинаться с http'); return; }
+
+                    localLinks.push({ id: Date.now(), title, url, category: cat, description: desc });
+                    saveLinks();
+                    
+                    addDocModal.style.display = 'none';
+                    renderFilters();
+                    renderDocuments();
+                    alert('✅ Ссылка добавлена!');
+                } else {
+                    const fileInput = document.getElementById('docFileInput');
+                    const file = fileInput?.files[0];
+                    const cat = document.getElementById('docFileCategory')?.value;
+
+                    if (!file) { alert('Выберите файл'); return; }
+                    
+                    const MAX_SIZE = 10 * 1024 * 1024;
+                    if (file.size > MAX_SIZE) {
+                        alert('❌ Файл больше 10 МБ. Выберите файл поменьше.');
+                        return;
+                    }
+
+                    try {
+                        await saveFileToDB(file, cat);
+                        addDocModal.style.display = 'none';
+                        localFiles = await getAllLocalFiles();
+                        renderFilters();
+                        renderDocuments();
+                        alert('✅ Файл добавлен в приложение!');
+                    } catch (err) {
+                        console.error(err);
+                        alert('❌ Ошибка сохранения файла: ' + err.message);
+                    }
+                }
+            });
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                const m = document.getElementById('documentsModal');
+                if (m && m.style.display === 'flex') closeDocuments();
+                const am = document.getElementById('docAddModal');
+                if (am && am.style.display === 'flex') am.style.display = 'none';
+            }
+        });
     }
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
+    } else init();
 
-    // Публичный API
     window.openDocuments = openDocuments;
     window.closeDocuments = closeDocuments;
-    window.openAddForm = openAddForm;
-    window.closeAddForm = closeAddForm;
 })();
 
 // ═══════════════════════════════════════════════════════════
@@ -14782,7 +14028,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Классификация тестирования',
                             hint: '🎬 Пошагово: Функциональное → Нефункциональное → По другим признакам',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Функциональное',
@@ -14959,11 +14205,11 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'QA → QC → Testing',
                             hint: '🎬 Пошагово: профилактика → разработка → проверка → тесты',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'QA',
-                                    x: 15, y: 30,
+                                    x: 15, y: 25,
                                     detail: '<strong>QA (Quality Assurance)</strong> — обеспечение качества. Это <strong>профилактика</strong>: внедряем процессы, чтобы баги не появлялись.',
                                     example: 'Внедряем Code Review (каждый код проверяет коллега). Внедряем TDD (сначала тест, потом код). Аналитик уточняет требования с заказчиком до разработки.',
                                     qa: 'QA — это про <strong>процессы</strong>. Мы не ищем баги — мы делаем так, чтобы они не появлялись. QA начинается ещё на этапе требований.',
@@ -14971,7 +14217,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Разработка',
-                                    x: 40, y: 30,
+                                    x: 40, y: 25,
                                     detail: 'Команда разработчиков пишет код по требованиям, которые прошли <strong>QA-проверку</strong>.',
                                     example: 'Backend пишет API, frontend — интерфейс. Параллельно пишутся unit-тесты.',
                                     qa: 'QA может писать тест-кейсы параллельно, чтобы быть готовым к тестированию.',
@@ -14979,7 +14225,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'QC',
-                                    x: 65, y: 30,
+                                    x: 65, y: 25,
                                     detail: '<strong>QC (Quality Control)</strong> — контроль качества. Это <strong>проверка готового продукта</strong>: прогоняем тесты, находим баги, оцениваем качество.',
                                     example: 'Прогоняем 200 регрессионных тестов. Находим 15 багов. Заводим баг-репорты. Ретестим, регрессируем.',
                                     qa: 'QC — это про <strong>продукт</strong>. Мы ищем баги, которые уже есть. Основной этап для тестировщика.',
@@ -14987,7 +14233,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Testing',
-                                    x: 90, y: 30,
+                                    x: 90, y: 25,
                                     detail: '<strong>Testing</strong> — <strong>выполнение конкретных тестов</strong>. Нажимаем кнопки, вводим данные, сравниваем реальный результат с ожидаемым.',
                                     example: 'Тест-кейс TC-001: открыть логин → ввести email → ввести пароль → нажать «Войти» → ожидаем главную. Результат — либо Passed, либо Failed.',
                                     qa: 'Это <strong>действие</strong>. Testing — часть QC. QC — часть QA.',
@@ -14995,7 +14241,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Верификация',
-                                    x: 15, y: 70,
+                                    x: 15, y: 75,
                                     detail: '<strong>Верификация</strong> отвечает на вопрос: «Делаем ли мы продукт <strong>правильно</strong>?» Проверяем соответствие требованиям и спецификации.',
                                     example: 'В ТЗ написано: «Должна быть регистрация с email». Проверяем: есть ли она в коде? Реализована ли по спецификации?',
                                     qa: 'Работает с документацией и кодом. Не с реальными пользователями.',
@@ -15003,7 +14249,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Валидация',
-                                    x: 50, y: 70,
+                                    x: 65, y: 75,
                                     detail: '<strong>Валидация</strong> отвечает на вопрос: «Делаем ли мы <strong>правильный</strong> продукт?» Проверяем соответствие ожиданиям пользователя.',
                                     example: 'ТЗ выполнено, но пользователи жалуются: «Кнопка "Добавить в корзину" слишком маленькая. Не видно статус заказа».',
                                     qa: 'Работает с реальными пользователями. Проводит юзабилити-тесты, собирает обратную связь.',
@@ -15011,11 +14257,16 @@ const CHEATSHEETS = [
                                 }
                             ],
                             arrows: [
-                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
-                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
-                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
-                                { from: 0, to: 4, x: 15, y: 34, w: 0, r: 90 },
-                                { from: 2, to: 5, x: 65, y: 34, w: 0, r: 90 }
+                                // ─── Верхний ряд (горизонтальные) ───
+                                { from: 0, to: 1, x: 15, y: 25, w: 25 }, // QA → Разработка
+                                { from: 1, to: 2, x: 40, y: 25, w: 25 }, // Разработка → QC
+                                { from: 2, to: 3, x: 65, y: 25, w: 25 }, // QC → Testing
+
+                                // ─── Вертикальные стрелки вниз ───
+                                // От QA к Верификации
+                                { from: 0, to: 4, x: 15, y: 25, w: 0, r: 90 },
+                                // От QC к Валидации
+                                { from: 2, to: 5, x: 65, y: 25, w: 0, r: 90 }
                             ]
                         }
                     },
@@ -15189,7 +14440,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Принципы тестирования',
                             hint: '🎬 Пошагово: 7 принципов на практике',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Принцип 1',
@@ -15344,7 +14595,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'SDLC',
                             hint: '🎬 Анализ → Дизайн → Разработка → Тест → Релиз → Поддержка',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Анализ',
@@ -15420,7 +14671,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: '6 фаз STLC',
                             hint: '🎬 Анализ → План → Кейсы → Среда → Прогон → Отчёт',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Анализ',
@@ -16334,7 +15585,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Kanban-доска',
                             hint: '🎬 To Do → In Progress → Review → Testing → Done → Релиз',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'To Do',
@@ -16520,7 +15771,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'CI/CD Pipeline',
                             hint: '🎬 push → build → test → package → registry → staging → production',
-                            stepDelay: 4000,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'push',
@@ -16903,7 +16154,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Две недели работы',
                             hint: '🎬 Backlog → Sprint → Review → Retro → Increment',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Product Backlog',
@@ -17623,7 +16874,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'API Testing Flow',
                             hint: '🎬 Документация → Collection → Request → Response → Tests → Automation',
-                            stepDelay: 4000,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Документация',
@@ -17735,15 +16986,15 @@ const CHEATSHEETS = [
                                             { key: 'Cache-Control', value: 'no-cache' }
                                         ],
                                         body: `{
-  "id": 42,
-  "name": "Alex Ivanov",
-  "email": "alex@example.com",
-  "createdAt": "2026-01-15T10:00:00Z",
-  "orders": [
-    { "id": 1, "total": 1990 },
-    { "id": 2, "total": 750 }
-  ]
-}`
+                                    "id": 42,
+                                    "name": "Alex Ivanov",
+                                    "email": "alex@example.com",
+                                    "createdAt": "2026-01-15T10:00:00Z",
+                                    "orders": [
+                                        { "id": 1, "total": 1990 },
+                                        { "id": 2, "total": 750 }
+                                    ]
+                                    }`
                                     },
                                     explanation: '✅ <strong>GET</strong> — читаем пользователя. Статус <code>200 OK</code>, поля правильные, есть вложенный массив <code>orders</code> — потому что передали <code>include=orders</code>.'
                                 },
@@ -17756,9 +17007,9 @@ const CHEATSHEETS = [
                                         { key: 'Content-Type', value: 'application/json', enabled: true }
                                     ],
                                     body: `{
-  "email": "alex@example.com",
-  "password": "Password123"
-}`,
+                                    "email": "alex@example.com",
+                                    "password": "Password123"
+                                    }`,
                                     response: {
                                         status: 200,
                                         statusText: 'OK',
@@ -17769,13 +17020,13 @@ const CHEATSHEETS = [
                                             { key: 'Set-Cookie',   value: 'session=abc123; HttpOnly; Secure' }
                                         ],
                                         body: `{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "expiresIn": 3600,
-  "user": {
-    "id": 42,
-    "name": "Alex Ivanov"
-  }
-}`
+                                    "token": "eyJhbGciOiJIUzI1NiIs...",
+                                    "expiresIn": 3600,
+                                    "user": {
+                                        "id": 42,
+                                        "name": "Alex Ivanov"
+                                    }
+                                    }`
                                     },
                                     explanation: '✅ <strong>POST</strong> — логин. Сервер вернул токен и <code>Set-Cookie</code> с флагом <code>HttpOnly; Secure</code>. Это правильно.'
                                 },
@@ -17810,10 +17061,10 @@ const CHEATSHEETS = [
                                         { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
                                     ],
                                     body: `{
-  "name": "Maria Petrova",
-  "email": "maria@example.com",
-  "password": "SecurePass456"
-}`,
+                                    "name": "Maria Petrova",
+                                    "email": "maria@example.com",
+                                    "password": "SecurePass456"
+                                    }`,
                                     response: {
                                         status: 201,
                                         statusText: 'Created',
@@ -17824,11 +17075,11 @@ const CHEATSHEETS = [
                                             { key: 'Location',     value: '/api/users/43' }
                                         ],
                                         body: `{
-  "id": 43,
-  "name": "Maria Petrova",
-  "email": "maria@example.com",
-  "createdAt": "2026-10-16T11:22:00Z"
-}`
+                                    "id": 43,
+                                    "name": "Maria Petrova",
+                                    "email": "maria@example.com",
+                                    "createdAt": "2026-10-16T11:22:00Z"
+                                    }`
                                     },
                                     explanation: '✅ <strong>POST</strong> — создание. Статус <code>201 Created</code>, заголовок <code>Location</code> указывает на нового пользователя. Пароль в ответе <strong>не возвращается</strong> — правильно.'
                                 },
@@ -17842,10 +17093,10 @@ const CHEATSHEETS = [
                                         { key: 'Authorization', value: 'Bearer eyJhbGci...', enabled: true }
                                     ],
                                     body: `{
-  "name": "Alex Ivanov",
-  "email": "new-alex@example.com"
-}`,
-                                    response: {
+                                    "name": "Alex Ivanov",
+                                    "email": "new-alex@example.com"
+                                    }`,
+                                                                        response: {
                                         status: 200,
                                         statusText: 'OK',
                                         time: '142 ms',
@@ -17854,12 +17105,12 @@ const CHEATSHEETS = [
                                             { key: 'Content-Type', value: 'application/json' }
                                         ],
                                         body: `{
-  "id": 42,
-  "name": "Alex Ivanov",
-  "email": "new-alex@example.com",
-  "updatedAt": "2026-10-16T11:25:00Z"
-}`
-                                    },
+                                "id": 42,
+                                "name": "Alex Ivanov",
+                                "email": "new-alex@example.com",
+                                "updatedAt": "2026-10-16T11:25:00Z"
+                                }`
+                                                                    },
                                     explanation: '✅ <strong>PUT</strong> — полное обновление. Email изменился, добавлено поле <code>updatedAt</code>. Так и должно быть.'
                                 },
 
@@ -17924,14 +17175,14 @@ const CHEATSHEETS = [
                         title: 'Горячие клавиши и трюки Postman',
                         subtitle: 'Кликните на карточку — она подсветится.',
                         cards: [
-                            { icon: '⌨️', title: 'Ctrl + Enter',  text: 'Отправить запрос (не убирая руки с клавиатуры).' },
-                            { icon: '📁', title: 'Ctrl + S',      text: 'Сохранить запрос в коллекцию. Не забудьте указать папку!' },
-                            { icon: '🔁', title: 'Ctrl + Alt + R', text: 'Открыть Collection Runner. Запуск всех запросов разом.' },
-                            { icon: '🌍', title: 'Environments',   text: 'Храните {{baseUrl}}, {{token}} в переменных. Меняйте одну переменную — меняется весь сценарий.' },
-                            { icon: '🧪', title: 'Tests',          text: 'Пишите JS-проверки: pm.test("Status 200", () => pm.response.to.have.status(200));' },
-                            { icon: '📥', title: 'Examples',       text: 'Сохраняйте примеры ответов. Полезно для документации и команды.' },
-                            { icon: '🧑‍💼', title: 'Pre-request',   text: 'JS, который выполняется ДО запроса. Можно генерировать timestamp или подпись.' },
-                            { icon: '🔄', title: 'Newman',         text: 'CLI-версия Postman. Запускается в CI/CD: newman run collection.json' }
+                            { icon: '', title: 'Ctrl + Enter',  text: 'Отправить запрос (не убирая руки с клавиатуры).' },
+                            { icon: '', title: 'Ctrl + S',      text: 'Сохранить запрос в коллекцию. Не забудьте указать папку!' },
+                            { icon: '', title: 'Ctrl + Alt + R', text: 'Открыть Collection Runner. Запуск всех запросов разом.' },
+                            { icon: '', title: 'Environments',   text: 'Храните {{baseUrl}}, {{token}} в переменных. Меняйте одну переменную — меняется весь сценарий.' },
+                            { icon: '', title: 'Tests',          text: 'Пишите JS-проверки: pm.test("Status 200", () => pm.response.to.have.status(200));' },
+                            { icon: '', title: 'Examples',       text: 'Сохраняйте примеры ответов. Полезно для документации и команды.' },
+                            { icon: '', title: 'Pre-request',   text: 'JS, который выполняется ДО запроса. Можно генерировать timestamp или подпись.' },
+                            { icon: '', title: 'Newman',         text: 'CLI-версия Postman. Запускается в CI/CD: newman run collection.json' }
                         ]
                     },
 
@@ -18107,6 +17358,166 @@ const CHEATSHEETS = [
         ]
     },
 
+        // ═══════════════════════════════════════════════════════
+    //  HTTP И МОДЕЛЬ OSI
+    // ═══════════════════════════════════════════════════════
+    {
+        id: 'http-osi',
+        cat: 'web',
+        title: 'Как работает HTTP через модель OSI',
+        subtitle: 'Интерактивный путь запроса от браузера до сервера.',
+        date: '19.10.2026',
+        preview: `
+            <strong style="font-size:0.72rem;color:#0a1929;">HTTP + OSI</strong>
+            <p style="font-size:0.55rem;color:#6a8aaa;margin:4px 0 8px 0;">Инкапсуляция данных</p>
+            <div style="display:flex;flex-direction:column;gap:2px;font-size:0.45rem;text-align:center;">
+                <div style="background:#c5d8ef;padding:2px;border-radius:3px;">7. Прикладной (HTTP)</div>
+                <div style="background:#d4c5e6;padding:2px;border-radius:3px;">6. Представления</div>
+                <div style="background:#f0d5b8;padding:2px;border-radius:3px;">4. Транспортный (TCP)</div>
+                <div style="background:#f0c5c5;padding:2px;border-radius:3px;">3. Сетевой (IP)</div>
+            </div>
+        `,
+        sections: [
+            {
+                id: 'http-osi-main',
+                title: 'Путь HTTP-запроса',
+                subtitle: 'Выберите вкладку.',
+                tabs: [
+                    // ═══ АНИМАЦИЯ ═══
+                    {
+                        label: 'Анимация',
+                        title: 'Инкапсуляция и декапсуляция',
+                        subtitle: '🎬 Запустите анимацию — увидите, как данные проходят через каждый уровень OSI.',
+                        animatedFlow: {
+                            title: 'Модель OSI и HTTP',
+                            hint: '🎬 Клиент (сверху вниз) → Сеть → Сервер (снизу вверх)',
+                            stepDelay: 6000,
+                            // ⚡ Убираем абсолютные координаты x/y, оставляем только данные
+                            nodes: [
+                                {
+                                    label: '7. Прикладной',
+                                    detail: '<strong>Прикладной уровень (Application).</strong> Здесь работают протоколы, с которыми взаимодействует пользователь: <strong>HTTP</strong>, FTP, SMTP, DNS.<br><br>Браузер формирует HTTP-запрос: <code>GET /index.html HTTP/1.1</code>.',
+                                    example: 'Вы вводите URL в браузере. Браузер понимает: нужно сделать GET-запрос. Формирует текст: <code>GET / HTTP/1.1\\nHost: google.com</code>.',
+                                    qa: 'QA проверяет: правильность HTTP-методов, заголовки, коды ответов. DevTools → Network показывает именно этот уровень.',
+                                    extra: 'На этом уровне рождается сам HTTP-запрос. До этого был только URL.'
+                                },
+                                {
+                                    label: '6. Представления',
+                                    detail: '<strong>Уровень представления (Presentation).</strong> Отвечает за <strong>шифрование</strong>, <strong>сжатие</strong> и <strong>кодирование</strong> данных.<br><br>Здесь подключается <strong>TLS/SSL</strong> (для HTTPS).',
+                                    example: 'Если сайт на HTTPS, здесь данные шифруются. Если картинка передаётся в сжатом виде (gzip) — здесь она сжимается.',
+                                    qa: 'QA проверяет: используется ли HTTPS, есть ли валидный SSL-сертификат. В DevTools → Security.',
+                                    extra: 'Именно на этом уровне в HTTP добавляется «S» в HTTPS. Данные становятся нечитаемыми для перехватчика.'
+                                },
+                                {
+                                    label: '5. Сеансовый',
+                                    detail: '<strong>Сеансовый уровень (Session).</strong> Управляет <strong>сессиями</strong> между клиентом и сервером: открытие, поддержание, закрытие.<br><br>Отвечает за авторизацию по сессии.',
+                                    example: 'Когда вы логинитесь, создаётся сессия. В течение этой сессии сервер «помнит» вас. При закрытии браузера сессия завершается.',
+                                    qa: 'QA проверяет: как долго живёт сессия, что происходит при logout, очищается ли сессия.',
+                                    extra: 'На этом уровне работают cookies и токены (JWT).'
+                                },
+                                {
+                                    label: '4. Транспортный',
+                                    detail: '<strong>Транспортный уровень (Transport).</strong> Обеспечивает <strong>надёжную доставку</strong> данных. Основные протоколы: <strong>TCP</strong> и <strong>UDP</strong>.<br><br>Здесь данные разбиваются на <strong>сегменты</strong>, нумеруются.',
+                                    example: 'HTTP-запрос разбивается на кусочки (сегменты). Каждому присваивается номер. Если сегмент потеряется — TCP запросит его заново.',
+                                    qa: 'QA проверяет: не теряются ли данные при плохой связи, правильно ли работает переключение сетей.',
+                                    extra: 'HTTP работает поверх TCP. Быстрый UDP используется в QUIC и HTTP/3.'
+                                },
+                                {
+                                    label: '3. Сетевой',
+                                    detail: '<strong>Сетевой уровень (Network).</strong> Отвечает за <strong>маршрутизацию</strong> — как доставить пакет от клиента к серверу через интернет.<br><br>Здесь работает протокол <strong>IP</strong> (IPv4/IPv6).',
+                                    example: 'Каждый сегмент оборачивается в пакет с IP-адресом отправителя и получателя. Роутеры в интернете смотрят на этот адрес и решают, куда отправить пакет дальше.',
+                                    qa: 'QA проверяет: как приложение работает при смене IP, при использовании прокси/VPN.',
+                                    extra: 'На этом уровне оперируют IP-адресами. DNS-сервер помогает получить IP по домену.'
+                                },
+                                {
+                                    label: '2. Канальный',
+                                    detail: '<strong>Канальный уровень (Data Link).</strong> Отвечает за передачу данных <strong>внутри одной локальной сети</strong> (Wi-Fi, Ethernet).<br><br>Здесь работают <strong>MAC-адреса</strong>.',
+                                    example: 'Пакет оборачивается в кадр (frame) с MAC-адресами вашего Wi-Fi адаптера и роутера. Роутер получает кадр.',
+                                    qa: 'QA обычно не тестирует этот уровень напрямую. Но если проблемы с Wi-Fi — это здесь.',
+                                    extra: 'MAC-адрес — это «серийный номер» сетевой карты. Он вшит на заводе.'
+                                },
+                                {
+                                    label: '1. Физический',
+                                    detail: '<strong>Физический уровень (Physical).</strong> Превращает кадры в <strong>электрические сигналы</strong> (по проводам), <strong>радиоволны</strong> (Wi-Fi) или <strong>свет</strong> (оптоволокно).',
+                                    example: 'Кадр превращается в поток нулей и единиц, передаётся по Wi-Fi-каналу или кабелю.',
+                                    qa: 'QA никогда не тестирует этот уровень. Это «железо».',
+                                    extra: 'После этого данные долетают до сервера, где всё повторяется в обратном порядке.'
+                                }
+                            ]
+                        }
+                    },
+
+                    // ═══ ТЕОРИЯ ═══
+                    {
+                        label: 'Суть',
+                        title: 'Как работает инкапсуляция',
+                        subtitle: 'Раскрывайте по одному.',
+                        accordion: [
+                            {
+                                title: 'Что такое OSI',
+                                body: '<p><strong>OSI (Open Systems Interconnection)</strong> — это теоретическая модель, которая описывает, как данные передаются по сети, разбивая этот процесс на <strong>7 уровней</strong>.</p><p>Каждый уровень выполняет свою задачу и передаёт данные соседнему уровню. В реальном интернете используется модель <strong>TCP/IP (4 уровня)</strong>, но OSI удобна для обучения и понимания процессов.</p>'
+                            },
+                            {
+                                title: 'Инкапсуляция (сверху вниз)',
+                                body: '<p>Когда браузер отправляет запрос, данные проходят от 7-го уровня к 1-му. На каждом уровне к ним добавляется <strong>свой заголовок</strong> (header). Это называется <strong>инкапсуляцией</strong>.</p><ul><li><strong>7 уровень:</strong> данные (HTTP-текст)</li><li><strong>4 уровень:</strong> + TCP-заголовок (сегмент)</li><li><strong>3 уровень:</strong> + IP-заголовок (пакет)</li><li><strong>2 уровень:</strong> + MAC-заголовок (кадр)</li><li><strong>1 уровень:</strong> превращается в биты (сигнал)</li></ul>'
+                            },
+                            {
+                                title: 'Декапсуляция (снизу вверх)',
+                                body: '<p>Когда данные доходят до сервера, процесс идёт в обратном порядке: от 1-го уровня к 7-му. Каждый уровень <strong>снимает свой заголовок</strong> и передаёт данные выше.</p><p>В итоге на 7-м уровне сервер получает исходный HTTP-запрос: <code>GET /index.html HTTP/1.1</code>.</p>'
+                            },
+                            {
+                                title: 'Где здесь HTTP',
+                                body: '<p><strong>HTTP</strong> — это протокол <strong>7-го уровня (Прикладного)</strong>.</p><p>Он не знает про TCP, IP или MAC. Он просто отдаёт текст: «GET /index.html» — и ждёт ответа. Всё остальное (доставку) берут на себя нижние уровни.</p><p>Именно поэтому тестировщики через DevTools видят <strong>только HTTP-часть</strong> — им не нужно разбираться в кадрах и сигналах.</p>'
+                            },
+                            {
+                                title: 'Важность для тестировщика',
+                                body: '<ul><li><strong>7-й уровень:</strong> тестируем через Postman, DevTools, проверяем методы и статус-коды.</li><li><strong>4-й уровень:</strong> проверяем таймауты, потерю пакетов, медленную сеть.</li><li><strong>3-й уровень:</strong> проверяем работу через VPN, прокси, при смене IP.</li><li><strong>6-й уровень:</strong> проверяем HTTPS, валидность сертификатов.</li></ul>'
+                            }
+                        ]
+                    },
+
+                    // ═══ СРАВНЕНИЕ ═══
+                    {
+                        label: 'OSI vs TCP/IP',
+                        title: 'Теоретическая и реальная модели',
+                        subtitle: 'Кликните на карточку.',
+                        compare: [
+                            {
+                                title: 'Модель OSI (7 уровней)',
+                                question: 'Теоретическая',
+                                text: '<strong>1. Физический</strong><br><strong>2. Канальный</strong><br><strong>3. Сетевой</strong><br><strong>4. Транспортный</strong><br><strong>5. Сеансовый</strong><br><strong>6. Представления</strong><br><strong>7. Прикладной</strong><br><br>Используется для обучения и понимания сетей. На практике в чистом виде не реализована.'
+                            },
+                            {
+                                title: 'Модель TCP/IP (4 уровня)',
+                                question: 'Практическая',
+                                text: '<strong>1. Канальный</strong> (Ethernet, Wi-Fi)<br><strong>2. Сетевой</strong> (IP)<br><strong>3. Транспортный</strong> (TCP, UDP)<br><strong>4. Прикладной</strong> (HTTP, DNS, FTP)<br><br>Реальный стек протоколов интернета. Именно по ней работают все сети в мире.'
+                            }
+                        ]
+                    },
+
+                    // ═══ СИМУЛЯТОР ═══
+                    {
+                        label: 'Симулятор',
+                        title: 'Интерактивная инкапсуляция',
+                        subtitle: 'Нажимайте кнопки, чтобы увидеть, как данные оборачиваются на каждом уровне.',
+                        osiSim: {
+                            levels: [
+                                { id: 'app',  num: 7, title: 'Прикладной (HTTP)', color: '#00897b', data: 'GET /index.html HTTP/1.1\\nHost: example.com' },
+                                { id: 'pres', num: 6, title: 'Представления (TLS)', color: '#8e24aa', data: '[Зашифровано TLS 1.3]' },
+                                { id: 'sess', num: 5, title: 'Сеансовый', color: '#f57f17', data: '[Session-ID: abc123]' },
+                                { id: 'trans', num: 4, title: 'Транспортный (TCP)', color: '#2196f3', data: '[TCP Header] SrcPort: 54321, DstPort: 80' },
+                                { id: 'net',  num: 3, title: 'Сетевой (IP)', color: '#e65100', data: '[IP Header] Src: 192.168.1.5, Dst: 93.184.216.34' },
+                                { id: 'link', num: 2, title: 'Канальный (Ethernet)', color: '#c62828', data: '[MAC Header] Src: AA:BB:CC, Dst: DD:EE:FF' },
+                                { id: 'phys', num: 1, title: 'Физический', color: '#4a6a8a', data: '[01010101 11001100 00110011...]' }
+                            ],
+                            defaultHint: 'Нажмите «Инкапсулировать» — увидите, как данные проходят по уровням сверху вниз.'
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+
     {
         id: 'cache',
         cat: 'web',
@@ -18174,11 +17585,11 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Как работает кэш браузера',
                             hint: '🎬 запрос → ответ → кэш → повтор → 304',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Запрос 1',
-                                    x: 15, y: 30,
+                                    x: 15, y: 30, // ← левый верх
                                     detail: '<strong>1. Первый запрос.</strong> Браузер запрашивает ресурс. Кэша ещё нет.',
                                     example: 'Пользователь открыл страницу. Браузер запрашивает <code>style.css</code>. Кэша нет — идёт полноценный запрос.',
                                     qa: 'Проверка: DevTools → Network → Size для ресурса показывает реальный размер (не из кэша).',
@@ -18186,7 +17597,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Ответ',
-                                    x: 40, y: 30,
+                                    x: 40, y: 30, // ← правее
                                     detail: '<strong>2. Сервер отвечает.</strong> Отдаёт файл + заголовки кэширования.',
                                     example: 'Сервер вернул CSS + заголовки:<br><code>Cache-Control: max-age=3600</code><br><code>ETag: "abc123"</code>',
                                     qa: 'Проверка: заголовки кэширования правильные? Для приватных данных — <code>no-store</code>.',
@@ -18194,7 +17605,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Кэш',
-                                    x: 65, y: 30,
+                                    x: 65, y: 30, // ← ещё правее
                                     detail: '<strong>3. Браузер кэширует.</strong> Файл сохраняется в disk cache.',
                                     example: 'CSS сохранён в кэш браузера. Будет использован при следующих запросах.',
                                     qa: 'Проверка: DevTools → Network → Size показывает <code>(disk cache)</code> для повторного запроса.',
@@ -18202,7 +17613,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Запрос 2',
-                                    x: 90, y: 30,
+                                    x: 90, y: 30, // ← крайний справа
                                     detail: '<strong>4. Повторный запрос (через 5 мин).</strong> Браузер отправляет <code>If-None-Match</code>.',
                                     example: 'Браузер отправляет запрос с заголовком <code>If-None-Match: "abc123"</code>.',
                                     qa: 'Проверка: кэш не истёк (max-age=3600). Заголовок отправляется.',
@@ -18210,7 +17621,7 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: '304',
-                                    x: 65, y: 70,
+                                    x: 90, y: 70, // ⚡ ВАЖНО: x = 90, как у Запроса 2
                                     detail: '<strong>5. Сервер отвечает 304 Not Modified.</strong> Тело НЕ передаётся.',
                                     example: '<code>HTTP/1.1 304 Not Modified</code> — сервер говорит: «Ресурс не изменился, используй свой кэш».',
                                     qa: 'Проверка: DevTools → Network → статус 304, размер 0.',
@@ -18218,19 +17629,22 @@ const CHEATSHEETS = [
                                 },
                                 {
                                     label: 'Инвалидация',
-                                    x: 40, y: 70,
+                                    x: 15, y: 70, // ⚡ x = 15, как у Запроса 1
                                     detail: '<strong>6. Инвалидация (через час).</strong> Кэш устарел (max-age истёк).',
                                     example: 'Прошёл час. Браузер снова делает полноценный запрос. Сервер отдаёт свежий файл.',
                                     qa: 'Проверка: после инвалидации пользователь видит актуальную версию.',
                                     extra: 'На деплое используем cache busting: <code>style.css?v=2</code> — сразу инвалидация.'
                                 }
                             ],
+                            // ⚡ Стрелки для SVG-отрисовки. x/y/w/r тут больше не важны, 
+                            // главное — связи from -> to.
                             arrows: [
-                                { from: 0, to: 1, x: 18, y: 30, w: 20 },
-                                { from: 1, to: 2, x: 43, y: 30, w: 20 },
-                                { from: 2, to: 3, x: 68, y: 30, w: 20 },
-                                { from: 3, to: 4, x: 90, y: 34, w: 0, r: 90 },
-                                { from: 4, to: 5, x: 62, y: 70, w: 0, r: 180 }
+                                { from: 0, to: 1 }, // Запрос 1 → Ответ
+                                { from: 1, to: 2 }, // Ответ → Кэш
+                                { from: 2, to: 3 }, // Кэш → Запрос 2
+                                { from: 3, to: 4 }, // Запрос 2 → 304 (вниз)
+                                { from: 2, to: 4 }, // Кэш → 304 (по диагонали) - если нужно
+                                { from: 0, to: 5 }  // Запрос 1 → Инвалидация (вниз)
                             ]
                         }
                     },
@@ -18433,7 +17847,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Жизненный цикл Cookie',
                             hint: '🎬 логин → установка → использование → удаление',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Логин',
@@ -18624,10 +18038,26 @@ const CHEATSHEETS = [
                         title: 'Что это',
                         subtitle: 'Раскрывайте.',
                         accordion: [
-                            { title: 'Идея метода', body: '<p><strong>Что это:</strong> метод тест-дизайна, который делит все возможные значения на <strong>классы эквивалентности</strong>.</p><p><strong>Внутри класса</strong> система ведёт себя одинаково.</p><p><strong>Правило:</strong> проверяем <strong>по одному значению</strong> из каждого класса.</p>' },
-                            { title: 'Позитивные классы', body: '<p>0–17 (дети), 18–54 (взрослые), 55–120 (пенсионеры).</p><p>Берём по одному значению: 10, 30, 70.</p>' },
-                            { title: 'Негативные классы', body: '<p>&lt;0, &gt;120, буквы, спецсимволы, пустое значение.</p><p>Ожидаем ошибку.</p>' },
-                            { title: 'Экономия', body: '<p>121 значение → 5 тестов. Экономия 96%.</p>' }
+                            { 
+                                title: 'Идея метода', 
+                                body: '<p><strong>Эквивалентное разбиение:</strong> делим все возможные значения на группы (классы), где система ведет себя одинаково.</p><p><strong>Граничные значения:</strong> внутри каждого класса самые частые ошибки возникают на его краях (границах).</p>' 
+                            },
+                            { 
+                                title: 'Позитивные классы (Метод эквивалентности)', 
+                                body: '<p>0–17 (дети), 18–54 (взрослые), 55–120 (пенсионеры).</p><p><strong>По какому принципу выбираем:</strong> берем по одному значению из середины каждого класса: <code>10</code>, <code>30</code>, <code>70</code>. Это позволяет проверить, что программа в принципе работает для этой группы.</p>' 
+                            },
+                            { 
+                                title: 'Граничные значения (Метод границ)', 
+                                body: '<p>Этот метод <strong>дополняет</strong> эквивалентное разбиение. Мы проверяем стыки между классами, так как большинство багов именно там.</p><p><strong>Что проверяем на границах:</strong> <code>-1</code> (невалидное), <code>0</code> (валидное начало), <code>17</code> (валидный конец детей), <code>18</code> (валидное начало взрослых), <code>120</code> (валидный конец), <code>121</code> (невалидное).</p><p><em>Именно эти точки вы видите на интерактивной шкале!</em></p>' 
+                            },
+                            { 
+                                title: 'Негативные классы', 
+                                body: '<p>Значения, которые система должна отклонить:</p><ul><li>&lt;0 (например, -1)</li><li>&gt;120 (например, 121)</li><li>Буквы, спецсимволы</li><li>Пустое значение</li></ul>' 
+                            },
+                            { 
+                                title: 'Экономия', 
+                                body: '<p>Вместо 121 значения мы проверяем <strong>5–6 тестов</strong>. Это экономит 96% времени, но дает 100% уверенность в безопасности границ.</p>' 
+                            }
                         ]
                     },
                     {
@@ -18674,7 +18104,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Проверка границы 17',
                             hint: '🎬 16 → 17 → 18',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'До границы',
@@ -19095,7 +18525,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Что тестировать после релиза билда',
                             hint: '🎬 билд → Smoke → Sanity → Regression → Отчёт → Релиз',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Новый билд',
@@ -19201,7 +18631,7 @@ const CHEATSHEETS = [
                         animatedFlow: {
                             title: 'Путь проверки исправленного бага',
                             hint: '🎬 Fixed → Re-test → Regression → Verified',
-                            stepDelay: 3500,
+                            stepDelay: 6000,
                             nodes: [
                                 {
                                     label: 'Баг исправлен',
@@ -20495,6 +19925,88 @@ function initCsSectionHandlers(content, section) {
 function initTabContent(panel, tabData) {
     if (!panel) return;
 
+    // ═══ OSI SIMULATOR — логика ═══
+    panel.querySelectorAll('.osi-sim').forEach(simEl => {
+        if (simEl._tabInit) return;
+        simEl._tabInit = true;
+
+        const sim = tabData.osiSim;
+        if (!sim) return;
+
+        const encapBtn = simEl.querySelector('#osiEncapBtn');
+        const resetBtn = simEl.querySelector('#osiResetBtn');
+        const explain = simEl.querySelector('#osiExplain');
+        const rows = simEl.querySelectorAll('.osi-row');
+
+        let currentStep = 0;
+        let animTimer = null;
+
+        function reset() {
+            clearTimeout(animTimer);
+            currentStep = 0;
+            rows.forEach(r => r.classList.remove('active', 'done'));
+            explain.innerHTML = sim.defaultHint;
+            encapBtn.disabled = false;
+            encapBtn.textContent = '⬇ Запустить';
+        }
+
+        function startEncapsulation() {
+            reset();
+            encapBtn.disabled = true;
+            encapBtn.textContent = '...';
+
+            const totalLevels = sim.levels.length;
+
+            function nextStep() {
+                // Снимаем active с предыдущего, ставим done
+                if (currentStep > 0) {
+                    rows[currentStep - 1].classList.remove('active');
+                    rows[currentStep - 1].classList.add('done');
+                }
+
+                // Если прошли все уровни
+                if (currentStep >= totalLevels) {
+                    explain.innerHTML = '✅ <strong>Инкапсуляция завершена!</strong> Данные прошли все 7 уровней OSI и упакованы в 4 уровня TCP/IP. Готово к отправке в сеть.';
+                    encapBtn.disabled = false;
+                    encapBtn.textContent = '⬇ Запустить заново';
+                    return;
+                }
+
+                // Активируем текущий
+                const currentLevel = sim.levels[currentStep];
+                const rowEl = rows[currentStep];
+                rowEl.classList.remove('done');
+                rowEl.classList.add('active');
+
+                // Мэппинг для текста
+                const tcpName = {
+                    'app': 'Прикладной (HTTP, DNS, FTP)',
+                    'pres': 'Прикладной (TLS/SSL)',
+                    'sess': 'Прикладной (Сессии)',
+                    'trans': 'Транспортный (TCP/UDP)',
+                    'net': 'Сетевой (IP)',
+                    'link': 'Канальный (Ethernet, Wi-Fi)',
+                    'phys': 'Канальный (Физика)'
+                }[currentLevel.id];
+
+                let extraText = '';
+                if (currentLevel.id === 'phys') {
+                    extraText = '<br><em>В модели TCP/IP физический и канальный уровни объединены в один.</em>';
+                }
+
+                explain.innerHTML = `<strong>Уровень ${currentLevel.num}: ${currentLevel.title}</strong><br>Соответствует уровню TCP/IP: <strong>${tcpName}</strong>${extraText}`;
+
+                currentStep++;
+                animTimer = setTimeout(nextStep, 1200);
+            }
+
+            setTimeout(nextStep, 300);
+        }
+
+        encapBtn.addEventListener('click', startEncapsulation);
+        resetBtn.addEventListener('click', reset);
+    });
+
     // ═══ POSTMAN SIMULATOR — интерактивность ═══
     panel.querySelectorAll('.postman-sim').forEach(pmEl => {
         if (pmEl._tabInit) return;
@@ -21553,25 +21065,116 @@ function initTabContent(panel, tabData) {
         });
     });
 
-    // ─── EQUIVALENCE SCALE ───
+    // ═══ EQUIVALENCE SCALE — Интерактивность ═══
     panel.querySelectorAll('.cs-scale').forEach(scaleEl => {
         if (scaleEl._tabInit) return;
         scaleEl._tabInit = true;
-        
+
+        const sim = tabData.scale;
+        if (!sim) return;
+
         const tabs = scaleEl.querySelectorAll('.cs-scale__tab');
-        const points = scaleEl.querySelectorAll('.cs-scale__point');
-        const segments = scaleEl.querySelectorAll('.cs-scale__segment');
+        const pointsContainer = scaleEl.querySelector('#scalePointsContainer');
         const info = scaleEl.querySelector('.cs-scale__info');
         
+        const minVal = -20;
+        const maxVal = 140;
+        const range = maxVal - minVal;
+
         let currentMethod = '2';
-        
-        // Переключение метода
+
+        // Функция отрисовки точек в зависимости от метода
+        function renderPoints(method) {
+            let pointsToRender = [];
+
+            if (method === '2') {
+                // Метод 2-х значений: сама граница и значение за ней
+                pointsToRender = [
+                    { value: -1, type: 'invalid' }, { value: 0, type: 'boundary' },
+                    { value: 17, type: 'valid' },   { value: 18, type: 'boundary' },
+                    { value: 54, type: 'valid' },   { value: 55, type: 'boundary' },
+                    { value: 120, type: 'boundary' }, { value: 121, type: 'invalid' }
+                ];
+            } else if (method === '3') {
+                // Метод 3-х значений: значение ДО, сама граница, значение ПОСЛЕ
+                pointsToRender = [
+                    // Граница 0
+                    { value: -1, type: 'invalid' },
+                    { value: 0, type: 'boundary' },
+                    { value: 1, type: 'valid' },
+                    
+                    // Граница 18
+                    { value: 17, type: 'valid' },
+                    { value: 18, type: 'boundary' },
+                    { value: 19, type: 'valid' },
+                    
+                    // Граница 55
+                    { value: 54, type: 'valid' },
+                    { value: 55, type: 'boundary' },
+                    { value: 56, type: 'valid' },
+                    
+                    // Граница 120
+                    { value: 119, type: 'valid' },
+                    { value: 120, type: 'boundary' },
+                    { value: 121, type: 'invalid' }
+                ];
+            }
+
+            // Очищаем контейнер
+            pointsContainer.innerHTML = '';
+
+            // Рисуем точки
+            pointsToRender.forEach((p, i) => {
+                const left = ((p.value - minVal) / range) * 100;
+                const pointDiv = document.createElement('div');
+                
+                // Добавляем классы
+                pointDiv.className = `cs-scale__point cs-scale__point--${p.type}`;
+                pointDiv.style.left = `${left}%`;
+                pointDiv.dataset.value = p.value;
+                pointDiv.innerHTML = `
+                    <span class="cs-scale__point-label">${p.value}</span>
+                    <span class="cs-scale__point-dot"></span>
+                `;
+
+                // Клик по точке
+                pointDiv.addEventListener('click', function() {
+                    const val = parseInt(this.dataset.value, 10);
+                    let type = 'валидное';
+                    let action = 'Система должна принять это значение.';
+                    
+                    // ⚡ Жесткая проверка по значению (самый надежный способ)
+                    if (val < 0 || val > 120) {
+                        type = 'невалидное';
+                        action = 'Система должна отклонить это значение.';
+                    } 
+                    // Для 0 и 120 — это границы, они валидные, но можно подсветить
+                    else if (val === 0 || val === 120) {
+                        type = 'граничное (валидное)';
+                        action = 'Система должна принять это значение (это сама граница).';
+                    }
+                    
+                    info.innerHTML = `
+                        <strong>Значение: ${val}</strong>
+                        <p>Тип: ${type}. ${action}</p>
+                    `;
+                });
+
+                pointsContainer.appendChild(pointDiv);
+            });
+        }
+
+        // Переключение методов
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 tabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 currentMethod = this.dataset.scaleMethod;
                 
+                // Перерисовываем точки
+                renderPoints(currentMethod);
+
+                // Обновляем текст в info
                 info.innerHTML = `
                     <strong>Метод ${currentMethod}-х значений</strong>
                     <p>${currentMethod === '2' 
@@ -21580,33 +21183,9 @@ function initTabContent(panel, tabData) {
                 `;
             });
         });
-        
-        // Клик по точке
-        points.forEach(point => {
-            point.addEventListener('click', function() {
-                const val = this.dataset.value;
-                const type = this.classList.contains('cs-scale__point--invalid') ? 'невалидное' : 
-                            this.classList.contains('cs-scale__point--boundary') ? 'граничное' : 'валидное';
-                
-                info.innerHTML = `
-                    <strong>Значение: ${val}</strong>
-                    <p>Тип: ${type}. ${type === 'невалидное' 
-                        ? 'Система должна отклонить это значение.' 
-                        : 'Система должна принять это значение.'}</p>
-                `;
-            });
-        });
-        
-        // Клик по цветному сегменту
-        segments.forEach(seg => {
-            seg.addEventListener('click', function() {
-                info.innerHTML = `
-                    <strong>${this.dataset.label}</strong>
-                    <p>Диапазон: от ${this.dataset.from} до ${this.dataset.to}. 
-                    Все значения в этом классе обрабатываются одинаково.</p>
-                `;
-            });
-        });
+
+        // Первичная отрисовка (метод 2 по умолчанию)
+        renderPoints('2');
     });
 
     // ─── ANIMATED FLOW ───
@@ -21838,13 +21417,50 @@ function initFlowBlock(container, nodes) {
 //  ЗАПУСК
 // ═══════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderCsCatalog();
-    setupCsFilters();
+// ═══════════════════════════════════════════════════════════
+//  ⚡ ЗАГРУЗКА ССЫЛОК ИЗ ФАЙЛА links.json (ГЛОБАЛЬНО)
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  НАДЁЖНАЯ ИНИЦИАЛИЗАЦИЯ ШПАРГАЛОК
+// ═══════════════════════════════════════════════════════════
+(function initCheatsheets() {
+    function start() {
+        // Проверяем, что все функции и DOM готовы
+        if (typeof renderCsCatalog !== 'function') {
+            console.warn('⚠️ renderCsCatalog не найдена, повтор через 200мс');
+            setTimeout(start, 200);
+            return;
+        }
 
-    const backBtn = document.getElementById('csBackBtn');
-    if (backBtn) backBtn.addEventListener('click', closeCsDetail);
-});
+        const grid = document.getElementById('csGrid');
+        if (!grid) {
+            setTimeout(start, 200);
+            return;
+        }
+
+        // Рендерим каталог
+        renderCsCatalog();
+        setupCsFilters();
+
+        const backBtn = document.getElementById('csBackBtn');
+        if (backBtn && !backBtn._init) {
+            backBtn._init = true;
+            backBtn.addEventListener('click', closeCsDetail);
+        }
+
+        console.log('✅ Шпаргалки инициализированы');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
+
+    // Страховка на случай, если DOMContentLoaded уже прошёл
+    setTimeout(start, 100);
+    setTimeout(start, 500);
+})();
 
 // ═══════════════════════════════════════════════════════════
 //  ANIMATED FLOW — анимированная схема процесса
@@ -21859,107 +21475,139 @@ function initAnimatedFlow(container, data) {
     const progressFill = container.querySelector('.cs-ani__progress-fill');
     const playBtn = container.querySelector('[data-ani-action="play"]');
     const resetBtn = container.querySelector('[data-ani-action="reset"]');
+    const canvas = container.querySelector('.cs-ani__canvas');
+    const canvasInner = container.querySelector('.cs-ani__canvas-inner');
+
+    // ⚡ ПРОВЕРКА: Если у узлов нет координат, это вертикальный список
+    const isVerticalList = nodes.every(n => n.x === undefined || n.y === undefined);
+    
+    if (isVerticalList) {
+        container.classList.add('cs-ani--vertical');
+        if (canvas) {
+            canvas.style.position = 'static';
+            canvas.style.height = 'auto';
+            canvas.style.minHeight = 'auto';
+            canvas.style.border = 'none';
+        }
+        if (canvasInner) {
+            canvasInner.style.display = 'flex';
+            canvasInner.style.flexDirection = 'column';
+            canvasInner.style.alignItems = 'center';
+            canvasInner.style.gap = '12px';
+        }
+        // Удаляем старые стрелки для списка
+        arrowEls.forEach(el => el.remove());
+        const prog = container.querySelector('.cs-ani__progress');
+        if (prog) prog.remove();
+        
+        // В списке SVG не нужен
+        const oldSvg = canvas.querySelector('.cs-ani__svg-layer');
+        if (oldSvg) oldSvg.remove();
+    } else {
+        // ⚡ Если есть координаты — рисуем СХЕМУ через SVG
+        let svg = canvas.querySelector('.cs-ani__svg-layer');
+        if (!svg) {
+            svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'cs-ani__svg-layer');
+            svg.style.position = 'absolute';
+            svg.style.inset = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.zIndex = '1';
+            canvas.insertBefore(svg, canvas.firstChild);
+        }
+        svg.innerHTML = '';
+        
+        // Прячем старые HTML-стрелки
+        arrowEls.forEach(el => el.style.display = 'none');
+
+        arrows.forEach((arrow) => {
+            const fromNode = nodes[arrow.from];
+            const toNode = nodes[arrow.to];
+            if (!fromNode || !toNode) return;
+
+            const isVertical = fromNode.x === toNode.x;
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+
+            if (isVertical) {
+                line.setAttribute('x1', `${fromNode.x}%`);
+                line.setAttribute('y1', `calc(${fromNode.y}% + 20px)`);
+                line.setAttribute('x2', `${toNode.x}%`);
+                line.setAttribute('y2', `calc(${toNode.y}% - 20px)`);
+            } else {
+                line.setAttribute('x1', `calc(${fromNode.x}% + 40px)`);
+                line.setAttribute('y1', `${fromNode.y}%`);
+                line.setAttribute('x2', `calc(${toNode.x}% - 40px)`);
+                line.setAttribute('y2', `${toNode.y}%`);
+            }
+
+            // ⚡ Сохраняем индексы "откуда" и "куда" прямо в линии
+            line.setAttribute('data-from', arrow.from);
+            line.setAttribute('data-to', arrow.to);
+
+            line.setAttribute('stroke', '#e6eef9');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-dasharray', '1000');
+            line.setAttribute('stroke-dashoffset', '1000');
+            line.style.transition = 'stroke-dashoffset 0.7s ease, stroke 0.3s';
+            svg.appendChild(line);
+        });
+    }
 
     let currentStep = -1;
     let isPlaying = false;
     let isPaused = false;
     let timer = null;
 
-    function updateArrow(fromIdx, toIdx) {
-        // Ищем стрелку между узлами
-        const arrow = arrows.find(a => a.from === fromIdx && a.to === toIdx);
-        if (!arrow) return;
-        const arrowEl = arrowEls[arrows.indexOf(arrow)];
-        if (!arrowEl) return;
-        const fill = arrowEl.querySelector('.cs-ani__arrow-fill');
-        fill.style.width = '100%';
-        arrowEl.classList.add('filled');
-    }
-
-    function clearArrows() {
-        arrowEls.forEach(el => {
-            el.querySelector('.cs-ani__arrow-fill').style.width = '0';
-            el.classList.remove('filled');
-        });
-    }
-
     function renderStep(step) {
-        // Узлы: done / active / обычные
         nodeEls.forEach((el, i) => {
             el.classList.remove('active', 'done');
             if (i < step) el.classList.add('done');
             if (i === step) el.classList.add('active');
         });
 
-        // Стрелки
-        clearArrows();
-        for (let i = 0; i < step; i++) {
-            updateArrow(i, i + 1);
+        if (!isVerticalList) {
+            const svg = canvas.querySelector('.cs-ani__svg-layer');
+            if (svg) {
+                const lines = svg.querySelectorAll('line');
+                lines.forEach(line => {
+                    const fromIdx = parseInt(line.getAttribute('data-from'), 10);
+                    const toIdx = parseInt(line.getAttribute('data-to'), 10);
+                    
+                    // ⚡ Линия закрашивается, только если мы дошли до её начала или конца
+                    if (fromIdx <= step || toIdx <= step) {
+                        line.setAttribute('stroke-dashoffset', '0');
+                        line.setAttribute('stroke', '#00897b');
+                    } else {
+                        // Если анимация еще не дошла — линия серая и пустая
+                        line.setAttribute('stroke-dashoffset', '1000');
+                        line.setAttribute('stroke', '#e6eef9');
+                    }
+                });
+            }
         }
 
-        // Прогресс-бар
-        const percent = nodes.length > 1
-            ? ((step + 1) / nodes.length) * 100
-            : 100;
+        const percent = nodes.length > 1 ? ((step + 1) / nodes.length) * 100 : 100;
         progressFill.style.width = percent + '%';
 
-        // Описание
         const node = nodes[step];
-
-        // ⚡ Убираем <strong>...</strong> из начала detail, если дублирует label
         let detailText = node.detail || '';
+        
         const strongRegex = /^\s*<strong>(.*?)<\/strong>[\s:.\-–—]*/i;
         const match = detailText.match(strongRegex);
         if (match) {
-            const strongText = match[1].trim();
-            const labelText = (node.label || '').trim();
-            const normalize = (s) => s.toLowerCase()
-                .replace(/[.,:;\-–—!?()]/g, '')
-                .replace(/\s+/g, ' ').trim();
-            if (normalize(strongText) === normalize(labelText) ||
-                normalize(strongText).startsWith(normalize(labelText)) ||
-                normalize(labelText).startsWith(normalize(strongText))) {
+            const normalize = (s) => s.toLowerCase().replace(/[.,:;\-–—!?()]/g, '').replace(/\s+/g, ' ').trim();
+            if (normalize(match[1]) === normalize(node.label) || normalize(match[1]).startsWith(normalize(node.label))) {
                 detailText = detailText.replace(strongRegex, '').trim();
             }
         }
 
-        // ⚡ Собираем HTML блока
-        let html = `
-            <span class="cs-ani__detail-step">Шаг ${step + 1} / ${nodes.length}</span>
-            <span class="cs-ani__detail-title">${node.label}</span>
-        `;
-
-        // Определение
-        if (detailText) {
-            html += `<div class="cs-ani__detail-section cs-ani__detail-section--def">
-                <span class="cs-ani__detail-label">Определение</span>
-                <div class="cs-ani__detail-content">${detailText}</div>
-            </div>`;
-        }
-
-        // Пример
-        if (node.example) {
-            html += `<div class="cs-ani__detail-section cs-ani__detail-section--example">
-                <span class="cs-ani__detail-label">Пример</span>
-                <div class="cs-ani__detail-content">${node.example}</div>
-            </div>`;
-        }
-
-        // Что делать QA
-        if (node.qa) {
-            html += `<div class="cs-ani__detail-section cs-ani__detail-section--qa">
-                <span class="cs-ani__detail-label">Что делает QA</span>
-                <div class="cs-ani__detail-content">${node.qa}</div>
-            </div>`;
-        }
-
-        // Дополнительно
-        if (node.extra) {
-            html += `<div class="cs-ani__detail-section cs-ani__detail-section--extra">
-                <span class="cs-ani__detail-label">Дополнительно</span>
-                <div class="cs-ani__detail-content">${node.extra}</div>
-            </div>`;
-        }
+        let html = `<span class="cs-ani__detail-step">Шаг ${step + 1} / ${nodes.length}</span><span class="cs-ani__detail-title">${node.label}</span>`;
+        if (detailText) html += `<div class="cs-ani__detail-section cs-ani__detail-section--def"><span class="cs-ani__detail-label">Определение</span><div class="cs-ani__detail-content">${detailText}</div></div>`;
+        if (node.example) html += `<div class="cs-ani__detail-section cs-ani__detail-section--example"><span class="cs-ani__detail-label">Пример</span><div class="cs-ani__detail-content">${node.example}</div></div>`;
+        if (node.qa) html += `<div class="cs-ani__detail-section cs-ani__detail-section--qa"><span class="cs-ani__detail-label">Что делает QA</span><div class="cs-ani__detail-content">${node.qa}</div></div>`;
+        if (node.extra) html += `<div class="cs-ani__detail-section cs-ani__detail-section--extra"><span class="cs-ani__detail-label">Дополнительно</span><div class="cs-ani__detail-content">${node.extra}</div></div>`;
 
         detail.classList.remove('active');
         setTimeout(() => {
@@ -21969,89 +21617,70 @@ function initAnimatedFlow(container, data) {
     }
 
     function nextStep() {
-        if (currentStep >= nodes.length - 1) {
-            stop();
-            return;
-        }
+        if (currentStep >= nodes.length - 1) { stop(); return; }
         currentStep++;
         renderStep(currentStep);
     }
 
     function play() {
         if (isPaused) {
-            isPaused = false;
-            isPlaying = true;
-            playBtn.classList.remove('paused');
-            playBtn.innerHTML = 'Пауза';
-            nextStep();
+            isPaused = false; isPlaying = true;
+            playBtn.classList.remove('paused'); playBtn.innerHTML = 'Пауза';
+            nextStep(); 
             timer = setInterval(nextStep, data.stepDelay || 1800);
             return;
         }
-
-        // Начинаем с нуля
-        reset();
+        reset(); 
         isPlaying = true;
-        playBtn.classList.add('paused');
-        playBtn.innerHTML = 'Пауза';
+        playBtn.classList.add('paused'); playBtn.innerHTML = 'Пауза';
         currentStep = -1;
         setTimeout(() => {
-            nextStep();
+            nextStep(); 
             timer = setInterval(nextStep, data.stepDelay || 1800);
         }, 200);
     }
 
     function pause() {
-        isPaused = true;
-        isPlaying = false;
+        isPaused = true; isPlaying = false;
         clearInterval(timer);
-        playBtn.classList.remove('paused');
-        playBtn.innerHTML = 'Продолжить';
+        playBtn.classList.remove('paused'); playBtn.innerHTML = 'Продолжить';
     }
 
     function stop() {
-        isPlaying = false;
-        isPaused = false;
+        isPlaying = false; isPaused = false;
         clearInterval(timer);
-        playBtn.classList.remove('paused');
-        playBtn.innerHTML = 'Запустить заново';
+        playBtn.classList.remove('paused'); playBtn.innerHTML = 'Запустить заново';
     }
 
     function reset() {
         clearInterval(timer);
-        currentStep = -1;
-        isPlaying = false;
-        isPaused = false;
+        currentStep = -1; isPlaying = false; isPaused = false;
         nodeEls.forEach(el => el.classList.remove('active', 'done'));
-        clearArrows();
+        
+        if (!isVerticalList) {
+            const svg = canvas.querySelector('.cs-ani__svg-layer');
+            if (svg) {
+                svg.querySelectorAll('line').forEach(line => {
+                    line.setAttribute('stroke-dashoffset', '1000');
+                    line.setAttribute('stroke', '#e6eef9');
+                });
+            }
+        }
+
         progressFill.style.width = '0';
-        playBtn.classList.remove('paused');
-        playBtn.innerHTML = 'Запустить анимацию';
+        playBtn.classList.remove('paused'); playBtn.innerHTML = 'Запустить анимацию';
         detail.classList.remove('active');
-        detail.innerHTML = `
-            <span class="cs-ani__detail-step">Шаг 0 / ${nodes.length}</span>
-            <span class="cs-ani__detail-title">Готово к запуску</span>
-            Нажмите «Запустить анимацию», чтобы пошагово увидеть процесс.
-        `;
+        detail.innerHTML = `<span class="cs-ani__detail-step">Шаг 0 / ${nodes.length}</span><span class="cs-ani__detail-title">Готово к запуску</span>Нажмите «Запустить анимацию», чтобы пошагово увидеть процесс.`;
     }
 
-    // ─── Кнопки управления ───
-    playBtn.addEventListener('click', () => {
-        if (isPlaying) pause();
-        else play();
-    });
-
+    playBtn.addEventListener('click', () => { if (isPlaying) pause(); else play(); });
     resetBtn.addEventListener('click', reset);
-
-    // ─── Клик по узлу — прыжок на него ───
+    
     nodeEls.forEach((nodeEl, idx) => {
         nodeEl.addEventListener('click', () => {
-            clearInterval(timer);
-            isPlaying = false;
-            isPaused = false;
-            playBtn.classList.remove('paused');
-            playBtn.innerHTML = 'Запустить анимацию';
-            currentStep = idx;
-            renderStep(currentStep);
+            clearInterval(timer); isPlaying = false; isPaused = false;
+            playBtn.classList.remove('paused'); playBtn.innerHTML = 'Запустить анимацию';
+            currentStep = idx; renderStep(currentStep);
         });
     });
 }
@@ -22062,6 +21691,64 @@ function initAnimatedFlow(container, data) {
 
 function renderTabContent(tab) {
     let html = '';
+
+    // ═══ OSI SIMULATOR ═══
+    if (tab.osiSim) {
+        const sim = tab.osiSim;
+        
+        // ⚡ Мэппинг OSI → TCP/IP с расшифровкой
+        const tcpMap = {
+            'app':  '4. Прикладной<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">HTTP, DNS, FTP, SMTP</span>',
+            'pres': '4. Прикладной<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">TLS/SSL, шифрование</span>',
+            'sess': '4. Прикладной<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">Сессии, Cookies, JWT</span>',
+            'trans':'3. Транспортный<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">TCP, UDP, порты</span>',
+            'net':  '2. Сетевой<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">IP, ICMP, маршрутизация</span>',
+            'link': '1. Канальный<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">Ethernet, Wi-Fi, MAC</span>',
+            'phys': '1. Канальный<br><span style="font-size:0.65rem; font-weight:normal; color:#6a8aaa;">Кабели, сигналы</span>'
+        };
+
+        html += `
+            <div class="osi-sim">
+                <div class="osi-sim__header">
+                    <h3>${escapeHtml(tab.title)}</h3>
+                    <p>${escapeHtml(tab.subtitle)}</p>
+                </div>
+                
+                <div class="osi-sim__controls">
+                    <button class="osi-btn osi-btn--encap" id="osiEncapBtn">⬇ Запустить</button>
+                    <button class="osi-btn osi-btn--reset" id="osiResetBtn">⟲ Сброс</button>
+                </div>
+
+                <div class="osi-sim__grid-header">
+                    <div>Модель OSI (7 уровней)</div>
+                    <div>→</div>
+                    <div>Модель TCP/IP (4 уровня)</div>
+                </div>
+
+                <div class="osi-sim__stack-wrapper">
+                    ${sim.levels.map(lvl => `
+                        <div class="osi-row" data-level-id="${lvl.id}">
+                            <div class="osi-card-osi">
+                                <div class="osi-card-osi__num" style="background: ${lvl.color}">${lvl.num}</div>
+                                <div class="osi-card-osi__text">
+                                    <div class="osi-card-osi__title">${lvl.title}</div>
+                                    <div class="osi-card-osi__data">${escapeHtml(lvl.data)}</div>
+                                </div>
+                            </div>
+                            <div class="osi-row__arrow">→</div>
+                            <div class="osi-card-tcp">
+                                ${tcpMap[lvl.id] || '—'}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="osi-sim__explain" id="osiExplain">
+                    ${sim.defaultHint}
+                </div>
+            </div>
+        `;
+    }
 
     // ═══ POSTMAN SIMULATOR ═══
     if (tab.postmanSim) {
@@ -22745,7 +22432,7 @@ function renderTabContent(tab) {
         `;
     }
 
-    // ═══ EQUIVALENCE SCALE ═══
+        // ═══ EQUIVALENCE SCALE ═══
     if (tab.scale) {
         const s = tab.scale;
         const minVal = -20;
@@ -22775,18 +22462,8 @@ function renderTabContent(tab) {
                                     data-to="${seg.to}"></div>`;
                     }).join('')}
                     
-                    ${s.points.map((p, i) => {
-                        const left = ((p.value - minVal) / range) * 100;
-                        return `
-                            <div class="cs-scale__point cs-scale__point--${p.type}" 
-                                style="left:${left}%;"
-                                data-value="${p.value}"
-                                data-idx="${i}">
-                                <span class="cs-scale__point-label">${p.label}</span>
-                                <span class="cs-scale__point-dot"></span>
-                            </div>
-                        `;
-                    }).join('')}
+                    <!-- ⚡ ТОЧКИ ОТРИСОВЫВАЮТСЯ ЧЕРЕЗ JS -->
+                    <div id="scalePointsContainer"></div>
                 </div>
                 
                 <div class="cs-scale__info" id="scaleInfo">
@@ -23045,3 +22722,86 @@ function renderTabContent(tab) {
     setTimeout(init, 500);
     setTimeout(init, 1500);
 })();
+
+// ═══════════════════════════════════════════════════════
+//  ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ ЗАГРУЗКИ links.json
+// ═══════════════════════════════════════════════════════
+setTimeout(() => {
+    const btn = document.getElementById('uploadLinksBtn');
+    if (!btn) {
+        console.error('❌ Кнопка #uploadLinksBtn НЕ НАЙДЕНА В HTML!');
+        return;
+    }
+    
+    console.log('✅ Кнопка #uploadLinksBtn найдена, привязываем обработчик...');
+    
+    // Убираем старый обработчик, чтобы не было дублей
+    btn.onclick = null; 
+    
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🖱 Клик по кнопке "Загрузить links.json"');
+
+        // Создаём скрытый input для выбора файла
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.style.display = 'none';
+        document.body.appendChild(input);
+
+        input.onchange = function(ev) {
+            const file = ev.target.files[0];
+            document.body.removeChild(input);
+            if (!file) return;
+
+            console.log('📂 Выбран файл:', file.name);
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const newLinks = JSON.parse(event.target.result);
+                    if (!Array.isArray(newLinks)) {
+                        alert('❌ Ошибка: файл должен содержать массив ссылок [ {...}, {...} ]');
+                        return;
+                    }
+                    
+                    // Читаем текущие ссылки
+                    let currentLinks = JSON.parse(localStorage.getItem('myLocalLinks_v2')) || [];
+                    
+                    // Объединяем, удаляя дубликаты по URL
+                    const existingUrls = new Set(currentLinks.map(l => l.url));
+                    let addedCount = 0;
+                    
+                    newLinks.forEach(link => {
+                        if (link.url && !existingUrls.has(l.url)) {
+                            currentLinks.push(link);
+                            existingUrls.add(l.url);
+                            addedCount++;
+                        }
+                    });
+                    
+                    // Сохраняем
+                    localStorage.setItem('myLocalLinks_v2', JSON.stringify(currentLinks));
+                    
+                    alert(`✅ Успешно загружено ссылок: ${addedCount}`);
+                    
+                    // ⚡ Обновляем интерфейс (перерисовываем список документов)
+                    // Находим функцию обновления внутри модуля
+                    if (typeof window.openDocuments === 'function') {
+                        window.openDocuments();
+                    } else {
+                        location.reload(); // fallback
+                    }
+                    
+                } catch (err) {
+                    console.error(err);
+                    alert('❌ Ошибка чтения JSON: ' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        input.click();
+    });
+}, 1000);

@@ -1,30 +1,45 @@
 {
   "theory": [
-    "checklist_registration_form.pdf",
-    "testing_registration_form.pdf",
-    "web_elements_basic_checks.pdf",
-    "test_ideas_for_input_fields.pdf",
-    "checklist_html_layout.pdf",
-    "checklist_web_design.pdf",
-    "checklist_layout_and_elements.pdf",
-    "checklist_api_testing.pdf",
-    "cheatsheet_api_testing.pdf"
-  ],
-  "requirements": [
-    "requirements.pdf"
+    "SDLC_STLC.pdf",
+    "Верификация и валидация.pdf",
+    "Принципы тестирования.pdf",
+    "Уровни_тестирования.pdf",
+    "Что такое тестирование, QC и QA_.pdf"
   ],
   "formal": [],
   "scenario": [],
   "methods": [],
   "levels": [],
   "functional": [],
-  "nonfunctional": [],
+  "nonfunctional": [
+    "Testing_Types.pdf"
+  ],
   "testdesign": [],
-  "documentation": [],
+    "documentation": [
+    "Roman_Savin_-_Testirovanie-dot-com.pdf",
+    "Тестовые_идеи_для_заполнения_разных_видов_полей_Для_доменного_тестирования.pdf",
+    "Ohapkina_Bazovye-znaniya-testirovshchika-veb-prilozheniy_RuLit_Me.pdf"
+  ],
   "api": [],
   "web": [],
-  "scrum": [],
+  "scrum": [
+    "SCRUM.pdf"
+  ],
   "kanban": [],
+  "requirements": [
+    "checklist example 1.xlsx",
+    "checklist example 2.xlsx",
+    "checklist-po-testirovaniyu-formy-registracii.pdf",
+    "Requirements.pdf",
+    "testirovanie_formy_registracyi.pdf",
+    "Копия Чек-лист и тест-кейс.xlsx",
+    "Чек_лист_по_тестированию_HTML_верстки.pdf",
+    "Чек_лист_по_тестированию_дизайна_сайта_2.pdf",
+    "Чеклист верстки и элементов.pdf",
+    "Чек-лист и тест-кейс.xlsx",
+    "Чек-лист по API проверкам.pdf",
+    "Чит-лист для тестирования API.pdf"
+  ],
   "sql": [],
   "python": [],
   "interview": [],

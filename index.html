@@ -21,6 +21,7 @@
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#1d3b5c">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
@@ -550,7 +551,6 @@
     </div>
 
     <script src="script.js"></script>
-    <script src="cheatsheets.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -611,7 +611,8 @@
             <h3>Документы</h3>
             <div class="documents-modal__actions">
                 <button class="documents-add-btn" id="refreshDocsBtn" title="Перечитать manifest.json">🔄 Обновить</button>
-                <button class="documents-add-btn" id="exportLinksBtn" title="Скачать все локальные ссылки в файл">📥 links.json</button>
+                <button id="exportLinksBtn" class="documents-header-btn">📤 links.json</button>
+                <input type="file" id="importLinksFile" accept=".json" style="display:none;">
                 <button class="documents-add-btn" id="exportManifestBtn" title="Скачать manifest.json">📥 manifest.json</button>
                 <button class="documents-add-btn" id="addDocumentBtn">➕ Добавить</button>
                 <button class="documents-close-btn" id="documentsCloseBtn">✕</button>
@@ -632,6 +633,29 @@
         <!-- Список документов -->
         <div class="documents-modal__list" id="documentsList"></div>
 
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!--  МОДАЛЬНОЕ ОКНО: ВВОД ПАРОЛЯ ДЛЯ ДОКУМЕНТОВ                  -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="docsPasswordOverlay" class="docs-password-overlay" style="display: none;">
+    <div class="docs-password-modal">
+        <h3>🔒 Доступ к документам</h3>
+        <p class="docs-password-modal__sub">Введите пароль, чтобы открыть список</p>
+        
+        <input type="password" 
+               id="docsPasswordInput" 
+               class="docs-password-modal__input" 
+               placeholder="Пароль" 
+               autocomplete="current-password">
+        
+        <p class="docs-password-modal__error" id="docsPasswordError">❌ Неверный пароль</p>
+        
+        <div class="docs-password-modal__actions">
+            <button class="docs-password-modal__btn docs-password-modal__btn--cancel" id="docsPasswordCancel">Отмена</button>
+            <button class="docs-password-modal__btn docs-password-modal__btn--ok" id="docsPasswordSubmit">Войти</button>
+        </div>
     </div>
 </div>
 
@@ -671,13 +695,13 @@
                 <div class="doc-add-hint">
                     <strong>📎 Как это работает:</strong>
                     <ol style="margin: 6px 0 0 0; padding-left: 18px;">
-                        <li>Файл скачается на ваше устройство с правильным именем.</li>
-                        <li>Положите его в папку <code>documents/{тема}/</code>.</li>
-                        <li>Откройте <code>documents/manifest.json</code> и добавьте имя файла в массив темы.</li>
-                        <li>Если работаете с Git — закоммитьте файл и manifest.json.</li>
+                        <li>Файл <strong>сохранится внутри приложения</strong> (в памяти браузера).</li>
+                        <li>Он появится в списке документов сразу после добавления.</li>
+                        <li>Его можно открыть и удалить в любой момент.</li>
+                        <li>Ограничение размера: <strong>10 МБ на файл</strong>.</li>
                     </ol>
                     <div style="margin-top: 8px;">
-                        💡 Ссылки можно добавлять и через <code>documents/links.json</code> — тогда их увидят все пользователи.
+                        💡 Ссылки сохраняются в браузере и не пропадают после перезагрузки.
                     </div>
                 </div>
             </div>

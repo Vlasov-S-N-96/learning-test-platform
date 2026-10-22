@@ -6402,7 +6402,7 @@ body {
     max-height: 400px;
     overflow-y: auto;
     opacity: 1;
-    margin-top: 10px;
+    margin-top: 12px;
     transform: translateY(0);
 }
 
@@ -6742,9 +6742,9 @@ body {
 
 .card-photos-wrapper.open .card-photos-block {
     max-height: 500px;
-    overflow: hidden;              /* ⚡ Сначала без скролла */
+    overflow: auto;          
     opacity: 1;
-    margin-top: 10px;
+    margin-top: 12px;
     transform: translateY(0);
 }
 
@@ -7526,11 +7526,6 @@ body {
     }
 }
 
-/* ═══ Раскрытая карточка ═══ */
-.card.expanded .expand-btn-wrapper,
-.card.expanded .expand-btn-wrapper .expand-btn {
-    border-radius: 0 !important;
-}
 
 /* ═══════════════════════════════════════════════════════════ */
 /*  ★ ФИКС: футер такой же ширины, как .page-card              */
@@ -22683,4 +22678,1285 @@ body {
         padding: 12px 14px;
         font-size: 0.8rem;
     }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Жирный текст (strong) не должен переноситься на новую строку
+   ═══════════════════════════════════════════════════════════ */
+
+/* Внутри описаний в анимациях и карточках */
+.cs-ani__detail-content strong,
+.cs-ani__detail-section strong:not(.cs-ani__detail-label),
+.card .academic-text strong,
+.card .simple-def strong,
+.card .example-text strong,
+.cs-content p strong {
+    display: inline;
+}
+
+/* Если нужно, чтобы жирный текст не разрывался (например, "QA-проверку") */
+.cs-ani__detail-content strong,
+.card .academic-text strong,
+.cs-content p strong {
+    white-space: nowrap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС ВЕРТИКАЛЬНЫХ ЛИНИЙ В АНИМАЦИИ
+   ═══════════════════════════════════════════════════════════ */
+
+/* Разрешаем всему контейнеру отображать элементы за своими границами */
+.cs-ani__canvas {
+    overflow: visible;
+}
+
+/* Задаем точку вращения для всех стрелок по центру */
+.cs-ani__arrow {
+    transform-origin: left center;
+}
+
+/* 
+   ⚡ ГЛАВНЫЙ ФИКС: 
+   Если у стрелки стоит поворот на 90 градусов, мы меняем её логику.
+   Теперь она растет ВНИЗ от своей начальной точки.
+*/
+.cs-ani__arrow[style*="rotate(90deg)"] {
+    width: 3px;
+    height: 0;
+    /* Убираем стандартный поворот, так как мы будем управлять высотой */
+    transform: none;
+    /* Сдвигаем линию так, чтобы она начиналась ровно под узлом */
+    margin-left: -1.5px;
+    background: #e6eef9;
+    transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Заполнение для вертикальной линии */
+.cs-ani__arrow[style*="rotate(90deg)"] .cs-ani__arrow-fill {
+    display: none; /* Скрываем горизонтальный заполнитель */
+}
+
+/* Когда анимация доходит до этой линии, она плавно вытягивается вниз */
+.cs-ani__arrow[style*="rotate(90deg)"].filled {
+    height: 36%; /* Длина линии от 34% до 70% */
+    background: #00897b; /* Цвет заполненной линии */
+}
+
+/* Наконечник стрелки внизу (треугольник) */
+.cs-ani__arrow[style*="rotate(90deg)"]::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #e6eef9; /* Цвет по умолчанию */
+    border-bottom: none;
+    transition: border-color 0.7s ease;
+}
+
+/* Когда линия заполнена, наконечник становится зеленым */
+.cs-ani__arrow[style*="rotate(90deg)"].filled::after {
+    border-top-color: #00897b;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС ВЕРТИКАЛЬНЫХ СТРЕЛОК
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-ani__canvas {
+    overflow: visible;
+}
+
+/* Сбрасываем transform-origin, чтобы горизонтальные линии не ехали */
+.cs-ani__arrow {
+    transform-origin: left center;
+}
+
+/* Спец. стили для вертикальных линий */
+.cs-ani__arrow[style*="rotate(90deg)"] {
+    width: 3px;
+    height: 0; /* Изначально линии нет */
+    transform: none; /* Отменяем поворот, чтобы не было багов с обрезкой */
+    margin-left: -1.5px; /* Центрируем линию */
+    background: #e6eef9; /* Цвет пустой линии */
+    transition: height 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Скрываем горизонтальный заполнитель */
+.cs-ani__arrow[style*="rotate(90deg)"] .cs-ani__arrow-fill {
+    display: none;
+}
+
+/* Когда анимация доходит, линия вытягивается вниз */
+.cs-ani__arrow[style*="rotate(90deg)"].filled {
+    height: 50%; /* Высота: от 25% до 75% = 50% */
+    background: #00897b;
+}
+
+/* Наконечник стрелки внизу */
+.cs-ani__arrow[style*="rotate(90deg)"]::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #e6eef9;
+    border-bottom: none;
+    transition: border-color 0.7s ease;
+}
+
+.cs-ani__arrow[style*="rotate(90deg)"].filled::after {
+    border-top-color: #00897b;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Текст в этапах Git Flow не вылезает за рамки
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-git .cs-git-stage {
+    white-space: normal;      /* ⚡ Разрешаем перенос текста на новую строку */
+    word-wrap: break-word;    /* ⚡ Ломаем длинные слова, если они не влезают */
+    overflow-wrap: break-word;
+    line-height: 1.3;         /* Делаем межстрочный интервал комфортным */
+    height: auto;             /* Высота подстраивается под текст */
+    
+    /* Немного увеличиваем максимальную ширину и добавляем отступы,
+       чтобы текст не прилипал к краям */
+    max-width: 180px;         
+    padding: 8px 12px;        
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС ШКАЛЫ: Универсальные тултипы для любого количества точек
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-scale,
+.cs-scale__axis {
+    overflow: visible !important;
+}
+
+/* Базовый стиль плашки (по умолчанию скрыта) */
+.cs-scale__point-label {
+    position: absolute !important;
+    top: -32px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    
+    background: #0a1929 !important;
+    color: #ffffff !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    z-index: 100 !important;
+    
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+
+.cs-scale__point-label::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #0a1929;
+    border-bottom: none;
+}
+
+/* Показываем плашку при наведении */
+.cs-scale__point:hover .cs-scale__point-label,
+.cs-scale__point.active-point .cs-scale__point-label {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-4px) !important;
+}
+
+/* ⚡ ФИКС ДЛЯ КРАЙНИХ ТОЧЕК (чтобы тултипы не вылезали за экран) */
+.cs-scale__point:first-child .cs-scale__point-label {
+    left: 0 !important;
+    transform: translateX(0) !important;
+}
+.cs-scale__point:first-child .cs-scale__point-label::after {
+    left: 15px;
+}
+.cs-scale__point:first-child:hover .cs-scale__point-label {
+    transform: translateX(0) translateY(-4px) !important;
+}
+
+.cs-scale__point:last-child .cs-scale__point-label {
+    left: auto !important;
+    right: 0 !important;
+    transform: translateX(0) !important;
+}
+.cs-scale__point:last-child .cs-scale__point-label::after {
+    left: auto;
+    right: 15px;
+    transform: none;
+}
+.cs-scale__point:last-child:hover .cs-scale__point-label {
+    transform: translateX(0) translateY(-4px) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OSI SIMULATOR (СПИСОК УРОВНЕЙ)
+   ═══════════════════════════════════════════════════════════ */
+
+.osi-sim {
+    background: #f0f4fa;
+    border-radius: 14px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.osi-sim__header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.osi-sim__header h3 {
+    font-size: 1.1rem;
+    color: #0a1929;
+    margin: 0 0 4px 0;
+}
+
+.osi-sim__header p {
+    font-size: 0.82rem;
+    color: #6a8aaa;
+    margin: 0;
+}
+
+.osi-sim__controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.osi-btn {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: none;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.osi-btn--encap {
+    background: #00897b;
+    color: #fff;
+}
+
+.osi-btn--encap:hover:not(:disabled) {
+    background: #00695c;
+    transform: translateY(-1px);
+}
+
+.osi-btn--encap:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.osi-btn--reset {
+    background: #eef3f9;
+    color: #2a405a;
+}
+
+.osi-btn--reset:hover {
+    background: #e1ebf9;
+}
+
+/* ═══ Вертикальный список уровней ═══ */
+.osi-sim__stack-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 10px 0;
+}
+
+.osi-level {
+    width: 100%;
+    max-width: 500px;
+    display: grid;
+    grid-template-columns: 40px 160px 1fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e6eef9;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+    box-sizing: border-box;
+}
+
+.osi-level.active {
+    opacity: 1;
+    border-color: #00897b;
+    box-shadow: 0 4px 14px rgba(0, 137, 123, 0.15);
+    transform: scale(1.02);
+    z-index: 2;
+}
+
+.osi-level.done {
+    opacity: 1;
+    border-color: #b8d9c8;
+    background: #f6fefe;
+}
+
+.osi-level__num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.osi-level__title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0a1929;
+}
+
+.osi-level__data pre {
+    margin: 0;
+    font-family: 'Consolas', monospace;
+    font-size: 0.72rem;
+    color: #4a6a8a;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.osi-level.active .osi-level__data pre {
+    color: #0a1929;
+    font-weight: 600;
+}
+
+.osi-sim__explain {
+    background: #fff;
+    border-left: 4px solid #00897b;
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: #1a2a3a;
+    min-height: 50px;
+    transition: all 0.3s;
+}
+
+.osi-sim__explain strong {
+    color: #00897b;
+}
+
+/* ═══ Адаптив для мобильных ═══ */
+@media (max-width: 767px) {
+    .osi-level {
+        grid-template-columns: 32px 1fr;
+        gap: 8px;
+        padding: 10px 12px;
+    }
+    
+    .osi-level__title {
+        font-size: 0.8rem;
+    }
+    
+    .osi-level__data {
+        grid-column: 1 / -1;
+        margin-top: 4px;
+    }
+
+    .osi-level__data pre {
+        font-size: 0.68rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OSI SIMULATOR v2: Две колонки (OSI vs TCP/IP)
+   ═══════════════════════════════════════════════════════════ */
+
+.osi-sim__grid-header {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 16px;
+    align-items: center;
+    text-align: center;
+    font-weight: 800;
+    color: #0a1929;
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+    padding: 0 16px;
+}
+
+.osi-sim__stack-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.osi-row {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 16px;
+    align-items: stretch;
+    transition: all 0.3s ease;
+    opacity: 0.5;
+}
+
+.osi-row.active {
+    opacity: 1;
+    transform: scale(1.02);
+    z-index: 2;
+}
+
+.osi-row.done {
+    opacity: 1;
+}
+
+/* ─── Карточка OSI (слева) ─── */
+.osi-card-osi {
+    background: #fff;
+    border: 1px solid #e6eef9;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.osi-row.active .osi-card-osi {
+    border-color: #00897b;
+    box-shadow: 0 4px 14px rgba(0, 137, 123, 0.15);
+}
+
+.osi-row.done .osi-card-osi {
+    border-color: #b8d9c8;
+    background: #f6fefe;
+}
+
+.osi-card-osi__num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.osi-card-osi__text {
+    flex: 1;
+}
+
+.osi-card-osi__title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #0a1929;
+    margin-bottom: 2px;
+}
+
+.osi-card-osi__data {
+    font-family: 'Consolas', monospace;
+    font-size: 0.68rem;
+    color: #4a6a8a;
+    word-break: break-word;
+}
+
+/* ─── Стрелочка посередине ─── */
+.osi-row__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #c5d8ef;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.osi-row.active .osi-row__arrow {
+    color: #00897b;
+}
+
+/* ─── Карточка TCP/IP (справа) ─── */
+.osi-card-tcp {
+    background: #f6faff;
+    border: 2px dashed #d0ddea;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 700;
+    color: #4a6a8a;
+    font-size: 0.85rem;
+    box-sizing: border-box;
+}
+
+.osi-row.active .osi-card-tcp {
+    border-color: #00897b;
+    border-style: solid;
+    background: #e0f2f1;
+    color: #00695c;
+}
+
+.osi-row.done .osi-card-tcp {
+    border-color: #b8d9c8;
+    border-style: solid;
+    background: #f0f9f8;
+}
+
+/* ─── Мобильный ─── */
+@media (max-width: 767px) {
+    .osi-sim__grid-header {
+        display: none; /* Скрываем заголовки колонок на мобильном */
+    }
+
+    .osi-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 4px 0;
+        border-bottom: 2px dashed #e6eef9;
+        margin-bottom: 8px;
+    }
+    
+    .osi-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+
+    .osi-row__arrow {
+        transform: rotate(90deg);
+        font-size: 1rem;
+        padding: 4px 0;
+    }
+
+    .osi-card-osi {
+        border-radius: 10px 10px 0 0;
+        border-bottom: none;
+    }
+
+    .osi-card-tcp {
+        border-radius: 0 0 10px 10px;
+        padding: 8px;
+        font-size: 0.78rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Вертикальный список для Анимации (OSI)
+   ═══════════════════════════════════════════════════════════ */
+
+.cs-ani--vertical .cs-ani__canvas {
+    min-height: auto !important;
+    padding: 20px !important;
+}
+
+.cs-ani--vertical .cs-ani__canvas-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: static !important;
+    height: auto !important;
+    width: 100% !important;
+}
+
+.cs-ani--vertical .cs-ani__node {
+    position: static !important;
+    transform: none !important;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.cs-ani--vertical .cs-ani__arrow,
+.cs-ani--vertical .cs-ani__progress {
+    display: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Правая колонка TCP/IP в симуляторе
+   ═══════════════════════════════════════════════════════════ */
+
+.osi-card-tcp {
+    display: flex;
+    flex-direction: column; /* ⚡ Выстраиваем заголовок и описание в колонку */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.osi-card-tcp br {
+    display: block; /* ⚡ Заставляем <br> работать как перенос строки */
+    content: "";
+    margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ЖЕСТКИЙ ФИКС: Превращаем анимацию в вертикальный список
+   ═══════════════════════════════════════════════════════════ */
+
+/* Когда контейнеру добавлен класс вертикального режима */
+.cs-ani--vertical .cs-ani__canvas-inner {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    position: static !important;
+    height: auto !important;
+    width: 100% !important;
+    min-height: 0 !important;
+}
+
+/* Узлы больше не абсолютные, а обычные блоки в потоке */
+.cs-ani--vertical .cs-ani__node {
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    max-width: 500px !important;
+    margin: 0 auto !important;
+    padding: 12px 20px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+    background: #fff !important;
+    border: 1px solid #e6eef9 !important;
+    border-radius: 10px !important;
+    white-space: normal !important;
+}
+
+/* Скрываем стрелки и прогресс-бар */
+.cs-ani--vertical .cs-ani__arrow,
+.cs-ani--vertical .cs-ani__progress {
+    display: none !important;
+}
+
+/* Сам холст делаем прозрачным и без фиксированной высоты */
+.cs-ani--vertical .cs-ani__canvas {
+    min-height: auto !important;
+    height: auto !important;
+    padding: 20px !important;
+    border: none !important;
+    background: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Возвращаем цвета и активное состояние списку OSI
+   ═══════════════════════════════════════════════════════════ */
+
+/* 1. Обычное состояние блока (неактивный) */
+.cs-ani--vertical .cs-ani__node {
+    background: #fff !important;
+    color: #4a6a8a !important; /* Серый текст для неактивных */
+    border: 2px solid #e6eef9 !important;
+    font-weight: 700 !important;
+    transition: all 0.3s ease !important;
+}
+
+/* 2. Активный блок (на котором сейчас анимация) */
+.cs-ani--vertical .cs-ani__node.active {
+    background: #00897b !important; /* Зелёный фон */
+    color: #ffffff !important;      /* Белый текст */
+    border-color: #00897b !important;
+    transform: scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(0, 137, 123, 0.3) !important;
+}
+
+/* 3. Пройденный блок (анимация уже прошла) */
+.cs-ani--vertical .cs-ani__node.done {
+    background: #e0f2f1 !important; /* Светло-зелёный */
+    color: #00695c !important;
+    border-color: #b8d9c8 !important;
+}
+
+.card.photos-open {
+    height: 600px; /* Было 500, стало 600 — фото видно, но карточка не гигантская */
+    max-height: 600px;
+    overflow: hidden;
+}
+
+.card.photos-open .card-content {
+    overflow-y: auto;
+    max-height: none;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ФИКС: Компактная кнопка "Добавить фото"
+   ═══════════════════════════════════════════════════════════ */
+
+/* Обёртка не должна растягивать кнопку на всю ширину */
+.card .card-photos-wrapper {
+    margin: 4px 0 0 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+/* Убираем "парение" кнопки в пустоте */
+.card .card-photos-wrapper > div {
+    padding: 0 !important;
+    text-align: center;
+}
+
+/* Сама кнопка — компактная */
+.card .photo-add-user-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    border: 1px solid #d0ddea;
+    background: #f6faff;
+    color: #1d3b5c;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: auto;
+    max-width: 100%;
+    margin: 4px auto 8px auto;
+    white-space: nowrap;
+}
+
+.card .photo-add-user-btn:hover {
+    background: #e1ebf9;
+    border-color: #8aacc9;
+    color: #0a1929;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(29, 59, 92, 0.1);
+}
+
+.card .photo-add-user-btn:active {
+    transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  HTTP PING-PONG                                           */
+/* ═══════════════════════════════════════════════════════ */
+.cs-pingpong {
+    background: #f0f4fa;
+    border-radius: 14px;
+    padding: 24px;
+}
+.cs-pingpong__header { text-align: center; margin-bottom: 18px; }
+.cs-pingpong__title { font-size: 1.2rem; font-weight: 800; margin: 0 0 4px; }
+.cs-pingpong__subtitle { font-size: 0.85rem; color: #6a8aaa; margin: 0; }
+
+.cs-pingpong__controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.cs-pingpong__methods { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.cs-pingpong__method {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 2px solid var(--method-color);
+    background: #fff;
+    color: var(--method-color);
+    font-weight: 700;
+    font-size: 0.8rem;
+    font-family: monospace;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-pingpong__method:hover,
+.cs-pingpong__method.active {
+    background: var(--method-color);
+    color: #fff;
+}
+.cs-pingpong__send {
+    padding: 10px 20px;
+    border-radius: 30px;
+    border: none;
+    background: #00897b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-pingpong__send:hover:not(:disabled) { background: #00695c; transform: translateY(-1px); }
+.cs-pingpong__send:disabled { opacity: 0.6; cursor: wait; }
+
+.cs-pingpong__stage {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.cs-pingpong__client,
+.cs-pingpong__server {
+    text-align: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 8px;
+    border: 2px solid #e6eef9;
+}
+.cs-pingpong__icon { font-size: 2rem; }
+.cs-pingpong__label { font-size: 0.7rem; color: #6a8aaa; font-weight: 600; }
+
+.cs-pingpong__track {
+    position: relative;
+    height: 100px;
+    background: linear-gradient(180deg, transparent 40%, #e6eef9 40%, #e6eef9 60%, transparent 60%);
+    border-radius: 8px;
+}
+.cs-pingpong__line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, #c5d8ef 0 8px, transparent 8px 16px);
+    transform: translateY(-50%);
+    z-index: 0;
+}
+.cs-pingpong__request-packet,
+.cs-pingpong__response-packet {
+    position: absolute;
+    left: 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: monospace;
+    white-space: nowrap;
+    z-index: 2;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: left 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cs-pingpong__request-packet {
+    top: 12px;
+    background: #e3f2fd;
+    border: 2px solid #1565c0;
+    color: #1565c0;
+    left: 0;
+}
+.cs-pingpong__response-packet {
+    bottom: 12px;
+    background: #e8f5e9;
+    border: 2px solid #2e7d32;
+    color: #2e7d32;
+    right: 0;
+    left: auto;
+    opacity: 0;
+}
+.cs-pingpong__request-packet.fly-right { left: calc(100% - 120px); }
+.cs-pingpong__response-packet.fly-left { left: 0; right: auto; }
+
+.cs-pingpong__packet-method { color: inherit; margin-right: 6px; }
+.cs-pingpong__packet-url { opacity: 0.8; }
+.cs-pingpong__packet-status--ok { color: #2e7d32; }
+.cs-pingpong__packet-status--err { color: #c62828; }
+
+.cs-pingpong__log {
+    background: #1e2a3a;
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #d0ddea;
+    font-family: monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    min-height: 100px;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.cs-pingpong__log-line { padding: 3px 0; animation: ppFade 0.3s ease; }
+.cs-pingpong__hint { color: #8a9fb8; font-style: italic; }
+.cs-pingpong__result {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(77,182,172,0.1);
+    border-left: 3px solid #4db6ac;
+    border-radius: 6px;
+    animation: ppFade 0.3s ease;
+}
+.cs-pingpong__result-row { padding: 3px 0; }
+.cs-pingpong__result-row code {
+    background: rgba(255,255,255,0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+@keyframes ppFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/*  DNS LOOKUP                                               */
+/* ═══════════════════════════════════════════════════════ */
+.cs-dns { background: #f0f4fa; border-radius: 14px; padding: 24px; }
+.cs-dns__header { text-align: center; margin-bottom: 18px; }
+.cs-dns__title { font-size: 1.2rem; font-weight: 800; margin: 0 0 4px; }
+.cs-dns__subtitle { font-size: 0.85rem; color: #6a8aaa; margin: 0; }
+
+.cs-dns__controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.cs-dns__input {
+    flex: 1;
+    min-width: 180px;
+    padding: 11px 16px;
+    border: 2px solid #d0ddea;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.cs-dns__input:focus { border-color: #00897b; }
+.cs-dns__lookup {
+    padding: 11px 22px;
+    border-radius: 30px;
+    border: none;
+    background: #00897b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-dns__lookup:hover:not(:disabled) { background: #00695c; transform: translateY(-1px); }
+.cs-dns__lookup:disabled { opacity: 0.6; cursor: wait; }
+
+.cs-dns__stage {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.cs-dns__client, .cs-dns__server {
+    text-align: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 8px;
+    border: 2px solid #e6eef9;
+}
+.cs-dns__icon { font-size: 2rem; }
+.cs-dns__label { font-size: 0.7rem; color: #6a8aaa; font-weight: 600; }
+
+.cs-dns__track {
+    position: relative;
+    height: 80px;
+    background: linear-gradient(180deg, transparent 45%, #e6eef9 45%, #e6eef9 55%, transparent 55%);
+    border-radius: 8px;
+}
+.cs-dns__packet {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    padding: 8px 14px;
+    border-radius: 8px;
+    background: #fff8e1;
+    border: 2px solid #f57f17;
+    color: #e65100;
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: left 1s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+    z-index: 2;
+}
+.cs-dns__packet.fly-right { left: calc(100% - 150px); }
+.cs-dns__packet.fly-left { left: 0; }
+
+.cs-dns__steps { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.cs-dns__step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e6eef9;
+    opacity: 0.4;
+    transition: all 0.3s;
+}
+.cs-dns__step.active { opacity: 1; border-color: #00897b; background: #f0f9f8; }
+.cs-dns__step-dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #d0ddea;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.cs-dns__step.active .cs-dns__step-dot { background: #00897b; }
+.cs-dns__step-text { font-size: 0.8rem; color: #1a2a3a; }
+
+.cs-dns__result {
+    padding: 18px;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e6eef9;
+    text-align: center;
+    min-height: 80px;
+}
+.cs-dns__hint { color: #8a9fb8; font-style: italic; font-size: 0.85rem; }
+.cs-dns__result-domain { font-family: monospace; font-size: 1.1rem; font-weight: 700; color: #1565c0; }
+.cs-dns__result-arrow { font-size: 1.5rem; color: #8a9fb8; margin: 4px 0; }
+.cs-dns__result-ip { font-family: monospace; font-size: 1.3rem; font-weight: 800; color: #2e7d32; }
+.cs-dns__result-desc { font-size: 0.8rem; color: #4a6a8a; margin-top: 8px; }
+.cs-dns__result-error .cs-dns__result-domain { color: #c62828; }
+.cs-dns__result-error .cs-dns__result-desc { color: #c62828; }
+
+/* ═══════════════════════════════════════════════════════ */
+/*  OSI PACKET                                               */
+/* ═══════════════════════════════════════════════════════ */
+.cs-osipacket { background: #f0f4fa; border-radius: 14px; padding: 24px; }
+.cs-osipacket__header { text-align: center; margin-bottom: 18px; }
+.cs-osipacket__title { font-size: 1.2rem; font-weight: 800; margin: 0 0 4px; }
+.cs-osipacket__subtitle { font-size: 0.85rem; color: #6a8aaa; margin: 0; }
+
+.cs-osipacket__controls { display: flex; justify-content: center; margin-bottom: 20px; }
+.cs-osipacket__send {
+    padding: 11px 26px;
+    border-radius: 30px;
+    border: none;
+    background: #00897b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.cs-osipacket__send:hover:not(:disabled) { background: #00695c; transform: translateY(-1px); }
+.cs-osipacket__send:disabled { opacity: 0.6; cursor: wait; }
+
+.cs-osipacket__stage {
+    display: grid;
+    grid-template-columns: 70px 1fr 70px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.cs-osipacket__client, .cs-osipacket__server {
+    text-align: center;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px 8px;
+    border: 2px solid #e6eef9;
+}
+.cs-osipacket__icon { font-size: 1.8rem; }
+.cs-osipacket__label { font-size: 0.68rem; color: #6a8aaa; font-weight: 600; }
+
+.cs-osipacket__layers { display: flex; flex-direction: column; gap: 6px; }
+.cs-osipacket__layer {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 14px;
+    background: #fff;
+    border-radius: 10px;
+    border: 2px solid #e6eef9;
+    opacity: 0.4;
+    transition: all 0.35s;
+}
+.cs-osipacket__layer.active {
+    opacity: 1;
+    border-color: var(--layer-color);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    transform: scale(1.02);
+}
+.cs-osipacket__layer.done {
+    opacity: 1;
+    border-color: var(--layer-color);
+    background: #f6fefe;
+}
+.cs-osipacket__layer-num {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--layer-color);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+.cs-osipacket__layer-title { font-size: 0.82rem; font-weight: 700; color: #0a1929; }
+.cs-osipacket__layer-desc { font-size: 0.72rem; color: #6a8aaa; }
+
+.cs-osipacket__log {
+    background: #1e2a3a;
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #d0ddea;
+    font-family: monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    min-height: 80px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+.cs-osipacket__log-line { padding: 3px 0; animation: ppFade 0.3s ease; }
+.cs-osipacket__hint { color: #8a9fb8; font-style: italic; }
+.cs-osipacket__result {
+    margin-top: 8px;
+    padding: 10px 14px;
+    background: rgba(77,182,172,0.1);
+    border-left: 3px solid #4db6ac;
+    border-radius: 6px;
+    animation: ppFade 0.3s ease;
+}
+
+/* ═══ Мобильный ═══ */
+@media (max-width: 767px) {
+    .cs-pingpong, .cs-dns, .cs-osipacket { padding: 14px; }
+    .cs-pingpong__title, .cs-dns__title, .cs-osipacket__title { font-size: 1rem; }
+    .cs-pingpong__stage, .cs-dns__stage, .cs-osipacket__stage {
+        grid-template-columns: 50px 1fr 50px;
+        gap: 6px;
+    }
+    .cs-pingpong__icon, .cs-dns__icon, .cs-osipacket__icon { font-size: 1.5rem; }
+    .cs-pingpong__label, .cs-dns__label, .cs-osipacket__label { font-size: 0.6rem; }
+    .cs-pingpong__track { height: 80px; }
+    .cs-pingpong__method { padding: 6px 10px; font-size: 0.7rem; }
+    .cs-pingpong__send { font-size: 0.78rem; padding: 8px 16px; }
+    .cs-pingpong__request-packet, .cs-pingpong__response-packet { font-size: 0.65rem; padding: 6px 8px; }
+    .cs-pingpong__request-packet.fly-right { left: calc(100% - 90px); }
+    .cs-dns__packet { font-size: 0.65rem; padding: 6px 10px; }
+    .cs-dns__packet.fly-right { left: calc(100% - 110px); }
+    .cs-osipacket__layer { padding: 8px 10px; grid-template-columns: 30px 1fr; }
+    .cs-osipacket__layer-num { width: 24px; height: 24px; font-size: 0.7rem; }
+    .cs-osipacket__layer-title { font-size: 0.75rem; }
+}
+
+.photo-path-btn, 
+.photo-add-user-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+}
+
+.photo-path-btn:hover, 
+.photo-add-user-btn:hover {
+    background: #e2e8f0;
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+}
+
+.photo-path-btn:active, 
+.photo-add-user-btn:active {
+    transform: translateY(0);
+}
+
+/* Основной стиль пункта */
+.dropdown-item {
+    display: block;
+    width: 100%;
+    margin: 0;               /* Убираем внешние отступы */
+    padding: 10px 16px;      /* Оставляем отступы только для удобства чтения */
+    border: none;            /* Убираем рамки */
+    border-radius: 0;        /* Убираем скругление у самого пункта */
+    background: transparent; /* Прозрачный фон по умолчанию */
+    text-align: center;      /* Выравнивание текста (или left, как тебе нужно) */
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #0a1929;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+    box-sizing: border-box;  /* Чтобы padding не вылезал за границы */
+}
+
+/* Стиль для наведения (чтобы было видно, куда кликаешь) */
+.dropdown-item:hover {
+    background-color: #e6eef9;
+}
+
+/* Стиль для ВЫБРАННОГО (активного) пункта */
+.dropdown-item.active {
+    background-color: #0a1929; /* Тёмно-синий цвет */
+    color: #ffffff;
+}
+
+/* Контейнер меню (чтобы заливка не вылезала за скругления) */
+.dropdown-menu {
+    padding: 0;              /* Убираем белые полосы сверху и снизу контейнера */
+    overflow: hidden;        /* Обрезаем всё, что выходит за скруглённые углы */
+    border-radius: 16px;     /* Скругление самого меню */
+}
+
+/* Стили для кнопок работы с файлами (Загрузить и Скачать) */
+#uploadLinksBtn,
+#exportLinksBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    color: #0a1929;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* Эффект при наведении для обеих кнопок */
+#uploadLinksBtn:hover,
+#exportLinksBtn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+/* Эффект при нажатии для обеих кнопок */
+#uploadLinksBtn:active,
+#exportLinksBtn:active {
+    transform: scale(0.98);
 }
