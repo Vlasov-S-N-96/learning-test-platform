@@ -12034,10 +12034,19 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
     // ─── Загрузка ───
     function tryLoadImage(url) {
         return new Promise(resolve => {
-            const img = new Image();
-            img.onload = () => resolve(url);
-            img.onerror = () => resolve(null);
-            img.src = url;
+            // Используем fetch с методом HEAD, чтобы не скачивать картинку целиком
+            // и не засорять консоль ошибками 404
+            fetch(url, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        resolve(url); // Файл есть
+                    } else {
+                        resolve(null); // Файла нет (404)
+                    }
+                })
+                .catch(() => {
+                    resolve(null); // Ошибка сети
+                });
         });
     }
 
@@ -12050,24 +12059,21 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
         const found = [];
         const extensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 
-        // ⚡ ШАГ 1: Ищем стандартные имена (1.jpg, 2.jpg, 1.png и т.д.)
+        // ⚡ ШАГ 1: Ищем ТОЛЬКО стандартные имена (1.jpg, 2.png и т.д.)
         for (let i = 1; i <= 20; i++) {
             let loaded = false;
-            const names = [`${i}`, `photo${i}`, `img${i}`, `image${i}`, `pic${i}`];
-
-            for (const name of names) {
-                for (const ext of extensions) {
-                    const url = `${folderPath}/${name}.${ext}`;
-                    const result = await tryLoadImage(url);
-                    if (result) { found.push(url); loaded = true; break; }
-                }
-                if (loaded) break;
+            // Оставляем ТОЛЬКО цифры, убираем photo, img, image, pic
+            for (const ext of extensions) {
+                const url = `${folderPath}/${i}.${ext}`;
+                const result = await tryLoadImage(url);
+                if (result) { found.push(url); loaded = true; break; }
             }
+            // Если файл с текущим номером не найден, и мы уже проверили 3 номера подряд — останавливаемся
             if (!loaded && i > 3 && found.length < i - 3) break;
         }
 
         // ⚡ ШАГ 2: Если стандартные не найдены, ищем по маске "Как_тестировать_API_X.jpg"
-        if (found.length === 0) {
+        if (found.length === 0 && (category === 'api' || category === 'interview_api')) {
             // Пробуем найти файлы с префиксом
             const prefixes = ['Как_тестировать_API_', 'Как_тестировать_', 'API_'];
             for (const prefix of prefixes) {
@@ -12159,7 +12165,7 @@ window.refreshCustomThemesUI = refreshCustomThemesUI;
                         ${allPhotos.map((src, idx) => `
                             <div class="card-photo-thumb" data-photo-src="${src}" data-photo-idx="${idx}">
                                 <img src="${src}" alt="Фото ${idx + 1}" loading="lazy">
-                                <span class="photo-zoom-hint">🔍</span>
+                                <span class="photo-zoom-hint"></span>
                             </div>
                         `).join('')}
                     </div>
@@ -22723,85 +22729,3 @@ function renderTabContent(tab) {
     setTimeout(init, 1500);
 })();
 
-// ═══════════════════════════════════════════════════════
-//  ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ ЗАГРУЗКИ links.json
-// ═══════════════════════════════════════════════════════
-setTimeout(() => {
-    const btn = document.getElementById('uploadLinksBtn');
-    if (!btn) {
-        console.error('❌ Кнопка #uploadLinksBtn НЕ НАЙДЕНА В HTML!');
-        return;
-    }
-    
-    console.log('✅ Кнопка #uploadLinksBtn найдена, привязываем обработчик...');
-    
-    // Убираем старый обработчик, чтобы не было дублей
-    btn.onclick = null; 
-    
-    btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('🖱 Клик по кнопке "Загрузить links.json"');
-
-        // Создаём скрытый input для выбора файла
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.style.display = 'none';
-        document.body.appendChild(input);
-
-        input.onchange = function(ev) {
-            const file = ev.target.files[0];
-            document.body.removeChild(input);
-            if (!file) return;
-
-            console.log('📂 Выбран файл:', file.name);
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const newLinks = JSON.parse(event.target.result);
-                    if (!Array.isArray(newLinks)) {
-                        alert('❌ Ошибка: файл должен содержать массив ссылок [ {...}, {...} ]');
-                        return;
-                    }
-                    
-                    // Читаем текущие ссылки
-                    let currentLinks = JSON.parse(localStorage.getItem('myLocalLinks_v2')) || [];
-                    
-                    // Объединяем, удаляя дубликаты по URL
-                    const existingUrls = new Set(currentLinks.map(l => l.url));
-                    let addedCount = 0;
-                    
-                    newLinks.forEach(link => {
-                        if (link.url && !existingUrls.has(l.url)) {
-                            currentLinks.push(link);
-                            existingUrls.add(l.url);
-                            addedCount++;
-                        }
-                    });
-                    
-                    // Сохраняем
-                    localStorage.setItem('myLocalLinks_v2', JSON.stringify(currentLinks));
-                    
-                    alert(`✅ Успешно загружено ссылок: ${addedCount}`);
-                    
-                    // ⚡ Обновляем интерфейс (перерисовываем список документов)
-                    // Находим функцию обновления внутри модуля
-                    if (typeof window.openDocuments === 'function') {
-                        window.openDocuments();
-                    } else {
-                        location.reload(); // fallback
-                    }
-                    
-                } catch (err) {
-                    console.error(err);
-                    alert('❌ Ошибка чтения JSON: ' + err.message);
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        input.click();
-    });
-}, 1000);
